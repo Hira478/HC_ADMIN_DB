@@ -3,18 +3,19 @@ import React from "react";
 
 interface StatCardProps {
   title: string;
+  valueUnit?: string;
   value: string;
   change: string;
   comparison?: string;
   rkdapInfo: string;
   icon: React.ReactNode;
   variant?: "dark" | "light";
-  notificationCount?: number;
   className?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
   title,
+  valueUnit,
   value,
   change,
   comparison,
@@ -30,25 +31,42 @@ const StatCard: React.FC<StatCardProps> = ({
   const iconBg = isDark ? "bg-gray-700" : "bg-blue-50";
   const iconColor = isDark ? "text-white" : "text-blue-600";
 
+  // TIDAK PERLU LAGI MEMISAHKAN "Rp" KARENA TAMPIL SATU BARIS
+  // const isCurrency = value.startsWith("Rp ");
+  // let currencySymbol = "";
+  // let amount = value;
+  // if (isCurrency) { ... }
+
   return (
-    // TAMBAHKAN justify-between DI SINI
     <div
-      className={`relative p-5 rounded-lg shadow-md flex flex-col justify-between ${cardBg} ${className}`}
+      className={`relative p-5 rounded-xl shadow-md flex flex-col justify-between ${cardBg} ${className}`}
     >
-      {/* Blok Konten Atas */}
       <div>
-        <div className="flex justify-between items-start">
-          <div>
-            <p className={`text-sm ${titleColor}`}>{title}</p>
-            <p className={`text-2xl font-bold mt-1 ${valueColor}`}>{value}</p>
+        <div className="flex justify-between items-center">
+          <div className="flex items-baseline">
+            <p className={`text-sm font-medium ${titleColor}`}>{title}</p>
+            {valueUnit && (
+              <span
+                className={`ml-1.5 text-xs font-normal opacity-70 ${titleColor}`}
+              >
+                {valueUnit}
+              </span>
+            )}
           </div>
-          <div className={`p-2 rounded-lg ${iconBg} ${iconColor}`}>{icon}</div>
+          <div className={`p-2.5 rounded-lg ${iconBg} ${iconColor}`}>
+            {icon}
+          </div>
+        </div>
+
+        {/* --- PERUBAHAN UTAMA DI SINI --- */}
+        {/* Tampilkan nilai 'value' secara langsung dalam satu baris */}
+        <div className="mt-1">
+          <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
         </div>
       </div>
 
-      {/* Blok Konten Bawah (HAPUS mt-auto DARI SINI) */}
-      <div>
-        <div className="flex items-center mt-2 text-xs">
+      <div className="mt-4">
+        <div className="flex items-center text-xs">
           <p className="text-green-500 font-semibold">{change}</p>
           <p className={`ml-2 ${titleColor}`}>{comparison}</p>
         </div>

@@ -23,29 +23,12 @@ const sumHeadcount = (stats: Headcount[]) =>
     { totalCount: 0 }
   );
 
+// VERSI BARU FUNGSI FORMATTING
 const formatCurrency = (value: number, isPerEmployee = false) => {
   const absValue = Math.abs(value);
   const sign = value < 0 ? "-" : "";
 
-  if (absValue >= 1e9 && !isPerEmployee)
-    return `${sign}Rp ${(absValue / 1e9).toLocaleString("id-ID", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    })}`;
-
-  if (absValue >= 1e6 && !isPerEmployee)
-    return `${sign}Rp ${(absValue / 1e6).toLocaleString("id-ID", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    })}`;
-
-  if (absValue >= 1e3 && !isPerEmployee)
-    return `${sign}Rp ${(absValue / 1e3).toLocaleString("id-ID", {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    })}`;
-
-  // Kalau per employee, pakai 2 desimal, tidak disingkat
+  // Untuk nilai per karyawan, gunakan 2 angka desimal
   if (isPerEmployee) {
     return `${sign}Rp ${absValue.toLocaleString("id-ID", {
       minimumFractionDigits: 2,
@@ -53,7 +36,7 @@ const formatCurrency = (value: number, isPerEmployee = false) => {
     })}`;
   }
 
-  // Default (untuk angka kecil)
+  // Untuk nilai total (revenue, profit, cost), tampilkan angka penuh tanpa desimal
   return `${sign}Rp ${absValue.toLocaleString("id-ID", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -99,14 +82,8 @@ export async function GET(request: NextRequest) {
       where: { companyId, year, month: { in: monthsToFetch } },
     });
     const headcountData = await prisma.headcount.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } }, // <-- Diperbaiki
+      where: { companyId, year, month: { in: monthsToFetch } },
     });
-
-    console.log("📊 DATA MENTAH YANG DIAMBIL ====================");
-    console.log("Productivity Data:");
-    console.table(productivityData); // Tampilkan tabel data productivity
-    console.log("Headcount Data:");
-    console.table(headcountData);
 
     if (productivityData.length === 0 || headcountData.length === 0) {
       return NextResponse.json(
@@ -116,6 +93,7 @@ export async function GET(request: NextRequest) {
     }
 
     const totalProductivity = sumProductivity(productivityData);
+
     const totalHeadcount = sumHeadcount(headcountData);
     let relevantHeadcount = 0;
 
@@ -136,6 +114,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Perhitungan metrik per karyawan sekarang menggunakan nilai yang sudah dikonversi
     const revenuePerEmployee =
       relevantHeadcount > 0 ? totalProductivity.revenue / relevantHeadcount : 0;
     const netProfitPerEmployee =
@@ -147,32 +126,33 @@ export async function GET(request: NextRequest) {
         ? totalProductivity.totalEmployeeCost / relevantHeadcount
         : 0;
 
-    console.log("\n🧮 HASIL KALKULASI ===============================");
-    console.log("Total Revenue:", totalProductivity.revenue);
-    console.log("Total Net Profit:", totalProductivity.netProfit);
-    console.log("Total Employee Cost:", totalProductivity.totalEmployeeCost);
-    console.log("Relevant Headcount:", relevantHeadcount);
-    console.log("Revenue per Employee:", revenuePerEmployee);
-    console.log("Net Profit per Employee:", netProfitPerEmployee);
-    console.log("Employee Cost Ratio:", employeeCostRatio);
-
     const response = {
       productivity: {
-        revenue: { value: formatCurrency(totalProductivity.revenue) },
-        netProfit: { value: formatCurrency(totalProductivity.netProfit) },
+        revenue: {
+          value: formatCurrency(totalProductivity.revenue),
+          unit: "(dalam Juta)",
+        },
+        netProfit: {
+          value: formatCurrency(totalProductivity.netProfit),
+          unit: "(dalam Juta)",
+        },
         revenuePerEmployee: {
           value: formatCurrency(revenuePerEmployee, true),
+          unit: "(Juta/Karyawan)",
         },
         netProfitPerEmployee: {
           value: formatCurrency(netProfitPerEmployee, true),
+          unit: "(Juta/Karyawan)",
         },
       },
       employeeCost: {
         total: {
           value: formatCurrency(totalProductivity.totalEmployeeCost),
-        },
+          unit: "(dalam Juta)",
+        }, // <== Pastikan koma ini ada
         ratio: {
           value: formatCurrency(employeeCostRatio, true),
+          unit: "(Juta/Karyawan)",
         },
       },
     };
