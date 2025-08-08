@@ -20,6 +20,8 @@ model Company {
   ageStats             AgeStat[]
   lengthOfServiceStats LengthOfServiceStat[]
   productivityStats    ProductivityStat[]
+  employeeCostStats   EmployeeCostStat[]
+  kpiStats            KpiStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -124,6 +126,37 @@ model ProductivityStat {
   totalEmployeeCost Float @default(0)
 
   companyId Int     // <-- Diubah ke Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId])
+}
+
+model EmployeeCostStat {
+  id                  Int @id @default(autoincrement())
+  month               Int
+  year                Int
+  
+  salary              Float
+  incentive           Float
+  pension             Float
+  others              Float
+  trainingRecruitment Float @map("training_recruitment")
+
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId])
+}
+
+model KpiStat {
+  id                  Int @id @default(autoincrement())
+  month               Int
+  year                Int
+  
+  kpiKorporasi        Float
+  kpiHcTransformation Float @map("kpi_hc_transformation")
+
+  companyId Int
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])

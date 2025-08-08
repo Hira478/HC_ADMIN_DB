@@ -7,6 +7,7 @@ import {
   Upload,
   Settings,
   Building,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // <-- Import hook untuk mendeteksi path
@@ -62,6 +63,11 @@ const Sidebar = () => {
           href="/input/productivity"
           icon={<DollarSign className="h-6 w-6" />}
           title="Input Productivity Data"
+        />
+        <SidebarItem
+          href="/input/employee-cost"
+          icon={<Wallet className="h-6 w-6" />}
+          title="Input Rincian Biaya Karyawan"
         />
         <SidebarItem
           href="/input/demography"
