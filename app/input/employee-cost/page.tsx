@@ -3,40 +3,37 @@
 import { useState, useEffect } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 
-// --- 1. Definisikan interface untuk bentuk form data ---
-interface ProductivityFormData {
+// Definisikan tipe data untuk state form
+interface FormData {
   year: number;
   month: number;
-  companyId: number | string; // Bisa string (saat kosong) atau number (saat dipilih)
-  revenue: number;
-  netProfit: number;
-  totalEmployeeCost: number;
-  kpiKorporasi: number;
-  kpiHcTransformation: number;
+  companyId: number | string;
+  salary: number;
+  incentive: number;
+  pension: number;
+  others: number;
+  trainingRecruitment: number;
 }
 
-// Gunakan interface untuk initial state
-const initialFormData: ProductivityFormData = {
+// Nilai awal untuk form
+const initialFormData: FormData = {
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
-  companyId: "", // Awalnya string kosong, ini tidak apa-apa
-  revenue: 0,
-  netProfit: 0,
-  totalEmployeeCost: 0,
-  kpiKorporasi: 0,
-  kpiHcTransformation: 0,
+  companyId: "",
+  salary: 0,
+  incentive: 0,
+  pension: 0,
+  others: 0,
+  trainingRecruitment: 0,
 };
 
-const InputProductivityPage = () => {
+const InputEmployeeCostPage = () => {
   const { companies, loading: companiesLoading } = useFilters();
-  // Terapkan tipe pada useState
-  const [formData, setFormData] =
-    useState<ProductivityFormData>(initialFormData);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
   const [status, setStatus] = useState({ message: "", type: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Kode ini sekarang valid karena tipe companyId sudah sesuai
     if (companies.length > 0 && !formData.companyId) {
       setFormData((prev) => ({ ...prev, companyId: companies[0].id }));
     }
@@ -59,17 +56,14 @@ const InputProductivityPage = () => {
     setStatus({ message: "Menyimpan data...", type: "loading" });
 
     try {
-      const response = await fetch("/api/input/productivity", {
+      const response = await fetch("/api/input/employee-cost", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Terjadi kesalahan");
-      setStatus({
-        message: "Data produktivitas berhasil disimpan!",
-        type: "success",
-      });
+      setStatus({ message: "Data berhasil disimpan!", type: "success" });
     } catch (error) {
       if (error instanceof Error) {
         setStatus({ message: `Error: ${error.message}`, type: "error" });
@@ -86,9 +80,7 @@ const InputProductivityPage = () => {
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">
-        Input: Productivity & Employee Cost
-      </h1>
+      <h1 className="text-3xl font-bold mb-6">Input: Rincian Biaya Karyawan</h1>
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-lg shadow-md space-y-6"
@@ -157,118 +149,111 @@ const InputProductivityPage = () => {
             />
           </div>
         </fieldset>
-        <fieldset className="border-t pt-6">
+
+        <fieldset>
           <legend className="text-lg font-semibold text-gray-900">
-            KPI (%)
+            Komponen Biaya
           </legend>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="space-y-4 mt-2">
             <div>
               <label
-                htmlFor="kpiKorporasi"
+                htmlFor="salary"
                 className="block text-sm font-medium text-gray-700"
               >
-                KPI Korporasi
+                Salary
               </label>
               <input
                 type="number"
-                name="kpiKorporasi"
-                id="kpiKorporasi"
-                value={formData.kpiKorporasi}
+                name="salary"
+                id="salary"
+                value={formData.salary}
                 onChange={handleChange}
                 required
                 step="any"
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Contoh: 58"
               />
             </div>
             <div>
               <label
-                htmlFor="kpiHcTransformation"
+                htmlFor="incentive"
                 className="block text-sm font-medium text-gray-700"
               >
-                KPI HC Transformation
+                Incentive
               </label>
               <input
                 type="number"
-                name="kpiHcTransformation"
-                id="kpiHcTransformation"
-                value={formData.kpiHcTransformation}
+                name="incentive"
+                id="incentive"
+                value={formData.incentive}
                 onChange={handleChange}
                 required
                 step="any"
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Contoh: 42"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="pension"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Pension
+              </label>
+              <input
+                type="number"
+                name="pension"
+                id="pension"
+                value={formData.pension}
+                onChange={handleChange}
+                required
+                step="any"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="others"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Others
+              </label>
+              <input
+                type="number"
+                name="others"
+                id="others"
+                value={formData.others}
+                onChange={handleChange}
+                required
+                step="any"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="trainingRecruitment"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Training & Recruitment
+              </label>
+              <input
+                type="number"
+                name="trainingRecruitment"
+                id="trainingRecruitment"
+                value={formData.trainingRecruitment}
+                onChange={handleChange}
+                required
+                step="any"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
           </div>
         </fieldset>
-
-        <div className="space-y-4 pt-4">
-          <div>
-            <label
-              htmlFor="revenue"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Revenue
-            </label>
-            <input
-              type="number"
-              name="revenue"
-              id="revenue"
-              value={formData.revenue}
-              onChange={handleChange}
-              required
-              step="any"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Masukkan jumlah revenue"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="netProfit"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Net Profit
-            </label>
-            <input
-              type="number"
-              name="netProfit"
-              id="netProfit"
-              value={formData.netProfit}
-              onChange={handleChange}
-              required
-              step="any"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Bisa negatif, misal: -50000"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="totalEmployeeCost"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Total Employee Cost
-            </label>
-            <input
-              type="number"
-              name="totalEmployeeCost"
-              id="totalEmployeeCost"
-              value={formData.totalEmployeeCost}
-              onChange={handleChange}
-              required
-              step="any"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Masukkan total biaya karyawan"
-            />
-          </div>
-        </div>
 
         <button
           type="submit"
           disabled={isSubmitting}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
         >
-          {isSubmitting ? "Menyimpan..." : "Simpan Data"}
+          {isSubmitting ? "Menyimpan..." : "Simpan Data Biaya"}
         </button>
 
         {status.message && (
@@ -288,5 +273,4 @@ const InputProductivityPage = () => {
     </div>
   );
 };
-
-export default InputProductivityPage;
+export default InputEmployeeCostPage;

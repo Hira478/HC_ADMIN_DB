@@ -8,7 +8,12 @@ import AgeChartCard from "@/components/widgets/Demography/AgeChartCard";
 import LengthOfServiceChartCard from "@/components/widgets/Demography/LengthOfServiceChartCard";
 import type { DemographyData } from "@/types";
 
-const DemographySection = ({ data }: { data: DemographyData | undefined }) => {
+// By aliasing 'data' to '_data', we signal that it's intentionally unused for now.
+const DemographySection = ({
+  data: _data,
+}: {
+  data: DemographyData | undefined;
+}) => {
   return (
     <section>
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Demography</h2>
