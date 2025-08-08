@@ -22,9 +22,9 @@ const KpiChartCard = () => {
       setLoading(true);
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
-        type: "yearly", // <-- PAKSA TIPE MENJADI 'yearly'
+        type: period.type,
         year: String(period.year),
-        value: "1", // Nilai 'value' tidak relevan, tapi kita isi 1
+        value: String(period.value),
       });
       try {
         const response = await fetch(`/api/charts/kpi?${params.toString()}`);
