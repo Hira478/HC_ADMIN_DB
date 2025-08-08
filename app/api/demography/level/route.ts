@@ -3,19 +3,8 @@ import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-// Fungsi bantuan untuk menjumlahkan data level
-const sumLevelStats = (stats: LevelStat[]) => {
-  return stats.reduce(
-    (accumulator, current) => {
-      accumulator.bod1Count += current.bod1Count;
-      accumulator.bod2Count += current.bod2Count;
-      accumulator.bod3Count += current.bod3Count;
-      accumulator.bod4Count += current.bod4Count;
-      return accumulator;
-    },
-    { bod1Count: 0, bod2Count: 0, bod3Count: 0, bod4Count: 0 }
-  );
-};
+// Fungsi ini tidak lagi digunakan, bisa dihapus
+// const sumLevelStats = (stats: LevelStat[]) => { ... };
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -33,29 +22,33 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Tentukan rentang bulan berdasarkan tipe filter
   let monthsToFetch: number[] = [];
-  if (type === "monthly") monthsToFetch = [value];
-  else if (type === "quarterly")
-    monthsToFetch =
-      [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-        [10, 11, 12],
-      ][value - 1] || [];
-  else if (type === "semesterly")
-    monthsToFetch =
-      [
-        [1, 2, 3, 4, 5, 6],
-        [7, 8, 9, 10, 11, 12],
-      ][value - 1] || [];
-  else if (type === "yearly")
-    monthsToFetch = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  if (type === "monthly") {
+    monthsToFetch = [value];
+  } else if (type === "quarterly") {
+    const quarterMonths = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+      [10, 11, 12],
+    ];
+    monthsToFetch = quarterMonths[value - 1] || [];
+  } else if (type === "semesterly") {
+    const semesterMonths = [
+      [1, 2, 3, 4, 5, 6],
+      [7, 8, 9, 10, 11, 12],
+    ];
+    monthsToFetch = semesterMonths[value - 1] || [];
+  } else if (type === "yearly") {
+    monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
+  }
 
   try {
     const levelDataFromDb = await prisma.levelStat.findMany({
       where: { companyId, year, month: { in: monthsToFetch } },
+      orderBy: {
+        month: "asc",
+      },
     });
 
     if (levelDataFromDb.length === 0) {
@@ -65,14 +58,36 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const aggregatedData = sumLevelStats(levelDataFromDb);
+    // <<< MULAI LOGIKA BARU UNTUK MEMILIH DATA >>>
+    let dataForPeriod: LevelStat | undefined;
+
+    if (type === "monthly") {
+      dataForPeriod = levelDataFromDb[0];
+    } else {
+      const latestMonth = Math.max(...monthsToFetch);
+      dataForPeriod = levelDataFromDb.find(
+        (stat) => stat.month === latestMonth
+      );
+    }
+
+    if (!dataForPeriod) {
+      return NextResponse.json({
+        labels: ["BOD-1", "BOD-2", "BOD-3", "BOD-4"],
+        values: [0, 0, 0, 0],
+        message: `Data level jabatan untuk bulan terakhir (${Math.max(
+          ...monthsToFetch
+        )}) tidak ditemukan.`,
+      });
+    }
+    // <<< AKHIR LOGIKA BARU >>>
 
     const labels = ["BOD-1", "BOD-2", "BOD-3", "BOD-4"];
+    // <<< GUNAKAN 'dataForPeriod' UNTUK MENGISI VALUES >>>
     const values = [
-      aggregatedData.bod1Count,
-      aggregatedData.bod2Count,
-      aggregatedData.bod3Count,
-      aggregatedData.bod4Count,
+      dataForPeriod.bod1Count,
+      dataForPeriod.bod2Count,
+      dataForPeriod.bod3Count,
+      dataForPeriod.bod4Count,
     ];
 
     return NextResponse.json({ labels, values });

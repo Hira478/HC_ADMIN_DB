@@ -2,7 +2,7 @@
 
 import { useFilters, Period } from "@/contexts/FilterContext";
 import { Filter, X } from "lucide-react";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 
 // Custom hook to detect clicks outside a component (unchanged)
 const useOnClickOutside = (
@@ -38,13 +38,40 @@ const Header = () => {
 
   useOnClickOutside(filterRef, () => setIsFilterOpen(false));
 
-  // Handler for changing the period type from radio buttons
+  // <<< MULAI PERUBAHAN LOGIKA: Kalkulasi ketersediaan periode >>>
+  const { quarterAvailability, semesterAvailability, isYearlyAvailable } =
+    useMemo(() => {
+      // Ambil bulan yang tersedia hanya untuk tahun yang sedang dipilih
+      const availableMonthsForYear = new Set(
+        availablePeriods
+          .filter((p) => p.year === period.year)
+          .map((p) => p.month)
+      );
+
+      // Fungsi untuk mengecek jika semua bulan dalam array ada di Set
+      const checkAllMonthsAvailable = (months: number[]) =>
+        months.every((month) => availableMonthsForYear.has(month));
+
+      return {
+        quarterAvailability: {
+          1: checkAllMonthsAvailable([1, 2, 3]),
+          2: checkAllMonthsAvailable([4, 5, 6]),
+          3: checkAllMonthsAvailable([7, 8, 9]),
+          4: checkAllMonthsAvailable([10, 11, 12]),
+        },
+        semesterAvailability: {
+          1: checkAllMonthsAvailable([1, 2, 3, 4, 5, 6]),
+          2: checkAllMonthsAvailable([7, 8, 9, 10, 11, 12]),
+        },
+        isYearlyAvailable: availableMonthsForYear.size === 12,
+      };
+    }, [availablePeriods, period.year]);
+  // <<< AKHIR PERUBAHAN LOGIKA >>>
+
   const handleTypeChange = (newType: Period["type"]) => {
-    // When the type changes, reset its value to 1 (e.g., January, Q1, 1st Semester)
     setPeriod({ ...period, type: newType, value: 1 });
   };
 
-  // Handler for changing the value from the active dropdown
   const handleValueChange = (newValue: number) => {
     setPeriod({ ...period, value: newValue });
   };
@@ -53,7 +80,6 @@ const Header = () => {
     setPeriod({ ...period, year });
   };
 
-  // Options for the dropdowns in English
   const uniqueYears = Array.from(new Set(availablePeriods.map((p) => p.year)));
 
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -61,20 +87,20 @@ const Header = () => {
     name: new Date(0, i).toLocaleString("id-ID", { month: "long" }),
   }));
   const quarters = [
-    { value: 1, name: "Q1" },
-    { value: 2, name: "Q2" },
-    { value: 3, name: "Q3" },
-    { value: 4, name: "Q4" },
+    { value: 1, name: "Q1 (Jan-Mar)" },
+    { value: 2, name: "Q2 (Apr-Jun)" },
+    { value: 3, name: "Q3 (Jul-Sep)" },
+    { value: 4, name: "Q4 (Okt-Des)" },
   ];
   const semesters = [
-    { value: 1, name: "1st Semester" },
-    { value: 2, name: "2nd Semester" },
+    { value: 1, name: "Semester 1 (Jan-Jun)" },
+    { value: 2, name: "Semester 2 (Jul-Des)" },
   ];
 
-  // Function to display the currently active filter text
   const getActiveFilterText = () => {
     const companyName =
-      companies.find((c) => c.id === selectedCompany)?.name || "Select Company";
+      companies.find((c) => c.id === selectedCompany)?.name ||
+      "Pilih Perusahaan";
     let periodText = "";
     switch (period.type) {
       case "monthly":
@@ -84,11 +110,10 @@ const Header = () => {
         periodText = `Q${period.value}`;
         break;
       case "semesterly":
-        periodText =
-          semesters.find((s) => s.value === period.value)?.name || "";
+        periodText = `Semester ${period.value}`;
         break;
       case "yearly":
-        periodText = "Annual";
+        periodText = "Tahunan";
         break;
     }
     const valueText = period.type === "yearly" ? "" : periodText;
@@ -102,38 +127,36 @@ const Header = () => {
       <div className="relative" ref={filterRef}>
         <button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="flex items-center space-x-2 rounded-md border p-2 text-sm bg-gray-50 hover:bg-gray-100"
+          className="flex items-center space-x-2 rounded-md border bg-gray-50 p-2 text-sm hover:bg-gray-100"
         >
           <Filter size={16} className="text-gray-600" />
-          <span className="text-gray-800 font-medium">
+          <span className="font-medium text-gray-800">
             {getActiveFilterText()}
           </span>
         </button>
 
         {isFilterOpen && (
-          <div className="absolute top-full right-0 mt-2 w-80 rounded-lg border bg-white shadow-xl z-20 p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="font-bold text-gray-800">Data Filters</h4>
+          <div className="absolute right-0 top-full z-20 mt-2 w-80 rounded-lg border bg-white p-4 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h4 className="font-bold text-gray-800">Filter Data</h4>
               <button
                 onClick={() => setIsFilterOpen(false)}
                 className="text-gray-500 hover:text-gray-800"
               >
-                {" "}
-                <X size={18} />{" "}
+                <X size={18} />
               </button>
             </div>
 
             <div className="space-y-4">
               {/* Company & Year Filters */}
-              <div>
+              <div className="grid grid-cols-2 gap-2">
                 <select
-                  // Pastikan value adalah string, atau kosong jika null
                   value={selectedCompany ?? ""}
-                  // Konversi kembali ke Angka saat ada perubahan
                   onChange={(e) => setSelectedCompany(Number(e.target.value))}
                   disabled={loading}
-                  className="rounded-md border bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
+                  <option value="">Pilih Perusahaan</option>
                   {loading ? (
                     <option>Memuat...</option>
                   ) : (
@@ -144,15 +167,10 @@ const Header = () => {
                     ))
                   )}
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-600">
-                  Tahun
-                </label>
                 <select
                   value={period.year}
                   onChange={(e) => handleYearChange(Number(e.target.value))}
-                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm"
+                  className="w-full rounded-md border bg-white p-2 text-sm"
                 >
                   {uniqueYears.map((y) => (
                     <option key={y} value={y}>
@@ -165,10 +183,10 @@ const Header = () => {
               {/* Period Filter with Radio Buttons */}
               <div>
                 <label className="text-xs font-semibold text-gray-600">
-                  Period
+                  Periode
                 </label>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2 text-sm">
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <label className="flex cursor-pointer items-center space-x-2">
                     <input
                       type="radio"
                       name="periodType"
@@ -176,9 +194,9 @@ const Header = () => {
                       onChange={() => handleTypeChange("monthly")}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                     />
-                    <span>Monthly</span>
+                    <span>Bulanan</span>
                   </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  <label className="flex cursor-pointer items-center space-x-2">
                     <input
                       type="radio"
                       name="periodType"
@@ -186,9 +204,9 @@ const Header = () => {
                       onChange={() => handleTypeChange("quarterly")}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                     />
-                    <span>Quarterly</span>
+                    <span>Kuartal</span>
                   </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  <label className="flex cursor-pointer items-center space-x-2">
                     <input
                       type="radio"
                       name="periodType"
@@ -198,15 +216,23 @@ const Header = () => {
                     />
                     <span>Semester</span>
                   </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  {/* <<< PERUBAHAN: Tambahkan disabled dan style pada radio button Yearly >>> */}
+                  <label
+                    className={`flex items-center space-x-2 ${
+                      !isYearlyAvailable
+                        ? "cursor-not-allowed text-gray-400"
+                        : "cursor-pointer"
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="periodType"
                       checked={period.type === "yearly"}
                       onChange={() => handleTypeChange("yearly")}
+                      disabled={!isYearlyAvailable}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500"
                     />
-                    <span>Yearly</span>
+                    <span>Tahunan</span>
                   </label>
                 </div>
 
@@ -221,7 +247,6 @@ const Header = () => {
                       className="w-full rounded-md border p-2 text-sm"
                     >
                       {months.map((m) => {
-                        // Cek apakah bulan ini tersedia untuk tahun yang dipilih
                         const isAvailable = availablePeriods.some(
                           (p) => p.year === period.year && p.month === m.value
                         );
@@ -230,6 +255,7 @@ const Header = () => {
                             key={m.value}
                             value={m.value}
                             disabled={!isAvailable}
+                            className={!isAvailable ? "text-gray-400" : ""}
                           >
                             {m.name}
                           </option>
@@ -237,6 +263,7 @@ const Header = () => {
                       })}
                     </select>
                   )}
+                  {/* <<< PERUBAHAN: Tambahkan disabled pada dropdown Kuartal >>> */}
                   {period.type === "quarterly" && (
                     <select
                       value={period.value}
@@ -246,12 +273,28 @@ const Header = () => {
                       className="w-full rounded-md border p-2 text-sm"
                     >
                       {quarters.map((q) => (
-                        <option key={q.value} value={q.value}>
+                        <option
+                          key={q.value}
+                          value={q.value}
+                          disabled={
+                            !quarterAvailability[
+                              q.value as keyof typeof quarterAvailability
+                            ]
+                          }
+                          className={
+                            !quarterAvailability[
+                              q.value as keyof typeof quarterAvailability
+                            ]
+                              ? "text-gray-400"
+                              : ""
+                          }
+                        >
                           {q.name}
                         </option>
                       ))}
                     </select>
                   )}
+                  {/* <<< PERUBAHAN: Tambahkan disabled pada dropdown Semester >>> */}
                   {period.type === "semesterly" && (
                     <select
                       value={period.value}
@@ -261,7 +304,22 @@ const Header = () => {
                       className="w-full rounded-md border p-2 text-sm"
                     >
                       {semesters.map((s) => (
-                        <option key={s.value} value={s.value}>
+                        <option
+                          key={s.value}
+                          value={s.value}
+                          disabled={
+                            !semesterAvailability[
+                              s.value as keyof typeof semesterAvailability
+                            ]
+                          }
+                          className={
+                            !semesterAvailability[
+                              s.value as keyof typeof semesterAvailability
+                            ]
+                              ? "text-gray-400"
+                              : ""
+                          }
+                        >
                           {s.name}
                         </option>
                       ))}
@@ -276,4 +334,5 @@ const Header = () => {
     </header>
   );
 };
+
 export default Header;
