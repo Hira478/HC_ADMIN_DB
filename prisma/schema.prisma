@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,114 +9,121 @@ datasource db {
 
 // TABEL DIMENSI: Menyimpan daftar perusahaan
 model Company {
-  id    String @id @default(cuid())
+  id    Int    @id @default(autoincrement()) // <-- Diubah ke Int & autoincrement
   name  String @unique
   type  String // "Holding" atau "Anper"
 
-  // Relasi ke semua tabel metrik (fakta)
-  headcounts            Headcount[]
-  employeeStatusStats   EmployeeStatusStat[]
-  educationStats        EducationStat[]
-  levelStats            LevelStat[]
-  ageStats              AgeStat[]
-  lengthOfServiceStats  LengthOfServiceStat[]
-  // Tambahkan relasi untuk metrik produktivitas jika perlu
+  headcounts           Headcount[]
+  employeeStatusStats  EmployeeStatusStat[]
+  educationStats       EducationStat[]
+  levelStats           LevelStat[]
+  ageStats             AgeStat[]
+  lengthOfServiceStats LengthOfServiceStat[]
+  productivityStats    ProductivityStat[]
 }
-
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
 
-// Untuk kartu "Total Headcount"
 model Headcount {
-  id          String   @id @default(cuid())
-  month       Int      // 1 untuk Januari, 2 untuk Februari, dst.
+  id          Int     @id @default(autoincrement()) // <-- Diubah
+  month       Int
   year        Int
   maleCount   Int
   femaleCount Int
   totalCount  Int
 
-  companyId String
+  companyId Int     // <-- Diubah ke Int
   company   Company @relation(fields: [companyId], references: [id])
 
-  @@unique([year, month, companyId]) // Data unik per periode per perusahaan
+  @@unique([year, month, companyId])
 }
 
-// Untuk chart "Employee Status"
 model EmployeeStatusStat {
-  id             String   @id @default(cuid())
+  id             Int     @id @default(autoincrement()) // <-- Diubah
   month          Int
   year           Int
   permanentCount Int
   contractCount  Int
 
-  companyId String
+  companyId Int     // <-- Diubah ke Int
   company   Company @relation(fields: [companyId], references: [id])
-  
+
   @@unique([year, month, companyId])
 }
 
-// Untuk chart "Education"
 model EducationStat {
-  id        String   @id @default(cuid())
-  month     Int
-  year      Int
-  d3Count   Int      @map("d3_count")
-  s1Count   Int      @map("s1_count")
-  s2Count   Int      @map("s2_count")
-  s3Count   Int      @map("s3_count")
-
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id])
-
-  @@unique([year, month, companyId])
-}
-
-// Untuk chart "Level"
-model LevelStat {
-  id          String   @id @default(cuid())
+  id          Int     @id @default(autoincrement()) // <-- Diubah
   month       Int
   year        Int
-  bod1Count   Int      @map("bod1_count")
-  bod2Count   Int      @map("bod2_count")
-  bod3Count   Int      @map("bod3_count")
-  bod4Count   Int      @map("bod4_count")
+  smaSmkCount Int     @map("sma_smk_count") @default(0)
+  d3Count     Int     @map("d3_count")
+  s1Count     Int     @map("s1_count")
+  s2Count     Int     @map("s2_count")
+  s3Count     Int     @map("s3_count")
 
-  companyId String
+  companyId Int     // <-- Diubah ke Int
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])
 }
 
-// Untuk chart "Age"
+model LevelStat {
+  id        Int     @id @default(autoincrement()) // <-- Diubah
+  month     Int
+  year      Int
+  bod1Count Int     @map("bod1_count")
+  bod2Count Int     @map("bod2_count")
+  bod3Count Int     @map("bod3_count")
+  bod4Count Int     @map("bod4_count")
+
+  companyId Int     // <-- Diubah ke Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId])
+}
+
 model AgeStat {
-  id             String   @id @default(cuid())
+  id             Int     @id @default(autoincrement()) // <-- Diubah
   month          Int
   year           Int
-  under25Count   Int      @map("under_25_count")
-  age26to40Count Int      @map("age_26_40_count")
-  age41to50Count Int      @map("age_41_50_count")
-  over50Count    Int      @map("over_50_count")
+  under25Count   Int     @map("under_25_count")
+  age26to40Count Int     @map("age_26_40_count")
+  age41to50Count Int     @map("age_41_50_count")
+  over50Count    Int     @map("over_50_count")
 
-  companyId String
+  companyId Int     // <-- Diubah ke Int
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])
 }
 
-// Untuk chart "Length of Service"
 model LengthOfServiceStat {
-  id              String   @id @default(cuid())
-  month           Int
-  year            Int
-  los_0_5_Count   Int      @map("los_0_5_count")   // los = length of service
-  los_6_10_Count  Int      @map("los_6_10_count")
-  los_11_15_Count Int      @map("los_11_15_count")
-  los_16_20_Count Int      @map("los_16_20_count")
-  los_21_25_Count Int      @map("los_21_25_count")
-  los_25_30_Count Int      @map("los_25_30_count")
-  los_over_30_Count Int    @map("los_over_30_count")
+  id                Int     @id @default(autoincrement()) // <-- Diubah
+  month             Int
+  year              Int
+  los_0_5_Count     Int     @map("los_0_5_count")
+  los_6_10_Count    Int     @map("los_6_10_count")
+  los_11_15_Count   Int     @map("los_11_15_count")
+  los_16_20_Count   Int     @map("los_16_20_count")
+  los_21_25_Count   Int     @map("los_21_25_count")
+  los_25_30_Count   Int     @map("los_25_30_count")
+  los_over_30_Count Int     @map("los_over_30_count")
 
-  companyId String
+  companyId Int     // <-- Diubah ke Int
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId])
+}
+
+model ProductivityStat {
+  id        Int     @id @default(autoincrement()) // <-- Diubah
+  month     Int
+  year      Int
+  revenue   Float
+  netProfit Float
+  totalEmployeeCost Float @default(0)
+
+  companyId Int     // <-- Diubah ke Int
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])

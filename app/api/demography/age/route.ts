@@ -23,14 +23,15 @@ const sumAgeStats = (stats: AgeStat[]) => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyId = searchParams.get("companyId");
+  const companyIdStr = searchParams.get("companyId");
+  const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
   const type = searchParams.get("type") || "monthly";
   const year = parseInt(searchParams.get("year") || "2025");
   const value = parseInt(searchParams.get("value") || "8");
 
-  if (!companyId) {
+  if (!companyId || isNaN(companyId)) {
     return NextResponse.json(
-      { error: "Company ID diperlukan." },
+      { error: "Company ID diperlukan dan harus berupa angka." },
       { status: 400 }
     );
   }
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const ageDataFromDb = await prisma.ageStat.findMany({
+      // Gunakan companyId (angka) di dalam kueri
       where: { companyId, year, month: { in: monthsToFetch } },
     });
 

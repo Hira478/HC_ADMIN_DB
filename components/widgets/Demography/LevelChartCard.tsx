@@ -14,13 +14,16 @@ const LevelChartCard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedCompany || !period) return;
+    if (selectedCompany === null || !period) {
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams({
-          companyId: selectedCompany,
+          companyId: String(selectedCompany),
           type: period.type,
           year: String(period.year),
           value: String(period.value),
@@ -46,15 +49,21 @@ const LevelChartCard = () => {
   }, [selectedCompany, period]);
 
   const option = {
-    grid: { top: "15%", bottom: "15%", left: "10%", right: "5%" },
+    grid: { top: "20%", bottom: "20%", left: "10%", right: "5%" },
     xAxis: {
       type: "category",
       data: chartData?.labels || [],
       axisTick: { show: false },
+      axisLabel: {
+        fontSize: 10,
+        interval: 0,
+        color: "#6b7280",
+        rotate: 30,
+      },
     },
     yAxis: {
       type: "value",
-      show: false,
+      show: true,
       splitLine: {
         show: true,
         lineStyle: { color: "#e0e6f1", type: "dashed" },
@@ -66,7 +75,12 @@ const LevelChartCard = () => {
         type: "bar",
         barWidth: "50%",
         color: "#4A5568",
-        label: { show: true, position: "top", color: "#1f2937" },
+        label: {
+          show: true,
+          position: "top",
+          fontSize: 10,
+          color: "#1f2937",
+        },
       },
     ],
   };
@@ -81,8 +95,8 @@ const LevelChartCard = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full">
-      <h3 className="font-bold text-lg text-gray-800">Level</h3>
-      <ReactECharts option={option} style={{ height: 200 }} />
+      <h3 className="font-bold text-lg text-gray-800 mb-4">Level</h3>
+      <ReactECharts option={option} style={{ height: "calc(100% - 40px)" }} />
     </div>
   );
 };

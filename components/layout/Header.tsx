@@ -6,7 +6,7 @@ import React, { useState, useRef, useEffect } from "react";
 
 // Custom hook to detect clicks outside a component (unchanged)
 const useOnClickOutside = (
-  ref: React.RefObject<HTMLDivElement>,
+  ref: React.RefObject<HTMLDivElement | null>,
   handler: () => void
 ) => {
   useEffect(() => {
@@ -26,6 +26,7 @@ const useOnClickOutside = (
 const Header = () => {
   const {
     companies,
+    availablePeriods,
     selectedCompany,
     setSelectedCompany,
     period,
@@ -53,10 +54,11 @@ const Header = () => {
   };
 
   // Options for the dropdowns in English
-  const years = [2025, 2024, 2023];
+  const uniqueYears = Array.from(new Set(availablePeriods.map((p) => p.year)));
+
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
-    name: new Date(0, i).toLocaleString("en-US", { month: "long" }),
+    name: new Date(0, i).toLocaleString("id-ID", { month: "long" }),
   }));
   const quarters = [
     { value: 1, name: "Q1" },
@@ -124,17 +126,16 @@ const Header = () => {
             <div className="space-y-4">
               {/* Company & Year Filters */}
               <div>
-                <label className="text-xs font-semibold text-gray-600">
-                  Company
-                </label>
                 <select
-                  value={selectedCompany}
-                  onChange={(e) => setSelectedCompany(e.target.value)}
+                  // Pastikan value adalah string, atau kosong jika null
+                  value={selectedCompany ?? ""}
+                  // Konversi kembali ke Angka saat ada perubahan
+                  onChange={(e) => setSelectedCompany(Number(e.target.value))}
                   disabled={loading}
-                  className="mt-1 w-full rounded-md border bg-white p-2 text-sm"
+                  className="rounded-md border bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {loading ? (
-                    <option>Loading...</option>
+                    <option>Memuat...</option>
                   ) : (
                     companies.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -146,14 +147,14 @@ const Header = () => {
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-600">
-                  Year
+                  Tahun
                 </label>
                 <select
                   value={period.year}
                   onChange={(e) => handleYearChange(Number(e.target.value))}
                   className="mt-1 w-full rounded-md border bg-white p-2 text-sm"
                 >
-                  {years.map((y) => (
+                  {uniqueYears.map((y) => (
                     <option key={y} value={y}>
                       {y}
                     </option>
@@ -219,11 +220,21 @@ const Header = () => {
                       }
                       className="w-full rounded-md border p-2 text-sm"
                     >
-                      {months.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.name}
-                        </option>
-                      ))}
+                      {months.map((m) => {
+                        // Cek apakah bulan ini tersedia untuk tahun yang dipilih
+                        const isAvailable = availablePeriods.some(
+                          (p) => p.year === period.year && p.month === m.value
+                        );
+                        return (
+                          <option
+                            key={m.value}
+                            value={m.value}
+                            disabled={!isAvailable}
+                          >
+                            {m.name}
+                          </option>
+                        );
+                      })}
                     </select>
                   )}
                   {period.type === "quarterly" && (

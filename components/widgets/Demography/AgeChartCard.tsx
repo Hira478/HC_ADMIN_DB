@@ -3,6 +3,12 @@ import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
 
+interface EChartsFormatterParams {
+  name: string;
+  value: number;
+  // Anda bisa tambahkan properti lain jika dibutuhkan, misal: seriesName
+}
+
 interface ChartData {
   labels: string[];
   values: number[];
@@ -14,7 +20,7 @@ const AgeChartCard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedCompany || !period.year) {
+    if (selectedCompany === null || !period) {
       setLoading(false);
       return;
     }
@@ -23,7 +29,7 @@ const AgeChartCard = () => {
       setLoading(true);
       try {
         const params = new URLSearchParams({
-          companyId: selectedCompany,
+          companyId: String(selectedCompany),
           type: period.type,
           year: String(period.year),
           value: String(period.value),
@@ -32,17 +38,10 @@ const AgeChartCard = () => {
         const response = await fetch(
           `/api/demography/age?${params.toString()}`
         );
-
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
         const data = await response.json();
-
-        // --- DEBUGGING POINT 1: Lihat data mentah dari API ---
-        console.log("Data diterima dari API /age:", data);
-        // ----------------------------------------------------
-
         setChartData(data);
       } catch (error) {
         console.error("Fetch error for Age Chart:", error);
@@ -55,51 +54,114 @@ const AgeChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
-  // --- DEBUGGING POINT 2: Lihat isi state `chartData` sebelum render ---
-  console.log("Dirender dengan chartData:", chartData);
-  // -----------------------------------------------------------------
-
   const option = {
-    grid: { left: "20%", right: "10%", top: "10%", bottom: "10%" },
+    grid: {
+      left: "5%", // Further reduced from 8%
+      right: "5%", // Further reduced from 3%
+      top: "10%", // Reduced from 12%
+      bottom: "10%", // Reduced from 12%
+      containLabel: true,
+    },
     xAxis: {
       type: "value",
-      show: false,
+      axisLabel: {
+        fontSize: 10,
+        margin: 1, // Reduced from 2
+      },
+      axisLine: {
+        show: true, // Pastikan ini true untuk kontrol penuh
+        lineStyle: {
+          width: 1,
+        },
+      },
       splitLine: {
         show: true,
-        lineStyle: { color: "#e0e6f1", type: "dashed" },
+        lineStyle: {
+          color: "#e0e6f1",
+          type: "dashed",
+        },
       },
+      boundaryGap: ["0%", "2%"],
     },
     yAxis: {
       type: "category",
       data: chartData?.labels || [],
-      axisLine: { show: false },
-      axisTick: { show: false },
+      axisLabel: {
+        fontSize: 11, // Slightly reduced from 12
+        margin: 1, // Reduced from 2
+      },
+      axisLine: { show: true },
+      axisTick: { show: true },
     },
     series: [
       {
         data: (chartData?.values || []).map((value) => ({
           value,
-          itemStyle: { color: "#C53030" },
+          itemStyle: {
+            color: "#C53030",
+            borderRadius: [0, 3, 3, 0], // Rounded right corners only
+          },
         })),
         type: "bar",
-        barWidth: "60%",
-        label: { show: true, position: "right", color: "#1f2937" },
+        barWidth: "45%", // Reduced from 50%
+        label: {
+          show: true,
+          position: "right",
+          fontSize: 10,
+          color: "#1f2937",
+          fformatter: (params: EChartsFormatterParams) =>
+            params.value > 5 ? params.value : "",
+        },
+        emphasis: {
+          itemStyle: {
+            shadowColor: "rgba(0, 0, 0, 0.5)",
+            shadowBlur: 5,
+          },
+        },
       },
     ],
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "shadow",
+      },
+      formatter: (params: EChartsFormatterParams[]) => {
+        const data = params[0];
+        return `<strong>${data.name}</strong><br/>Count: ${data.value}`;
+      },
+    },
   };
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
+      <div className="bg-white p-4 rounded-lg shadow-md h-full flex items-center justify-center">
         Memuat...
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full relative">
-      <h3 className="font-bold text-lg text-gray-800">Age</h3>
-      <ReactECharts option={option} style={{ height: 470 }} />
+    <div className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
+      <div className="flex justify-between items-center mb-1">
+        {" "}
+        {/* Changed from items-start */}
+        <h3 className="font-bold text-lg text-gray-800">Age</h3>
+        <div className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          Avg: 27.4 years
+        </div>
+      </div>
+      <div className="flex-1 -ml-1.5">
+        {" "}
+        {/* Increased negative margin */}
+        <ReactECharts
+          option={option}
+          style={{
+            height: "100%",
+            width: "100%", // Increased from 8px
+            minHeight: "250px",
+          }}
+        />
+      </div>
     </div>
   );
 };

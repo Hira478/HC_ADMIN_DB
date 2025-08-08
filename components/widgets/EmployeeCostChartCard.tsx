@@ -85,7 +85,7 @@ const EmployeeCostChartCard = () => {
           <Settings className="h-5 w-5" />
         </button>
       </div>
-      <ReactECharts option={option} style={{ height: 350 }} />
+      <ReactECharts option={option} style={{ height: 200 }} />
     </div>
   );
 };

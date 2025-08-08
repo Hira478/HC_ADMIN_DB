@@ -8,22 +8,23 @@ import React, {
   ReactNode,
 } from "react";
 
-// Tipe data baru untuk filter periode
 export interface Period {
   type: "monthly" | "quarterly" | "semesterly" | "yearly";
   year: number;
-  value: number; // bulan (1-12), quarter (1-4), semester (1-2), atau 1 untuk tahunan
+  value: number;
 }
 
+// Ubah tipe 'id' menjadi 'number'
 interface Company {
-  id: string;
+  id: number;
   name: string;
 }
 
 interface FilterContextType {
   companies: Company[];
-  selectedCompany: string;
-  setSelectedCompany: (companyId: string) => void;
+  availablePeriods: { year: number; month: number }[];
+  selectedCompany: number | null; // <-- Sekarang number atau null
+  setSelectedCompany: (companyId: number) => void; // <-- Menerima number
   period: Period;
   setPeriod: (period: Period) => void;
   loading: boolean;
@@ -33,28 +34,61 @@ const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 export const FilterProvider = ({ children }: { children: ReactNode }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string>("");
+  const [availablePeriods, setAvailablePeriods] = useState<
+    { year: number; month: number }[]
+  >([]);
+  // State awal 'null' untuk menandakan belum ada yang dipilih
+  const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // State baru yang terpadu untuk periode
   const [period, setPeriod] = useState<Period>({
     type: "monthly",
-    year: 2025,
-    value: 8, // Default: Agustus 2025
+    year: new Date("2025-08-06").getFullYear(),
+    value: new Date("2025-08-06").getMonth() + 1,
   });
 
   useEffect(() => {
-    fetch("/api/companies")
-      .then((res) => res.json())
-      .then((data: Company[]) => {
-        setCompanies(data);
-        if (data.length > 0) setSelectedCompany(data[0].id);
+    Promise.all([
+      fetch("/api/companies").then((res) => res.json()),
+      fetch("/api/filters/available-periods").then((res) => res.json()),
+    ])
+      .then(([companyData, periodData]) => {
+        setCompanies(companyData);
+        setAvailablePeriods(periodData);
+
+        // --- PERUBAHAN UTAMA DI SINI ---
+        const defaultCompanyId = 7; // <-- Tentukan ID default yang Anda inginkan
+
+        // Cari apakah perusahaan dengan ID default ada di dalam daftar
+        const defaultCompany = companyData.find(
+          (c: Company) => c.id === defaultCompanyId
+        );
+
+        if (defaultCompany) {
+          // Jika ditemukan, set sebagai default
+          setSelectedCompany(defaultCompany.id);
+        } else if (companyData.length > 0) {
+          // Jika tidak ditemukan, fallback ke perusahaan pertama (agar tidak error)
+          setSelectedCompany(companyData[0].id);
+        }
+        // ---------------------------------
+        if (periodData.length > 0) {
+          setPeriod((prev) => ({
+            ...prev,
+            year: periodData[0].year,
+            value: periodData[0].month,
+          }));
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch initial filter data:", error);
         setLoading(false);
       });
   }, []);
 
   const value = {
     companies,
+    availablePeriods,
     selectedCompany,
     setSelectedCompany,
     period,

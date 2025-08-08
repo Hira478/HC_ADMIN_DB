@@ -5,7 +5,7 @@ interface StatCardProps {
   title: string;
   value: string;
   change: string;
-  comparison: string;
+  comparison?: string;
   rkdapInfo: string;
   icon: React.ReactNode;
   variant?: "dark" | "light";

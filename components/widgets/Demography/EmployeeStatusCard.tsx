@@ -6,6 +6,7 @@ import { useFilters } from "@/contexts/FilterContext";
 interface StatusData {
   name: string;
   value: number;
+  itemStyle?: { color: string };
 }
 
 const EmployeeStatusCard = () => {
@@ -14,18 +15,19 @@ const EmployeeStatusCard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedCompany || !period) return;
-
+    if (selectedCompany === null || !period) {
+      setLoading(false);
+      return;
+    }
     const fetchData = async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams({
-          companyId: selectedCompany,
+          companyId: String(selectedCompany),
           type: period.type,
           year: String(period.year),
           value: String(period.value),
         });
-
         const response = await fetch(
           `/api/demography/status?${params.toString()}`
         );
@@ -41,33 +43,53 @@ const EmployeeStatusCard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [selectedCompany, period]);
 
-  const totalEmployees = chartData.reduce((sum, item) => sum + item.value, 0);
-
   const option = {
-    tooltip: { trigger: "item" },
+    tooltip: {
+      trigger: "item",
+      formatter: "{a} <br/>{b}: {c} ({d}%)",
+    },
+    legend: { show: false },
     series: [
       {
         name: "Employee Status",
         type: "pie",
-        radius: ["60%", "80%"],
+        radius: ["30%", "85%"],
+        center: ["50%", "55%"],
         avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 11,
+          borderColor: "#fff",
+          borderWidth: 7,
+        },
         label: {
           show: true,
-          position: "center",
-          formatter: () => {
-            if (loading || totalEmployees === 0) return "";
-            return `${totalEmployees}`;
-          },
-          fontSize: 24,
+          position: "inside",
+          formatter: "{b}\n{c}", // tampilkan jumlah
+          fontSize: 14,
+          color: "#fff",
           fontWeight: "bold",
-          color: "#1f2937",
         },
-        emphasis: { label: { show: true } },
-        data: chartData,
+        labelLine: {
+          show: false,
+        },
+        emphasis: {
+          scale: true,
+          scaleSize: 5,
+          label: {
+            show: true,
+            fontSize: 18,
+            fontWeight: "bold",
+          },
+        },
+        data: chartData.map((item) => ({
+          ...item,
+          itemStyle: {
+            color: item.name === "Permanent" ? "#C53030" : "#4A5568",
+          },
+        })),
       },
     ],
   };
@@ -82,26 +104,38 @@ const EmployeeStatusCard = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
-      <h3 className="font-bold text-lg text-gray-800">Employee Status</h3>
-      <div className="flex space-x-4 text-xs text-gray-600 my-2">
-        <div className="flex items-center">
-          <span className="h-2 w-2 rounded-full bg-red-700 mr-2"></span>
-          Permanent
+      <h3 className="font-bold text-xl text-gray-800 mb-2">Employee Status</h3>
+
+      <div className="flex justify-center gap-8 mt-4">
+        <div className="flex items-center translate-y-[60px]">
+          <span className="h-4 w-4 rounded-full bg-red-700 mr-2"></span>
+          <span className="text-base font-medium">Permanent</span>
         </div>
-        <div className="flex items-center">
-          <span className="h-2 w-2 rounded-full bg-gray-700 mr-2"></span>
-          Contract
+        <div className="flex items-center translate-y-[60px]">
+          <span className="h-4 w-4 rounded-full bg-gray-700 mr-2"></span>
+          <span className="text-base font-medium">Contract</span>
         </div>
       </div>
-      <div className="flex-grow min-h-0">
+
+      <div className="flex-1 flex items-center justify-center -mt-2">
         <ReactECharts
           option={option}
-          style={{ height: "100%", width: "100%" }}
+          style={{
+            height: "320px",
+            width: "100%",
+          }}
         />
       </div>
-      <div className="text-center text-sm text-gray-500 mt-auto pt-2">
-        <p>Permanent : +2% | Year on Year</p>
-        <p>Contract : +2% | Year on Year</p>
+
+      <div className="text-base text-gray-600 -mt-3 text-center space-y-1 transform -translate-y-1">
+        {" "}
+        {/* Added -translate-y-1 */}
+        <p className="font-medium">
+          Permanent: <span className="text-green-600">+2%</span> | Year on Year
+        </p>
+        <p className="font-medium">
+          Contract: <span className="text-green-600">+2%</span> | Year on Year
+        </p>
       </div>
     </div>
   );

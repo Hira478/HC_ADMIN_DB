@@ -17,6 +17,7 @@ export async function GET() {
     });
     return NextResponse.json(companies);
   } catch (error) {
+    console.error("API Error in /companies:", error);
     return NextResponse.json(
       { error: "Gagal mengambil daftar perusahaan." },
       { status: 500 }
