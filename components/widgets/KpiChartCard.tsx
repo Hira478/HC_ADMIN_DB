@@ -29,8 +29,12 @@ const KpiChartCard = () => {
       try {
         const response = await fetch(`/api/charts/kpi?${params.toString()}`);
         if (!response.ok) throw new Error("Data not found");
-        const data: KpiData = await response.json();
-        setKpiData(data);
+
+        // Terima respons sebagai array
+        const dataArray: KpiData[] = await response.json();
+
+        // Jika array tidak kosong, ambil elemen pertama. Jika kosong, set ke null.
+        setKpiData(dataArray[0] || null);
       } catch (_error) {
         // Fix: unused variable warning
         setKpiData(null);
