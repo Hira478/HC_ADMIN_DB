@@ -31,19 +31,19 @@ const formatCurrency = (value: number, isPerEmployee = false) => {
     return `${sign}Rp ${(absValue / 1e9).toLocaleString("id-ID", {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
-    })} T`;
+    })}`;
 
   if (absValue >= 1e6 && !isPerEmployee)
     return `${sign}Rp ${(absValue / 1e6).toLocaleString("id-ID", {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
-    })} M`;
+    })}`;
 
   if (absValue >= 1e3 && !isPerEmployee)
     return `${sign}Rp ${(absValue / 1e3).toLocaleString("id-ID", {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
-    })} Jt`;
+    })}`;
 
   // Kalau per employee, pakai 2 desimal, tidak disingkat
   if (isPerEmployee) {
@@ -117,10 +117,24 @@ export async function GET(request: NextRequest) {
 
     const totalProductivity = sumProductivity(productivityData);
     const totalHeadcount = sumHeadcount(headcountData);
-    const relevantHeadcount =
-      type === "monthly"
-        ? totalHeadcount.totalCount
-        : totalHeadcount.totalCount / headcountData.length;
+    let relevantHeadcount = 0;
+
+    if (type === "monthly") {
+      relevantHeadcount = totalHeadcount.totalCount;
+    } else if (["quarterly", "semesterly", "yearly"].includes(type)) {
+      const latestMonth = Math.max(...monthsToFetch);
+      const latestHeadcount = headcountData.find(
+        (h) => h.month === latestMonth
+      );
+      if (latestHeadcount) {
+        relevantHeadcount = latestHeadcount.totalCount;
+      } else {
+        return NextResponse.json(
+          { error: `Data headcount bulan ${latestMonth} tidak ditemukan.` },
+          { status: 404 }
+        );
+      }
+    }
 
     const revenuePerEmployee =
       relevantHeadcount > 0 ? totalProductivity.revenue / relevantHeadcount : 0;

@@ -41,7 +41,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const kpiData = await prisma.kpiStat.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
+      where: {
+        companyId,
+        year,
+        month: { in: monthsToFetch },
+      },
+      orderBy: { month: "asc" }, // biar urut bulan
     });
 
     if (kpiData.length === 0) {
@@ -51,26 +56,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Hitung rata-rata
-    const totalKorporasi = kpiData.reduce(
-      (sum, item) => sum + item.kpiKorporasi,
-      0
-    );
-    const totalHc = kpiData.reduce(
-      (sum, item) => sum + item.kpiHcTransformation,
-      0
-    );
-
-    const response = {
-      kpiKorporasi: totalKorporasi / kpiData.length,
-      kpiHcTransformation: totalHc / kpiData.length,
-    };
+    // Kirim data KPI per bulan sesuai filter
+    const response = kpiData.map((item) => ({
+      month: item.month,
+      kpiKorporasi: item.kpiKorporasi,
+      kpiHcTransformation: item.kpiHcTransformation,
+    }));
 
     return NextResponse.json(response);
-  } catch (_error) {
-    // Changed 'error' to '_error' to indicate it's unused
-    // You might want to log the actual error here for debugging purposes in the future
-    // console.error(_error);
+  } catch (error) {
     return NextResponse.json(
       { error: "Gagal mengambil data KPI." },
       { status: 500 }
