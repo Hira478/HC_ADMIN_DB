@@ -3,23 +3,8 @@ import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-const sumAgeStats = (stats: AgeStat[]) => {
-  return stats.reduce(
-    (accumulator, currentStat) => {
-      accumulator.under25Count += currentStat.under25Count;
-      accumulator.age26to40Count += currentStat.age26to40Count;
-      accumulator.age41to50Count += currentStat.age41to50Count;
-      accumulator.over50Count += currentStat.over50Count;
-      return accumulator;
-    },
-    {
-      under25Count: 0,
-      age26to40Count: 0,
-      age41to50Count: 0,
-      over50Count: 0,
-    }
-  );
-};
+// Fungsi sumAgeStats tidak lagi diperlukan dan bisa dihapus
+// const sumAgeStats = (stats: AgeStat[]) => { ... };
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -54,32 +39,56 @@ export async function GET(request: NextRequest) {
     ];
     monthsToFetch = semesterMonths[value - 1] || [];
   } else if (type === "yearly") {
-    // --- TAMBAHKAN BLOK INI ---
-    monthsToFetch = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    // -------------------------
+    monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
   }
 
   try {
     const ageDataFromDb = await prisma.ageStat.findMany({
-      // Gunakan companyId (angka) di dalam kueri
       where: { companyId, year, month: { in: monthsToFetch } },
+      orderBy: {
+        month: "asc", // Urutkan untuk memastikan data terakhir adalah yang benar
+      },
     });
 
     if (ageDataFromDb.length === 0) {
+      // Jika tidak ada data sama sekali, kembalikan nilai nol
       return NextResponse.json({
         labels: [">50", "41-50", "26-40", "<25"],
         values: [0, 0, 0, 0],
       });
     }
 
-    const aggregatedData = sumAgeStats(ageDataFromDb);
+    // <<< MULAI PERUBAHAN LOGIKA DI SINI >>>
+    let dataForPeriod: AgeStat | undefined;
+
+    if (type === "monthly") {
+      // Untuk bulanan, langsung ambil data pertama (dan satu-satunya)
+      dataForPeriod = ageDataFromDb[0];
+    } else {
+      // Untuk kuartal/semester/tahunan, cari data bulan terakhir
+      const latestMonth = Math.max(...monthsToFetch);
+      dataForPeriod = ageDataFromDb.find((stat) => stat.month === latestMonth);
+    }
+
+    // Jika data untuk bulan terakhir tidak ditemukan (misal: data Maret belum diinput untuk Q1)
+    if (!dataForPeriod) {
+      return NextResponse.json({
+        labels: [">50", "41-50", "26-40", "<25"],
+        values: [0, 0, 0, 0],
+        message: `Data demografi untuk bulan terakhir (${Math.max(
+          ...monthsToFetch
+        )}) tidak ditemukan.`,
+      });
+    }
+    // <<< AKHIR PERUBAHAN LOGIKA >>>
 
     const labels = [">50", "41-50", "26-40", "<25"];
+    // <<< GUNAKAN 'dataForPeriod' BUKAN 'aggregatedData' >>>
     const values = [
-      aggregatedData.over50Count,
-      aggregatedData.age41to50Count,
-      aggregatedData.age26to40Count,
-      aggregatedData.under25Count,
+      dataForPeriod.over50Count,
+      dataForPeriod.age41to50Count,
+      dataForPeriod.age26to40Count,
+      dataForPeriod.under25Count,
     ];
 
     return NextResponse.json({ labels, values });

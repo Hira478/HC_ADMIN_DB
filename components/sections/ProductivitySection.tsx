@@ -43,6 +43,7 @@ const ProductivitySection = ({
         <StatCard
           title="Revenue"
           value={data.revenue.value}
+          valueUnit="(dalam Juta)"
           change="+10% | Year on Year"
           rkdapInfo=""
           icon={<DollarSign size={24} />}
@@ -51,6 +52,7 @@ const ProductivitySection = ({
         <StatCard
           title="Net Profit"
           value={data.netProfit.value}
+          valueUnit="(dalam Juta)"
           change="+2% | Year on Year"
           rkdapInfo=""
           icon={<DollarSign size={24} />}
@@ -59,6 +61,7 @@ const ProductivitySection = ({
         <StatCard
           title="Revenue/Employee"
           value={data.revenuePerEmployee.value}
+          valueUnit="(dalam Juta)"
           change="+2% | Year on Year"
           rkdapInfo=""
           icon={<User size={24} />}
@@ -67,6 +70,7 @@ const ProductivitySection = ({
         <StatCard
           title="Net Profit/Employee"
           value={data.netProfitPerEmployee.value}
+          valueUnit="(dalam Juta)"
           change="+1% | Year on Year"
           rkdapInfo=""
           icon={<TrendingUp size={24} />}
