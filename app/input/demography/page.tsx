@@ -81,9 +81,17 @@ const InputDemographyPage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    // Jika tipe inputnya 'number' ATAU namanya 'companyId', konversi ke Angka.
+    // Jika tidak, biarkan sebagai string.
+    const processedValue =
+      e.target.type === "number" || name === "companyId"
+        ? Number(value)
+        : value;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: e.target.type === "number" ? Number(value) : value,
+      [name]: processedValue,
     }));
   };
 
