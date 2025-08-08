@@ -93,8 +93,8 @@ const ProductivityChartCard = () => {
       type: "value",
       axisLabel: {
         formatter: (value: number) => {
-          if (value >= 1e6) return `${value / 1e6} Jt`;
-          if (value >= 1e3) return `${value / 1e3} Ribu`;
+          if (value >= 1e6) return `${value / 1e6}`;
+          if (value >= 1e3) return `${value / 1e3}`;
           return value;
         },
       },
