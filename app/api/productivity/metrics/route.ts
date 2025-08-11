@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const companyIdStr = searchParams.get("companyId");
   const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
-  const type = searchParams.get("type") || "monthly";
+  // Perubahan: Hilangkan 'type' karena sekarang hanya bulanan
   const year = parseInt(searchParams.get("year") || "2025");
   const value = parseInt(searchParams.get("value") || "6");
 
@@ -58,63 +58,36 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  let monthsToFetch: number[] = [];
-  if (type === "monthly") monthsToFetch = [value];
-  else if (type === "quarterly")
-    monthsToFetch =
-      [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-        [10, 11, 12],
-      ][value - 1] || [];
-  else if (type === "semesterly")
-    monthsToFetch =
-      [
-        [1, 2, 3, 4, 5, 6],
-        [7, 8, 9, 10, 11, 12],
-      ][value - 1] || [];
-  else if (type === "yearly")
-    monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
+  // Logika baru untuk mengambil bulan secara kumulatif
+  const monthsToFetch: number[] = Array.from(
+    { length: value },
+    (_, i) => i + 1
+  );
 
   try {
     const productivityData = await prisma.productivityStat.findMany({
       where: { companyId, year, month: { in: monthsToFetch } },
     });
-    const headcountData = await prisma.headcount.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
+
+    // Perubahan: Ambil headcount untuk bulan yang dipilih saja ('value')
+    const headcountData = await prisma.headcount.findFirst({
+      where: { companyId, year, month: value },
     });
 
-    if (productivityData.length === 0 || headcountData.length === 0) {
+    if (productivityData.length === 0 || !headcountData) {
       return NextResponse.json(
         { error: "Data tidak lengkap untuk periode ini." },
         { status: 404 }
       );
     }
 
+    // Perubahan: Sum productivity data secara kumulatif
     const totalProductivity = sumProductivity(productivityData);
 
-    const totalHeadcount = sumHeadcount(headcountData);
-    let relevantHeadcount = 0;
+    // Gunakan headcount dari bulan yang dipilih
+    const relevantHeadcount = headcountData.totalCount;
 
-    if (type === "monthly") {
-      relevantHeadcount = totalHeadcount.totalCount;
-    } else if (["quarterly", "semesterly", "yearly"].includes(type)) {
-      const latestMonth = Math.max(...monthsToFetch);
-      const latestHeadcount = headcountData.find(
-        (h) => h.month === latestMonth
-      );
-      if (latestHeadcount) {
-        relevantHeadcount = latestHeadcount.totalCount;
-      } else {
-        return NextResponse.json(
-          { error: `Data headcount bulan ${latestMonth} tidak ditemukan.` },
-          { status: 404 }
-        );
-      }
-    }
-
-    // Perhitungan metrik per karyawan sekarang menggunakan nilai yang sudah dikonversi
+    // Perhitungan metrik per karyawan
     const revenuePerEmployee =
       relevantHeadcount > 0 ? totalProductivity.revenue / relevantHeadcount : 0;
     const netProfitPerEmployee =
@@ -149,7 +122,7 @@ export async function GET(request: NextRequest) {
         total: {
           value: formatCurrency(totalProductivity.totalEmployeeCost),
           unit: "(dalam Juta)",
-        }, // <== Pastikan koma ini ada
+        },
         ratio: {
           value: formatCurrency(employeeCostRatio, true),
           unit: "(Juta/Karyawan)",

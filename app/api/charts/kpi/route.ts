@@ -1,3 +1,5 @@
+// pages/api/kpi/stats.ts
+
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -7,9 +9,8 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const companyIdStr = searchParams.get("companyId");
   const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
-  const type = searchParams.get("type") || "monthly";
   const year = parseInt(searchParams.get("year") || "2025");
-  const value = parseInt(searchParams.get("value") || "8");
+  const value = parseInt(searchParams.get("value") || "8"); // Menggunakan 'value' untuk bulan
 
   if (!companyId) {
     return NextResponse.json(
@@ -18,45 +19,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  let monthsToFetch: number[] = [];
-  if (type === "monthly") {
-    monthsToFetch = [value];
-  } else if (type === "quarterly") {
-    monthsToFetch =
-      [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-        [10, 11, 12],
-      ][value - 1] || [];
-  } else if (type === "semesterly") {
-    monthsToFetch =
-      [
-        [1, 2, 3, 4, 5, 6],
-        [7, 8, 9, 10, 11, 12],
-      ][value - 1] || [];
-  } else if (type === "yearly") {
-    monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
-  }
-
   try {
     const kpiData = await prisma.kpiStat.findMany({
       where: {
         companyId,
         year,
-        month: { in: monthsToFetch },
+        month: value, // Filter KPI berdasarkan bulan yang dipilih
       },
-      orderBy: { month: "asc" }, // biar urut bulan
     });
 
     if (kpiData.length === 0) {
       return NextResponse.json(
-        { error: "Data KPI tidak ditemukan" },
+        { error: "Data KPI tidak ditemukan untuk bulan ini." },
         { status: 404 }
       );
     }
 
-    // Kirim data KPI per bulan sesuai filter
+    // Kirim data KPI untuk bulan yang dipilih
     const response = kpiData.map((item) => ({
       month: item.month,
       kpiKorporasi: item.kpiKorporasi,
@@ -65,6 +44,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    console.error("Gagal mengambil data KPI:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data KPI." },
       { status: 500 }
