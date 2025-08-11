@@ -6,15 +6,13 @@ import { Settings } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import CardLoader from "./CardLoader";
 
-// Definisikan tipe yang lebih akurat untuk parameter tooltip ECharts
 interface EChartsTooltipParams {
   seriesName: string;
   value: number;
   axisValueLabel: string;
-  marker: string; // Ikon warna di tooltip
+  marker: string;
 }
 
-// Define a specific type for the chart data
 interface ProductivityChartData {
   months: string[];
   revenue: number[];
@@ -23,7 +21,6 @@ interface ProductivityChartData {
 
 const ProductivityChartCard = () => {
   const { selectedCompany, period } = useFilters();
-  // Use the specific type for state instead of 'any'
   const [chartData, setChartData] = useState<ProductivityChartData | null>(
     null
   );
@@ -34,6 +31,7 @@ const ProductivityChartCard = () => {
       setLoading(false);
       return;
     }
+
     const fetchData = async () => {
       setLoading(true);
       const params = new URLSearchParams({
@@ -42,6 +40,7 @@ const ProductivityChartCard = () => {
         year: String(period.year),
         value: "1",
       });
+
       try {
         const response = await fetch(
           `/api/charts/productivity?${params.toString()}`
@@ -50,12 +49,12 @@ const ProductivityChartCard = () => {
         const data: ProductivityChartData = await response.json();
         setChartData(data);
       } catch (_error) {
-        // Fix: unused variable warning
         setChartData(null);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [selectedCompany, period]);
 
@@ -93,8 +92,8 @@ const ProductivityChartCard = () => {
       type: "value",
       axisLabel: {
         formatter: (value: number) => {
-          if (value >= 1e6) return `${value / 1e6}`;
-          if (value >= 1e3) return `${value / 1e3}`;
+          if (value >= 1e6 || value <= -1e6) return `${value / 1e6}M`;
+          if (value >= 1e3 || value <= -1e3) return `${value / 1e3}K`;
           return value;
         },
       },
@@ -103,20 +102,22 @@ const ProductivityChartCard = () => {
       {
         name: "Revenue",
         type: "line",
-        stack: "Total",
-        areaStyle: {},
         smooth: true,
         data: chartData?.revenue || [],
         color: "#3B82F6",
+        symbol: "circle",
+        symbolSize: 6,
+        lineStyle: { width: 2 },
       },
       {
         name: "Net Profit",
         type: "line",
-        stack: "Total",
-        areaStyle: {},
         smooth: true,
         data: chartData?.netProfit || [],
         color: "#10B981",
+        symbol: "circle",
+        symbolSize: 6,
+        lineStyle: { width: 2 },
       },
     ],
   };
@@ -135,6 +136,7 @@ const ProductivityChartCard = () => {
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center space-x-3">
             <h3 className="font-bold text-lg text-gray-800">Productivity</h3>
+            <p className="text-sm text-gray-500">{period.year}</p>
           </div>
           <button className="text-gray-500 hover:text-gray-800">
             <Settings className="h-5 w-5" />

@@ -71,11 +71,11 @@ export async function GET(request: NextRequest) {
         { name: "Salary", data: costData.map((d) => d.salary) },
         { name: "Incentive", data: costData.map((d) => d.incentive) },
         { name: "Pension", data: costData.map((d) => d.pension) },
-        { name: "Others", data: costData.map((d) => d.others) },
         {
           name: "Training & Recruitment",
           data: costData.map((d) => d.trainingRecruitment),
         },
+        { name: "Others", data: costData.map((d) => d.others) }, // pindah ke paling akhir
       ],
     };
 
