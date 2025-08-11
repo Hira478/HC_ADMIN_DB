@@ -1,11 +1,11 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { Settings } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import CardLoader from "./CardLoader";
 
-// Define specific types for the chart data to avoid 'any'
 interface ChartSeries {
   name: string;
   data: number[];
@@ -16,9 +16,13 @@ interface EmployeeCostChartData {
   series: ChartSeries[];
 }
 
+const getColorByIndex = (index: number) => {
+  const colors = ["#EF4444", "#3B82F6", "#22C55E", "#F59E0B", "#4F46E5"];
+  return colors[index % colors.length];
+};
+
 const EmployeeCostChartCard = () => {
   const { selectedCompany, period } = useFilters();
-  // Use the specific type for state
   const [chartData, setChartData] = useState<EmployeeCostChartData | null>(
     null
   );
@@ -26,14 +30,16 @@ const EmployeeCostChartCard = () => {
 
   useEffect(() => {
     if (!selectedCompany || !period) return;
+
     const fetchData = async () => {
       setLoading(true);
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
-        type: "yearly", // <-- PAKSA TIPE MENJADI 'yearly'
+        type: "yearly",
         year: String(period.year),
         value: "1",
       });
+
       try {
         const response = await fetch(
           `/api/charts/employee-cost?${params.toString()}`
@@ -42,19 +48,23 @@ const EmployeeCostChartCard = () => {
         const data: EmployeeCostChartData = await response.json();
         setChartData(data);
       } catch (_error) {
-        // Fix: unused variable warning
         setChartData(null);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [selectedCompany, period]);
 
   const option = {
-    tooltip: { trigger: "axis" },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "line",
+      },
+    },
     legend: {
-      // No 'any' needed here due to typed state
       data: chartData?.series.map((s) => s.name) || [],
       top: "top",
       itemWidth: 15,
@@ -63,12 +73,11 @@ const EmployeeCostChartCard = () => {
     grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
     xAxis: {
       type: "category",
-      boundaryGap: false,
+      boundaryGap: false, // lebih cocok untuk line chart
       data: chartData?.labels || [],
     },
     yAxis: {
       type: "value",
-      scale: true,
       axisLabel: {
         formatter: (value: number) => {
           if (value >= 1e6) return value / 1e6 + "M";
@@ -78,13 +87,22 @@ const EmployeeCostChartCard = () => {
       },
     },
     series:
-      // No 'any' needed here due to typed state
-      chartData?.series.map((s) => ({
-        ...s,
+      chartData?.series.map((s, idx) => ({
+        name: s.name,
         type: "line",
-        stack: "Total",
-        areaStyle: { opacity: 0.7 },
-        emphasis: { focus: "series" },
+        data: s.data,
+        smooth: true, // opsional: membuat garis lebih halus
+        symbol: "circle",
+        symbolSize: 6,
+        lineStyle: {
+          width: 2,
+        },
+        itemStyle: {
+          color: getColorByIndex(idx),
+        },
+        emphasis: {
+          focus: "series",
+        },
       })) || [],
   };
 
