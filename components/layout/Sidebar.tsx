@@ -59,12 +59,12 @@ const Sidebar = () => {
           title="Dashboard"
         />
         {/* 2. Tambahkan item baru untuk Organization & Culture */}
+        {/*
         <SidebarItem
           href="/organization-culture"
           icon={<Globe className="h-6 w-6" />}
           title="Organization & Culture"
         />
-        {/* 2. Tambahkan item baru untuk Workforce Planning */}
         <SidebarItem
           href="/workforce-planning"
           icon={<Briefcase className="h-6 w-6" />}
@@ -75,6 +75,7 @@ const Sidebar = () => {
           icon={<ClipboardEdit className="h-6 w-6" />}
           title="Input Skor"
         />
+        */}
 
         {/* 3. Nonaktifkan sementara tautan input dan upload */}
         {/* <SidebarItem
