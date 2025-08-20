@@ -2,12 +2,11 @@
 
 import {
   Home,
-  Database,
-  DollarSign,
-  Upload,
   Settings,
   Building,
-  Wallet,
+  Globe,
+  Briefcase,
+  ClipboardEdit,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // <-- Import hook untuk mendeteksi path
@@ -59,7 +58,26 @@ const Sidebar = () => {
           icon={<Home className="h-6 w-6" />}
           title="Dashboard"
         />
+        {/* 2. Tambahkan item baru untuk Organization & Culture */}
         <SidebarItem
+          href="/organization-culture"
+          icon={<Globe className="h-6 w-6" />}
+          title="Organization & Culture"
+        />
+        {/* 2. Tambahkan item baru untuk Workforce Planning */}
+        <SidebarItem
+          href="/workforce-planning"
+          icon={<Briefcase className="h-6 w-6" />}
+          title="Workforce Planning"
+        />
+        <SidebarItem
+          href="/input/scores"
+          icon={<ClipboardEdit className="h-6 w-6" />}
+          title="Input Skor"
+        />
+
+        {/* 3. Nonaktifkan sementara tautan input dan upload */}
+        {/* <SidebarItem
           href="/input/productivity"
           icon={<DollarSign className="h-6 w-6" />}
           title="Input Productivity Data"
@@ -78,7 +96,8 @@ const Sidebar = () => {
           href="/upload"
           icon={<Upload className="h-6 w-6" />}
           title="Upload Excel File"
-        />
+        /> 
+        */}
       </nav>
 
       {/* Ikon Pengaturan di bagian bawah */}

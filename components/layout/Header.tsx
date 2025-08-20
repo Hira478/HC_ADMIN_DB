@@ -1,9 +1,9 @@
 // components/Header.tsx
 "use client";
 
-import { useFilters, Period } from "@/contexts/FilterContext";
+import { useFilters } from "@/contexts/FilterContext";
 import { Filter, X } from "lucide-react";
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 // Custom hook to detect clicks outside a component (unchanged)
 const useOnClickOutside = (

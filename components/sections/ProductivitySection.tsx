@@ -46,7 +46,7 @@ const ProductivitySection = ({
           valueUnit="(dalam Juta)"
           change="+10% | Year on Year"
           rkdapInfo=""
-          icon={<DollarSign size={24} />}
+          // icon={<DollarSign size={24} />}
           variant="dark"
         />
         <StatCard
@@ -55,7 +55,7 @@ const ProductivitySection = ({
           valueUnit="(dalam Juta)"
           change="+2% | Year on Year"
           rkdapInfo=""
-          icon={<DollarSign size={24} />}
+          // icon={<DollarSign size={24} />}
           variant="dark"
         />
         <StatCard
@@ -64,7 +64,7 @@ const ProductivitySection = ({
           valueUnit="(dalam Juta)"
           change="+2% | Year on Year"
           rkdapInfo=""
-          icon={<User size={24} />}
+          // icon={<User size={24} />}
           variant="light"
         />
         <StatCard
@@ -73,7 +73,7 @@ const ProductivitySection = ({
           valueUnit="(dalam Juta)"
           change="+1% | Year on Year"
           rkdapInfo=""
-          icon={<TrendingUp size={24} />}
+          // icon={<TrendingUp size={24} />}
           variant="light"
         />
       </div>

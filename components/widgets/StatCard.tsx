@@ -8,7 +8,7 @@ interface StatCardProps {
   change: string;
   comparison?: string;
   rkdapInfo: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   variant?: "dark" | "light";
   className?: string;
 }
@@ -53,9 +53,11 @@ const StatCard: React.FC<StatCardProps> = ({
               </span>
             )}
           </div>
-          <div className={`p-2.5 rounded-lg ${iconBg} ${iconColor}`}>
-            {icon}
-          </div>
+          {icon && (
+            <div className={`p-2.5 rounded-lg ${iconBg} ${iconColor}`}>
+              {icon}
+            </div>
+          )}
         </div>
 
         {/* --- PERUBAHAN UTAMA DI SINI --- */}

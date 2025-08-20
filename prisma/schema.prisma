@@ -22,6 +22,8 @@ model Company {
   productivityStats    ProductivityStat[]
   employeeCostStats   EmployeeCostStat[]
   kpiStats            KpiStat[]
+  hcmaScores          HcmaScore[]
+  cultureMaturityStats CultureMaturityStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -160,4 +162,46 @@ model KpiStat {
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])
+}
+
+model HcmaScore {
+  id                    Int     @id @default(autoincrement())
+  year                  Int
+  
+  // Indikator Skor (sesuai mockup, tipe data Float untuk angka desimal)
+  talentSuccession      Float
+  rewardRecognition     Float
+  learningDevelopment   Float
+  performanceGoal       Float
+  capacityStrategy      Float
+  behaviourCulture      Float
+  humanCapitalIt        Float
+  leadership            Float
+  
+  // Total Skor
+  totalScore            Float
+
+  // Relasi ke Company
+  companyId             Int
+  company               Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, companyId])
+}
+
+model CultureMaturityStat {
+  id          Int     @id @default(autoincrement())
+  year        Int
+  companyId   Int
+  
+  amanah      Float
+  kompeten    Float
+  harmonis    Float
+  loyal       Float
+  adaptif     Float
+  kolaboratif Float
+  totalScore  Float
+
+  company     Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, companyId])
 }

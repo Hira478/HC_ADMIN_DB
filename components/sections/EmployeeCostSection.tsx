@@ -44,7 +44,7 @@ const EmployeeCostSection = ({
             change="+10% | Year on Year"
             comparison="" // <-- Tambahkan ini
             rkdapInfo=""
-            icon={<DollarSign size={24} />}
+            // icon={<DollarSign size={24} />}
             variant="dark"
             className="flex-1" // <-- Tambahkan className="flex-1"
           />
@@ -54,7 +54,7 @@ const EmployeeCostSection = ({
             change="+1% | Year on Year"
             comparison="" // <-- Tambahkan ini
             rkdapInfo=""
-            icon={<Divide size={24} />}
+            // icon={<Divide size={24} />}
             variant="dark"
             className="flex-1" // <-- Tambahkan className="flex-1"
           />

@@ -1,0 +1,120 @@
+// components/charts/GroupedBarChart.tsx
+"use client";
+
+import React from "react";
+import ReactECharts from "echarts-for-react";
+// Sesuaikan path jika berbeda
+import { CultureMaturityData as GroupedChartData } from "@/app/api/charts/culture-maturity/route";
+
+// PERUBAHAN 1: Interface disederhanakan, hanya terima data dan isLoading
+interface GroupedBarChartProps {
+  data: GroupedChartData | null;
+  isLoading: boolean;
+  cardClassName?: string;
+}
+
+const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
+  data,
+  isLoading,
+  cardClassName = "bg-white text-gray-800",
+}) => {
+  if (isLoading || !data) {
+    const message = isLoading ? "Memuat data..." : "Data tidak tersedia.";
+    const height = cardClassName.includes("bg-[#343A40]") ? "410px" : "auto"; // Atur tinggi agar konsisten
+    return (
+      <div
+        className={`p-6 rounded-lg shadow-md w-full flex justify-center items-center ${cardClassName}`}
+        style={{ height }}
+      >
+        <p>{message}</p>
+      </div>
+    );
+  }
+
+  // PERUBAHAN 2: Semua informasi diambil dari prop 'data'
+  const { title, mainScore, scoreLabel, trend, chartData, prevYear, currYear } =
+    data;
+
+  const options = {
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    legend: {
+      data: [prevYear?.toString(), currYear.toString()].filter(Boolean),
+      top: 10,
+      textStyle: {
+        color: cardClassName.includes("bg-[#343A40]") ? "#fff" : "#333",
+      },
+    },
+    grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+    xAxis: {
+      type: "category",
+      data: chartData.categories,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: {
+        color: cardClassName.includes("bg-[#343A40]") ? "#ccc" : "#666",
+      },
+    },
+    yAxis: {
+      type: "value",
+      splitLine: {
+        lineStyle: {
+          type: "dashed",
+          color: cardClassName.includes("bg-[#343A40]") ? "#555" : "#E5E7EB",
+        },
+      },
+      axisLabel: {
+        color: cardClassName.includes("bg-[#343A40]") ? "#ccc" : "#666",
+      },
+    },
+    series: [
+      {
+        name: prevYear?.toString(),
+        type: "bar",
+        data: chartData.seriesPrevYear,
+        barWidth: "30%",
+        label: {
+          show: true,
+          position: "top",
+          color: cardClassName.includes("bg-[#343A40]") ? "#fff" : "#333",
+        },
+        itemStyle: { color: "#f87171" },
+      },
+      {
+        name: currYear.toString(),
+        type: "bar",
+        data: chartData.seriesCurrYear,
+        barWidth: "30%",
+        label: {
+          show: true,
+          position: "top",
+          color: cardClassName.includes("bg-[#343A40]") ? "#fff" : "#333",
+        },
+        itemStyle: { color: "#facc15" },
+      },
+    ].filter((s) => s.data && s.data.length > 0),
+  };
+
+  return (
+    <div className={`p-6 rounded-lg shadow-md w-full ${cardClassName}`}>
+      {/* 1. Buat container Flexbox untuk layout horizontal */}
+      <div className="flex flex-col md:flex-row gap-6 items-center">
+        {/* 2. Kolom Kiri untuk Teks Informasi */}
+        <div className="md:w-1/3 text-center md:text-left">
+          <h2 className="text-xl font-semibold">{title}</h2>
+          <div className="my-2">
+            <span className="text-6xl font-bold">{mainScore}</span>
+            <p className="text-lg">{scoreLabel}</p>
+            <p className="text-sm text-green-500">{trend}</p>
+          </div>
+        </div>
+
+        {/* 3. Kolom Kanan untuk Chart */}
+        <div className="flex-1 w-full">
+          <ReactECharts option={options} style={{ height: "250px" }} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GroupedBarChart;
