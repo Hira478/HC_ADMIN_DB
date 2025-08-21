@@ -44,7 +44,12 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
         color: cardClassName.includes("bg-[#343A40]") ? "#fff" : "#333",
       },
     },
-    grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+    grid: {
+      left: "0%", // Kurangi jarak kiri untuk mengisi ruang kosong
+      right: "4%",
+      bottom: "15%", // Tambah jarak bawah untuk label yang diputar
+      containLabel: true,
+    },
     xAxis: {
       type: "category",
       data: chartData.categories,
@@ -52,6 +57,8 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
       axisTick: { show: false },
       axisLabel: {
         color: cardClassName.includes("bg-[#343A40]") ? "#ccc" : "#666",
+        interval: 0, // Paksa semua label untuk tampil
+        rotate: 30, // Putar label 30 derajat
       },
     },
     yAxis: {
@@ -99,7 +106,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
       {/* 1. Buat container Flexbox untuk layout horizontal */}
       <div className="flex flex-col md:flex-row gap-6 items-center">
         {/* 2. Kolom Kiri untuk Teks Informasi */}
-        <div className="md:w-1/3 text-center md:text-left">
+        <div className="md:w-1/4 text-center md:text-left md:pl-4">
           <h2 className="text-xl font-semibold">{title}</h2>
           <div className="my-2">
             <span className="text-6xl font-bold">{mainScore}</span>

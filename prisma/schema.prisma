@@ -24,6 +24,9 @@ model Company {
   kpiStats            KpiStat[]
   hcmaScores          HcmaScore[]
   cultureMaturityStats CultureMaturityStat[]
+  employeeEngagementStats EmployeeEngagementStat[]
+  organizationHealthStats OrganizationHealthStat[]
+  organizationStructureStats OrganizationStructureStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -202,6 +205,72 @@ model CultureMaturityStat {
   totalScore  Float
 
   company     Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, companyId])
+}
+
+model EmployeeEngagementStat {
+  id         Int     @id @default(autoincrement())
+  year       Int
+  companyId  Int
+  
+  say        Float
+  stay       Float
+  strive     Float
+  totalScore Float
+
+  company    Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, companyId])
+}
+
+model OrganizationHealthStat {
+  id                    Int     @id @default(autoincrement())
+  year                  Int
+  companyId             Int
+
+  // 9 Indikator Baru
+  accountability        Float
+  motivation            Float
+  coordinationControl   Float   @map("coordination_control")
+  leadership            Float
+  innovationLearning    Float   @map("innovation_learning")
+  externalOrientation   Float   @map("external_orientation")
+  direction             Float
+  capabilities          Float
+  workEnvironment       Float   @map("work_environment")
+
+  // Skor total
+  totalScore            Float
+
+  company               Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, companyId])
+}
+
+model OrganizationStructureStat {
+  id                    Int     @id @default(autoincrement())
+  year                  Int
+  companyId             Int
+
+  // Data untuk Chart "Employee Formation Rasio"
+  risikoTataKelola      Float   @map("risiko_tata_kelola")
+  sdmUmum               Float   @map("sdm_umum")
+  keuangan              Float
+  it                    Float
+  operasional           Float
+  bisnis                Float
+  cabang                Float
+
+  // Data untuk Kartu Informasi
+  enablerCount          Int     @map("enabler_count")
+  revenueGeneratorCount Int     @map("revenue_generator_count")
+  divisionCount         Int     @map("division_count")
+  departmentCount       Int     @map("department_count")
+  avgSpanDepartment     Int     @map("avg_span_department")
+  avgSpanEmployee       Int     @map("avg_span_employee")
+
+  company               Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, companyId])
 }
