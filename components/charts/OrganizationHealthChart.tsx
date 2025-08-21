@@ -3,43 +3,60 @@
 
 import React from "react";
 import ReactECharts from "echarts-for-react";
+// 1. Import tipe data dari API
+import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
 
-// Kembalikan ke komponen sederhana tanpa props dinamis
-const OrganizationHealthChart = () => {
-  // Data dummy dikembalikan ke dalam komponen
-  const categories = [
-    "Leadership",
-    "Human Capital IT",
-    "Behaviour & Culture",
-    "Capacity & Strategy",
-    "Performance & Goal",
-    "Learning & Development",
-    "Reward & Recognition",
-    "Talent & Sucession",
-  ];
-  const data2023 = [2.38, 2.28, 2.45, 2.51, 2.65, 2.53, 2.53, 2.42];
-  const data2024 = [3.0, 2.4, 2.45, 2.6, 3.0, 2.9, 2.76, 2.87];
+// 2. Definisikan interface untuk props
+interface ChartProps {
+  data: OrganizationHealthData | null;
+  isLoading: boolean;
+}
+
+// 3. Terima props 'data' dan 'isLoading'
+const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
+  // 4. Tampilkan pesan saat loading
+  if (isLoading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center min-h-[500px]">
+        <p>Memuat data...</p>
+      </div>
+    );
+  }
+
+  // 5. Tampilkan pesan jika data tidak ada
+  if (!data || data.currentYearData.length === 0) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center min-h-[500px]">
+        <p>Data tidak tersedia untuk filter yang dipilih.</p>
+      </div>
+    );
+  }
 
   const options = {
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: {
-      data: ["2023", "2024"], // Menggunakan tahun statis
+      // Gunakan data dinamis untuk legend
+      data: [data.previousYear?.toString(), data.currentYear.toString()].filter(
+        Boolean
+      ),
       bottom: 10,
     },
     grid: { left: "3%", right: "4%", bottom: "10%", containLabel: true },
     xAxis: { type: "value", show: false },
     yAxis: {
       type: "category",
-      data: categories,
+      // Gunakan data dinamis untuk kategori
+      data: data.categories,
       axisLine: { show: false },
       axisTick: { show: false },
       inverse: true,
     },
     series: [
       {
-        name: "2023",
+        name: data.previousYear?.toString(),
         type: "bar",
-        data: data2023,
+        // Gunakan data dinamis untuk series
+        data: data.previousYearData,
         barWidth: "30%",
         label: {
           show: true,
@@ -50,9 +67,10 @@ const OrganizationHealthChart = () => {
         itemStyle: { color: "#adb5bd" },
       },
       {
-        name: "2024",
+        name: data.currentYear.toString(),
         type: "bar",
-        data: data2024,
+        // Gunakan data dinamis untuk series
+        data: data.currentYearData,
         barWidth: "30%",
         label: {
           show: true,
@@ -62,18 +80,23 @@ const OrganizationHealthChart = () => {
         },
         itemStyle: { color: "#6c757d" },
       },
-    ],
+    ].filter((series) => series.data && series.data.length > 0),
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full h-full">
       <h2 className="text-xl font-semibold">Organization Health Index</h2>
       <div className="my-2">
-        {/* Skor dikembalikan menjadi statis */}
-        <span className="text-6xl font-bold text-gray-800">2,3</span>
+        <span className="text-6xl font-bold text-gray-800">
+          {/* Gunakan skor dinamis */}
+          {data.currentYearScore.toLocaleString("id-ID", {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })}
+        </span>
         <span className="ml-2 text-lg text-gray-500">Medium</span>
       </div>
-      <ReactECharts option={options} style={{ height: "450px" }} />
+      <ReactECharts option={options} style={{ height: "500px" }} />
     </div>
   );
 };

@@ -1,11 +1,10 @@
 // app/api/charts/organization-health/route.ts
 
 import { NextResponse } from "next/server";
-import { PrismaClient, HcmaScore } from "@prisma/client";
+import { PrismaClient, OrganizationHealthStat } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Tipe untuk data yang akan kita kembalikan
 export interface OrganizationHealthData {
   categories: string[];
   currentYear: number;
@@ -15,6 +14,22 @@ export interface OrganizationHealthData {
   currentYearScore: number;
   previousYearScore: number | null;
 }
+
+const formatData = (record: OrganizationHealthStat | null) => {
+  if (!record) return [];
+  // Sesuaikan dengan 9 field baru, urutan harus sama dengan categories
+  return [
+    record.workEnvironment,
+    record.capabilities,
+    record.direction,
+    record.externalOrientation,
+    record.innovationLearning,
+    record.leadership,
+    record.coordinationControl,
+    record.motivation,
+    record.accountability,
+  ];
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -33,54 +48,37 @@ export async function GET(request: Request) {
   const previousYearNum = currentYearNum - 1;
 
   try {
+    // Daftar kategori baru (dibalik agar Accountability di atas)
     const categories = [
+      "Work Environtment",
+      "Capabilities",
+      "Direction",
+      "External Orientation",
+      "Innovation & Learning",
       "Leadership",
-      "Human Capital IT",
-      "Behaviour & Culture",
-      "Capacity & Strategy",
-      "Performance & Goal",
-      "Learning & Development",
-      "Reward & Recognition",
-      "Talent & Sucession",
+      "Coordination & Control",
+      "Motivation",
+      "Accountability",
     ];
 
-    // Ambil data untuk tahun yang dipilih
-    const currentYearRecord = await prisma.hcmaScore.findUnique({
+    // Query ke tabel baru: OrganizationHealthStat
+    const currentYearRecord = await prisma.organizationHealthStat.findUnique({
       where: {
         year_companyId: { year: currentYearNum, companyId: companyIdNum },
       },
     });
-
-    // Ambil data untuk tahun sebelumnya
-    const previousYearRecord = await prisma.hcmaScore.findUnique({
+    const previousYearRecord = await prisma.organizationHealthStat.findUnique({
       where: {
         year_companyId: { year: previousYearNum, companyId: companyIdNum },
       },
     });
 
-    const formatData = (record: HcmaScore | null) => {
-      if (!record) return [];
-      // Urutkan data sesuai urutan kategori
-      return [
-        record.leadership,
-        record.humanCapitalIt,
-        record.behaviourCulture,
-        record.capacityStrategy,
-        record.performanceGoal,
-        record.learningDevelopment,
-        record.rewardRecognition,
-        record.talentSuccession,
-      ];
-    };
-
     const responseData: OrganizationHealthData = {
       categories,
       currentYear: currentYearNum,
       previousYear: previousYearRecord ? previousYearNum : null,
-      currentYearData: currentYearRecord ? formatData(currentYearRecord) : [],
-      previousYearData: previousYearRecord
-        ? formatData(previousYearRecord)
-        : [],
+      currentYearData: formatData(currentYearRecord),
+      previousYearData: formatData(previousYearRecord),
       currentYearScore: currentYearRecord ? currentYearRecord.totalScore : 0,
       previousYearScore: previousYearRecord
         ? previousYearRecord.totalScore

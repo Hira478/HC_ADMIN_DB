@@ -2,7 +2,6 @@
 
 import React from "react";
 
-// Definisikan tipe untuk props agar lebih mudah dikelola
 interface Metric {
   value: string | number;
   label: string;
@@ -15,12 +14,15 @@ interface InfoCardProps {
 
 const InfoCard: React.FC<InfoCardProps> = ({ title, metrics }) => {
   return (
-    <div className="bg-[#343A40] p-6 rounded-lg shadow-md text-white w-full">
+    <div className="bg-[#343A40] p-6 rounded-lg shadow-md text-white flex flex-col h-full">
       <h3 className="text-lg font-semibold text-gray-300 mb-4">{title}</h3>
-      <div className="flex justify-between items-center">
+
+      <div className="flex flex-1 items-center justify-around text-center">
         {metrics.map((metric, index) => (
-          <div key={index} className="text-center">
-            <p className="text-4xl font-bold">{metric.value}</p>
+          // --- PERUBAHAN DI SINI ---
+          // Mengubah div ini menjadi flex container horizontal
+          <div key={index} className="flex items-baseline justify-center gap-2">
+            <p className="text-5xl font-bold">{metric.value}</p>
             <p className="text-sm text-gray-400">{metric.label}</p>
           </div>
         ))}

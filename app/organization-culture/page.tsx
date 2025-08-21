@@ -6,20 +6,28 @@ import OrganizationHealthChart from "@/components/charts/OrganizationHealthChart
 import InfoCard from "@/components/ui/InfoCard";
 import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
-// import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
+import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
 import { CultureMaturityData } from "@/app/api/charts/culture-maturity/route";
+import HcmaBarChart from "@/components/charts/HcmaBarChart";
 
 interface SimpleChartData {
   categories: string[];
   data: number[];
 }
 
+interface OrgStructureData {
+  formationRatioChart: { categories: string[]; data: number[] };
+  formationRatioCard: { enabler: number; revenueGenerator: number };
+  designOrgCard: { division: number; department: number };
+  avgSpanCard: { department: number; employee: number };
+}
+
 export default function OrganizationCulturePage() {
   const { selectedCompany, period } = useFilters(); // <-- Ambil filter dari context
-  //const [healthData, setHealthData] = useState<OrganizationHealthData | null>(
-  //  null
-  //);
-  //const [isLoadingHealth, setIsLoadingHealth] = useState(true);
+  const [healthData, setHealthData] = useState<OrganizationHealthData | null>(
+    null
+  );
+  const [isLoadingHealth, setIsLoadingHealth] = useState(true);
 
   const [maturityData, setMaturityData] = useState<SimpleChartData | null>(
     null
@@ -29,33 +37,88 @@ export default function OrganizationCulturePage() {
     null
   );
   const [isLoadingCulture, setIsLoadingCulture] = useState(true);
+  const [engagementData, setEngagementData] =
+    useState<CultureMaturityData | null>(null);
+  const [isLoadingEngagement, setIsLoadingEngagement] = useState(true);
 
-  const formationRatioData = {
-    categories: [
-      "Risiko & Tata Kelola",
-      "SDM & Umum",
-      "Keuangan",
-      "IT",
-      "Operasional",
-      "Bisnis",
-      "Cabang",
-    ],
-    data: [10, 11, 12, 12, 15, 18, 22],
-  };
+  const [orgStructureData, setOrgStructureData] =
+    useState<OrgStructureData | null>(null);
+  const [isLoadingOrgStructure, setIsLoadingOrgStructure] = useState(true);
 
-  const employeeEngagementData: CultureMaturityData = {
-    title: "Employee Engagement",
-    mainScore: "78.5",
-    scoreLabel: "Moderate High",
-    trend: "+10% | Year on Year",
-    chartData: {
-      categories: ["Say", "Stay", "Strive"],
-      seriesPrevYear: [74, 72, 75],
-      seriesCurrYear: [77, 70, 80],
-    },
-    prevYear: 2024, // Contoh
-    currYear: 2025, // Contoh
-  };
+  useEffect(() => {
+    if (selectedCompany && period.year) {
+      setIsLoadingHealth(true);
+      const fetchData = async () => {
+        try {
+          const res = await fetch(
+            `/api/charts/organization-health?companyId=${selectedCompany}&year=${period.year}`
+          );
+          if (!res.ok) throw new Error("Failed to fetch");
+          const data: OrganizationHealthData = await res.json();
+          setHealthData(data);
+        } catch (error) {
+          console.error(error);
+          setHealthData(null); // Reset data jika ada error
+        } finally {
+          setIsLoadingHealth(false);
+        }
+      };
+      fetchData();
+    } else {
+      setHealthData(null);
+      setIsLoadingHealth(false);
+    }
+  }, [selectedCompany, period.year]);
+
+  useEffect(() => {
+    if (selectedCompany && period.year) {
+      setIsLoadingOrgStructure(true);
+      const fetchData = async () => {
+        try {
+          const res = await fetch(
+            `/api/charts/organization-structure?companyId=${selectedCompany}&year=${period.year}`
+          );
+          if (!res.ok) throw new Error("Failed to fetch org structure data");
+          const data = await res.json();
+          setOrgStructureData(data);
+        } catch (error) {
+          console.error(error);
+          setOrgStructureData(null);
+        } finally {
+          setIsLoadingOrgStructure(false);
+        }
+      };
+      fetchData();
+    } else {
+      setOrgStructureData(null);
+      setIsLoadingOrgStructure(false);
+    }
+  }, [selectedCompany, period.year]);
+
+  useEffect(() => {
+    if (selectedCompany && period.year) {
+      setIsLoadingEngagement(true);
+      const fetchData = async () => {
+        try {
+          const res = await fetch(
+            `/api/charts/employee-engagement?companyId=${selectedCompany}&year=${period.year}`
+          );
+          if (!res.ok) throw new Error("Failed to fetch engagement data");
+          const data: CultureMaturityData = await res.json();
+          setEngagementData(data);
+        } catch (error) {
+          console.error(error);
+          setEngagementData(null);
+        } finally {
+          setIsLoadingEngagement(false);
+        }
+      };
+      fetchData();
+    } else {
+      setEngagementData(null);
+      setIsLoadingEngagement(false);
+    }
+  }, [selectedCompany, period.year]);
 
   // --- PERUBAHAN FINAL DI SINI ---
   // Membuat "deep copy" sederhana untuk memastikan tidak ada referensi array yang sama.
@@ -147,28 +210,60 @@ export default function OrganizationCulturePage() {
           <AreaLineChart
             key="formation-ratio"
             title="Employee Formation Rasio"
-            subtitle="2025"
-            chartData={formationRatioData}
-            isLoading={false}
+            subtitle={period.year.toString()}
+            chartData={orgStructureData?.formationRatioChart || null}
+            isLoading={isLoadingOrgStructure}
           />
         </div>
         <div className="w-full lg:w-1/3 flex flex-col gap-6">
           <InfoCard
             title="Employee Formation Rasio"
-            metrics={[{ value: "1/4", label: "Enabler/Revenue Generator" }]}
+            metrics={[
+              {
+                // Ambil data dari state 'orgStructureData'
+                value: isLoadingOrgStructure
+                  ? "..."
+                  : `${orgStructureData?.formationRatioCard.enabler || 0}/${
+                      orgStructureData?.formationRatioCard.revenueGenerator || 0
+                    }`,
+                label: "Enabler/Revenue Generator",
+              },
+            ]}
           />
           <InfoCard
             title="Design Organization"
             metrics={[
-              { value: 16, label: "Division" },
-              { value: 34, label: "Department" },
+              // Ambil data dari state 'orgStructureData'
+              {
+                value: isLoadingOrgStructure
+                  ? "..."
+                  : orgStructureData?.designOrgCard.division || 0,
+                label: "Division",
+              },
+              {
+                value: isLoadingOrgStructure
+                  ? "..."
+                  : orgStructureData?.designOrgCard.department || 0,
+                label: "Department",
+              },
             ]}
           />
           <InfoCard
             title="AVG Span of Control"
             metrics={[
-              { value: 2, label: "Department" },
-              { value: 8, label: "Employee" },
+              // Ambil data dari state 'orgStructureData'
+              {
+                value: isLoadingOrgStructure
+                  ? "..."
+                  : orgStructureData?.avgSpanCard.department || 0,
+                label: "Department",
+              },
+              {
+                value: isLoadingOrgStructure
+                  ? "..."
+                  : orgStructureData?.avgSpanCard.employee || 0,
+                label: "Employee",
+              },
             ]}
           />
         </div>
@@ -178,12 +273,16 @@ export default function OrganizationCulturePage() {
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           {/* Kirim data dan status loading ke komponen chart */}
-          <OrganizationHealthChart />
+          <OrganizationHealthChart
+            data={healthData}
+            isLoading={isLoadingHealth}
+          />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6">
           <GroupedBarChart
-            data={employeeEngagementData}
-            isLoading={false} // Karena datanya statis
+            // 4. Hubungkan ke state dinamis
+            data={engagementData}
+            isLoading={isLoadingEngagement}
           />
           <GroupedBarChart
             data={cultureData} // Kirim seluruh objek data
@@ -195,7 +294,7 @@ export default function OrganizationCulturePage() {
 
       {/* --- SECTION 3 --- */}
       <div className="mt-8">
-        <AreaLineChart
+        <HcmaBarChart
           key="hc-maturity"
           title="HC Maturity Assessment"
           subtitle={period.year.toString()}

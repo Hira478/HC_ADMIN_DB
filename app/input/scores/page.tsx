@@ -2,12 +2,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+// 1. Impor semua komponen secara konsisten
 import HcmaForm from "@/components/forms/HcmaForm";
 import CultureMaturityForm from "@/components/forms/CultureMaturityForm";
+import EmployeeEngagementForm from "@/components/forms/EmployeeEngagementForm";
+import OrganizationStructureForm from "@/components/forms/OrganizationStructureForm";
+import OrganizationHealthForm from "@/components/forms/OrganizationHealthForm";
 import { Company } from "@/types";
 
+// 2. Definisikan semua tab di dalam satu array agar rapi
+const TABS = [
+  { id: "org-structure", label: "Struktur Organisasi" },
+  { id: "org-health", label: "Organization Health" },
+  { id: "hcma", label: "Skor HCMA" },
+  { id: "culture", label: "Skor Culture Maturity" },
+  { id: "engagement", label: "Skor Employee Engagement" },
+];
+
 export default function InputScoresPage() {
-  const [activeTab, setActiveTab] = useState("hcma");
+  const [activeTab, setActiveTab] = useState(TABS[0].id); // Default ke tab pertama
   const [companies, setCompanies] = useState<Company[]>([]);
 
   useEffect(() => {
@@ -27,29 +40,34 @@ export default function InputScoresPage() {
     <main className="p-8">
       <h1 className="text-3xl font-bold mb-6">Input Skor Perusahaan</h1>
 
-      <div className="mb-6 flex space-x-2 border-b">
-        <button
-          onClick={() => setActiveTab("hcma")}
-          className={`${tabStyle} ${
-            activeTab === "hcma" ? activeTabStyle : inactiveTabStyle
-          }`}
-        >
-          Skor HCMA
-        </button>
-        <button
-          onClick={() => setActiveTab("culture")}
-          className={`${tabStyle} ${
-            activeTab === "culture" ? activeTabStyle : inactiveTabStyle
-          }`}
-        >
-          Skor Culture Maturity
-        </button>
+      {/* 3. Render tombol tab secara dinamis menggunakan map */}
+      <div className="mb-6 flex flex-wrap gap-2 border-b pb-2">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`${tabStyle} ${
+              activeTab === tab.id ? activeTabStyle : inactiveTabStyle
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <div>
+        {activeTab === "org-structure" && (
+          <OrganizationStructureForm companies={companies} />
+        )}
+        {activeTab === "org-health" && (
+          <OrganizationHealthForm companies={companies} />
+        )}
         {activeTab === "hcma" && <HcmaForm companies={companies} />}
         {activeTab === "culture" && (
           <CultureMaturityForm companies={companies} />
+        )}
+        {activeTab === "engagement" && (
+          <EmployeeEngagementForm companies={companies} />
         )}
       </div>
     </main>
