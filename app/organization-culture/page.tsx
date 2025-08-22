@@ -206,7 +206,7 @@ export default function OrganizationCulturePage() {
 
       {/* --- SECTION 1 --- */}
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-2/3">
+        <div className="w-full lg:w-3/4">
           <AreaLineChart
             key="formation-ratio"
             title="Employee Formation Rasio"
@@ -215,7 +215,7 @@ export default function OrganizationCulturePage() {
             isLoading={isLoadingOrgStructure}
           />
         </div>
-        <div className="w-full lg:w-1/3 flex flex-col gap-6">
+        <div className="w-full lg:w-1/4 flex flex-col gap-6">
           <InfoCard
             title="Employee Formation Rasio"
             metrics={[
@@ -279,16 +279,19 @@ export default function OrganizationCulturePage() {
           />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <GroupedBarChart
-            // 4. Hubungkan ke state dinamis
-            data={engagementData}
-            isLoading={isLoadingEngagement}
-          />
-          <GroupedBarChart
-            data={cultureData} // Kirim seluruh objek data
-            isLoading={isLoadingCulture}
-            cardClassName="bg-[#343A40] text-white"
-          />
+          <div className="flex-1">
+            <GroupedBarChart
+              data={engagementData}
+              isLoading={isLoadingEngagement}
+            />
+          </div>
+          <div className="flex-1">
+            <GroupedBarChart
+              data={cultureData}
+              isLoading={isLoadingCulture}
+              cardClassName="bg-[#343A40] text-white"
+            />
+          </div>
         </div>
       </div>
 

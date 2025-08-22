@@ -35,8 +35,8 @@ export async function GET(request: Request) {
     const responseData = {
       formationRatioChart: {
         categories: [
-          "Risiko & Tata Kelola",
-          "SDM & Umum",
+          "Risiko &\nTata Kelola",
+          "SDM &\nUmum",
           "Keuangan",
           "IT",
           "Operasional",

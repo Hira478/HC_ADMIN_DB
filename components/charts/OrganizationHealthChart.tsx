@@ -3,49 +3,56 @@
 
 import React from "react";
 import ReactECharts from "echarts-for-react";
-// 1. Import tipe data dari API
 import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
 
-// 2. Definisikan interface untuk props
 interface ChartProps {
   data: OrganizationHealthData | null;
   isLoading: boolean;
 }
 
-// 3. Terima props 'data' dan 'isLoading'
 const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
-  // 4. Tampilkan pesan saat loading
   if (isLoading) {
+    // Hapus tinggi minimum agar container bisa fleksibel
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center min-h-[500px]">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center">
         <p>Memuat data...</p>
       </div>
     );
   }
 
-  // 5. Tampilkan pesan jika data tidak ada
   if (!data || data.currentYearData.length === 0) {
+    // Hapus tinggi minimum agar container bisa fleksibel
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center min-h-[500px]">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center">
         <p>Data tidak tersedia untuk filter yang dipilih.</p>
       </div>
     );
   }
 
+  // --- PERUBAHAN UTAMA: HITUNG TINGGI DINAMIS ---
+  // Kita tentukan tinggi per bar (misal 45px) + padding atas/bawah (misal 80px)
+  const barHeight = 45;
+  const padding = 80;
+  const chartHeight = data.categories.length * barHeight + padding;
+
   const options = {
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: {
-      // Gunakan data dinamis untuk legend
       data: [data.previousYear?.toString(), data.currentYear.toString()].filter(
         Boolean
       ),
       bottom: 10,
     },
-    grid: { left: "3%", right: "4%", bottom: "10%", containLabel: true },
+    grid: {
+      left: "3%",
+      right: "4%",
+      top: "5%",
+      bottom: "15%", // Beri ruang untuk legenda dan padding
+      containLabel: true,
+    },
     xAxis: { type: "value", show: false },
     yAxis: {
       type: "category",
-      // Gunakan data dinamis untuk kategori
       data: data.categories,
       axisLine: { show: false },
       axisTick: { show: false },
@@ -55,29 +62,17 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
       {
         name: data.previousYear?.toString(),
         type: "bar",
-        // Gunakan data dinamis untuk series
         data: data.previousYearData,
-        barWidth: "30%",
-        label: {
-          show: true,
-          position: "right",
-          color: "#fff",
-          formatter: "{c}",
-        },
+        barWidth: "40%",
+        label: { show: false }, // Label di dalam bar disembunyikan agar lebih rapi
         itemStyle: { color: "#adb5bd" },
       },
       {
         name: data.currentYear.toString(),
         type: "bar",
-        // Gunakan data dinamis untuk series
         data: data.currentYearData,
-        barWidth: "30%",
-        label: {
-          show: true,
-          position: "right",
-          color: "#fff",
-          formatter: "{c}",
-        },
+        barWidth: "40%",
+        label: { show: false }, // Label di dalam bar disembunyikan agar lebih rapi
         itemStyle: { color: "#6c757d" },
       },
     ].filter((series) => series.data && series.data.length > 0),
@@ -88,7 +83,6 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
       <h2 className="text-xl font-semibold">Organization Health Index</h2>
       <div className="my-2">
         <span className="text-6xl font-bold text-gray-800">
-          {/* Gunakan skor dinamis */}
           {data.currentYearScore.toLocaleString("id-ID", {
             minimumFractionDigits: 1,
             maximumFractionDigits: 1,
@@ -96,7 +90,8 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
         </span>
         <span className="ml-2 text-lg text-gray-500">Medium</span>
       </div>
-      <ReactECharts option={options} style={{ height: "500px" }} />
+      {/* Gunakan tinggi dinamis yang sudah dihitung */}
+      <ReactECharts option={options} style={{ height: `${chartHeight}px` }} />
     </div>
   );
 };
