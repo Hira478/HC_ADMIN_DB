@@ -102,7 +102,9 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   };
 
   return (
-    <div className={`p-6 rounded-lg shadow-md w-full ${cardClassName}`}>
+    <div
+      className={`p-6 rounded-lg shadow-md w-full h-full flex flex-col ${cardClassName}`}
+    >
       {/* 1. Buat container Flexbox untuk layout horizontal */}
       <div className="flex flex-col md:flex-row gap-6 items-center">
         {/* 2. Kolom Kiri untuk Teks Informasi */}
@@ -117,7 +119,11 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
 
         {/* 3. Kolom Kanan untuk Chart */}
         <div className="flex-1 w-full">
-          <ReactECharts option={options} style={{ height: "250px" }} />
+          {/* 3. Ubah tinggi chart menjadi 100% */}
+          <ReactECharts
+            option={options}
+            style={{ height: "100%", minHeight: "250px" }}
+          />
         </div>
       </div>
     </div>

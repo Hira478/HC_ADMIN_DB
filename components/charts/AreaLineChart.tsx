@@ -27,7 +27,10 @@ const AreaLineChart: React.FC<AreaLineChartProps> = ({
   containerClassName = "bg-white",
 }) => {
   const options = {
-    tooltip: { trigger: "axis" },
+    tooltip: {
+      trigger: "axis",
+      valueFormatter: (value: number) => value + " %",
+    },
     xAxis: {
       type: "category",
       boundaryGap: false,
@@ -57,6 +60,8 @@ const AreaLineChart: React.FC<AreaLineChartProps> = ({
       type: "value",
       splitLine: { lineStyle: { type: "dashed", color: "#E5E7EB" } },
       interval: 10, // Menjaga interval agar tidak bertumpuk
+      min: 0,
+      max: 100,
     },
     series: [
       {
@@ -71,6 +76,8 @@ const AreaLineChart: React.FC<AreaLineChartProps> = ({
           position: "top",
           color: "#374151",
           fontWeight: "bold",
+          // Tambahkan ini untuk format label di atas titik data
+          formatter: "{c}%",
         },
         lineStyle: { color: "#EF4444", width: 3 },
         itemStyle: { color: "#EF4444", borderColor: "#FFFFFF", borderWidth: 2 },
