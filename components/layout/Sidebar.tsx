@@ -59,12 +59,13 @@ const Sidebar = () => {
           title="Dashboard"
         />
         {/* 2. Tambahkan item baru untuk Organization & Culture */}
-        {/*
+
         <SidebarItem
           href="/organization-culture"
           icon={<Globe className="h-6 w-6" />}
           title="Organization & Culture"
         />
+        {/*
         <SidebarItem
           href="/workforce-planning"
           icon={<Briefcase className="h-6 w-6" />}
