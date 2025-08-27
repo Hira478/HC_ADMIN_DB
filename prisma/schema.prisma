@@ -27,6 +27,7 @@ model Company {
   employeeEngagementStats EmployeeEngagementStat[]
   organizationHealthStats OrganizationHealthStat[]
   organizationStructureStats OrganizationStructureStat[]
+  formationRasioStats FormationRasioStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -129,6 +130,7 @@ model ProductivityStat {
   revenue   Float
   netProfit Float
   totalEmployeeCost Float @default(0)
+  totalCost         Float   @default(0)
 
   companyId Int     // <-- Diubah ke Int
   company   Company @relation(fields: [companyId], references: [id])
@@ -273,4 +275,27 @@ model OrganizationStructureStat {
   company               Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, companyId])
+}
+
+model FormationRasioStat {
+  id                    Int @id @default(autoincrement())
+  year                  Int
+  month                 Int
+  companyId             Int
+  
+  // 10 Kategori Baru (dalam Bahasa Inggris & camelCase)
+  rd                    Int @default(0) @map("research_development")
+  business              Int @default(0)
+  finance               Int @default(0)
+  humanResources        Int @default(0) @map("human_resources")
+  actuary               Int @default(0)
+  compliance            Int @default(0)
+  legal                 Int @default(0)
+  informationTechnology Int @default(0) @map("information_technology")
+  corporateSecretary    Int @default(0) @map("corporate_secretary")
+  generalAffairs        Int @default(0) @map("general_affairs")
+
+  company               Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId])
 }

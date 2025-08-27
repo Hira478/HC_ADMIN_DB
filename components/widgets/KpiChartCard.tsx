@@ -4,7 +4,7 @@ import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
 import CardLoader from "./CardLoader";
 
-// Define a specific type for the KPI data
+// Tipe data untuk KPI
 interface KpiData {
   kpiHcTransformation: number;
   kpiKorporasi: number;
@@ -12,7 +12,6 @@ interface KpiData {
 
 const KpiChartCard = () => {
   const { selectedCompany, period } = useFilters();
-  // Use the specific type for state instead of 'any'
   const [kpiData, setKpiData] = useState<KpiData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,13 +29,9 @@ const KpiChartCard = () => {
         const response = await fetch(`/api/charts/kpi?${params.toString()}`);
         if (!response.ok) throw new Error("Data not found");
 
-        // Terima respons sebagai array
         const dataArray: KpiData[] = await response.json();
-
-        // Jika array tidak kosong, ambil elemen pertama. Jika kosong, set ke null.
         setKpiData(dataArray[0] || null);
       } catch (_error) {
-        // Fix: unused variable warning
         setKpiData(null);
       } finally {
         setLoading(false);
@@ -45,30 +40,56 @@ const KpiChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // Konfigurasi ECharts yang sudah disesuaikan
   const option = {
-    grid: { left: "5%", right: "10%", top: "5%", bottom: "5%" },
-    xAxis: { type: "value", show: false },
+    grid: {
+      left: "1%",
+      right: "15%",
+      top: "5%",
+      bottom: "15%",
+      containLabel: true,
+    },
+    xAxis: {
+      type: "value",
+      max: 100,
+      // 1. Tampilkan kembali garis sumbu dan labelnya
+      axisLine: { show: true },
+      axisTick: { show: true },
+      axisLabel: {
+        show: true,
+        formatter: "{value}%",
+      },
+      // 2. Tampilkan garis grid vertikal (splitLine)
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: "#E0E6F1", // Warna abu-abu muda
+          type: "dashed", // Jenis garis putus-putus
+        },
+      },
+    },
     yAxis: {
       type: "category",
+      data: ["KPI Korporasi", "KPI HC Transformation"],
       axisLine: { show: false },
       axisTick: { show: false },
-      data: ["KPI HC Transformation", "KPI Korporasi"],
-      inverse: true,
-      show: false,
+      axisLabel: {
+        show: false,
+      },
     },
     series: [
       {
         name: "KPI",
         type: "bar",
-        barWidth: "50%",
+        barWidth: "60%",
         data: [
           {
-            value: kpiData?.kpiHcTransformation || 0,
-            itemStyle: { color: "#4A5568" },
+            value: kpiData?.kpiKorporasi || 0,
+            itemStyle: { color: "#C53030" }, // Merah
           },
           {
-            value: kpiData?.kpiKorporasi || 0,
-            itemStyle: { color: "#C53030" },
+            value: kpiData?.kpiHcTransformation || 0,
+            itemStyle: { color: "#4A5568" }, // Abu-abu
           },
         ],
         label: {
@@ -77,7 +98,7 @@ const KpiChartCard = () => {
           formatter: "{c}%",
           color: "#fff",
           fontWeight: "bold",
-          fontSize: 18,
+          fontSize: 16,
         },
       },
     ],
@@ -110,7 +131,10 @@ const KpiChartCard = () => {
         </div>
       </div>
       <div className="flex-grow min-h-0">
-        <ReactECharts option={option} style={{ height: "100%" }} />
+        <ReactECharts
+          option={option}
+          style={{ height: "100%", minHeight: "120px" }}
+        />
       </div>
     </div>
   );

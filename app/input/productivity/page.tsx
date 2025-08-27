@@ -11,6 +11,7 @@ interface ProductivityFormData {
   revenue: number;
   netProfit: number;
   totalEmployeeCost: number;
+  totalCost: number;
   kpiKorporasi: number;
   kpiHcTransformation: number;
 }
@@ -23,6 +24,7 @@ const initialFormData: ProductivityFormData = {
   revenue: 0,
   netProfit: 0,
   totalEmployeeCost: 0,
+  totalCost: 0,
   kpiKorporasi: 0,
   kpiHcTransformation: 0,
 };
@@ -259,6 +261,25 @@ const InputProductivityPage = () => {
               step="any"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               placeholder="Masukkan total biaya karyawan"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="totalCost"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Total Cost
+            </label>
+            <input
+              type="number"
+              name="totalCost"
+              id="totalCost"
+              value={formData.totalCost}
+              onChange={handleChange}
+              required
+              step="any"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              placeholder="Masukkan total biaya operasional"
             />
           </div>
         </div>

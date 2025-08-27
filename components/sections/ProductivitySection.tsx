@@ -1,12 +1,12 @@
+// File: ProductivitySection.tsx
+
 "use client";
 
-import StatCard from "@/components/widgets/StatCard";
+import StatCard from "@/components/widgets/StatCard"; // Pastikan path ini benar
 import ProductivityChartCard from "@/components/widgets/ProductivityChartCard";
 import KpiChartCard from "@/components/widgets/KpiChartCard";
-import { DollarSign, User, TrendingUp } from "lucide-react";
 import type { ProductivityCardData } from "@/types";
 
-// Terima 'data' dan 'loading' sebagai props
 const ProductivitySection = ({
   data,
   loading,
@@ -14,8 +14,8 @@ const ProductivitySection = ({
   data: ProductivityCardData | undefined;
   loading: boolean;
 }) => {
-  // Return lebih awal jika loading atau data tidak ada
   if (loading) {
+    // Tampilkan skeleton loading jika diperlukan
     return (
       <section>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Productivity</h2>
@@ -35,7 +35,6 @@ const ProductivitySection = ({
     );
   }
 
-  // Kode di bawah ini hanya akan berjalan jika loading=false DAN data=ada
   return (
     <section>
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Productivity</h2>
@@ -44,47 +43,41 @@ const ProductivitySection = ({
           title="Revenue"
           value={data.revenue.value}
           valueUnit="(dalam Juta)"
-          change="+10% | Year on Year"
-          rkdapInfo=""
-          // icon={<DollarSign size={24} />}
+          change={data.revenue.change || ""}
+          rkdapInfo="Revenue Key Data"
           variant="dark"
         />
         <StatCard
           title="Net Profit"
           value={data.netProfit.value}
           valueUnit="(dalam Juta)"
-          change="+2% | Year on Year"
-          rkdapInfo=""
-          // icon={<DollarSign size={24} />}
+          change={data.netProfit.change || ""}
+          rkdapInfo="Net Profit Key Data"
           variant="dark"
         />
         <StatCard
           title="Revenue/Employee"
           value={data.revenuePerEmployee.value}
           valueUnit="(dalam Juta)"
-          change="+2% | Year on Year"
-          rkdapInfo=""
-          // icon={<User size={24} />}
+          change={data.revenuePerEmployee.change || ""}
+          rkdapInfo="Revenue per Employee Key Data"
           variant="light"
         />
         <StatCard
           title="Net Profit/Employee"
           value={data.netProfitPerEmployee.value}
           valueUnit="(dalam Juta)"
-          change="+1% | Year on Year"
-          rkdapInfo=""
-          // icon={<TrendingUp size={24} />}
+          change={data.netProfitPerEmployee.change || ""}
+          rkdapInfo="Net Profit per Employee Key Data"
           variant="light"
         />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6 items-stretch">
         <div className="lg:col-span-3 h-96">
-          {" "}
-          <ProductivityChartCard />{" "}
+          <ProductivityChartCard />
         </div>
         <div className="lg:col-span-1">
-          {" "}
-          <KpiChartCard />{" "}
+          <KpiChartCard />
         </div>
       </div>
     </section>

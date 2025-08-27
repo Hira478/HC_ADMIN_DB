@@ -24,10 +24,12 @@ const InfoCard: React.FC<InfoCardProps> = ({ title, metrics }) => {
         {metrics.map((metric, index) => (
           // Hapus justify-center dari blok ini
           <div key={index} className="flex items-baseline gap-2">
-            <p className="text-5xl font-bold">{metric.value}</p>
+            <p className="text-3xl font-bold">{metric.value}</p>
             {/* 2. PERBESAR UKURAN FONT DETAIL */}
             {/* text-sm diubah menjadi text-base */}
-            <p className="text-xs text-gray-400">{metric.label}</p>
+            <p className="text-xs text-gray-400 whitespace-pre-line">
+              {metric.label}
+            </p>
           </div>
         ))}
       </div>

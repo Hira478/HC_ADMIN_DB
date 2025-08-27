@@ -1,3 +1,5 @@
+// File: components/widgets/ProductivityChartCard.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,6 +19,8 @@ interface ProductivityChartData {
   months: string[];
   revenue: number[];
   netProfit: number[];
+  revenuePerEmployee: number[];
+  netProfitPerEmployee: number[];
 }
 
 const ProductivityChartCard = () => {
@@ -36,9 +40,7 @@ const ProductivityChartCard = () => {
       setLoading(true);
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
-        type: "yearly",
         year: String(period.year),
-        value: "1",
       });
 
       try {
@@ -58,6 +60,7 @@ const ProductivityChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // Konfigurasi ECharts dengan satu Sumbu Y
   const option = {
     tooltip: {
       trigger: "axis",
@@ -65,22 +68,29 @@ const ProductivityChartCard = () => {
         if (!params || params.length === 0) return "";
         let tooltipText = `<strong>${params[0].axisValueLabel}</strong>`;
         params.forEach((item) => {
-          tooltipText += `<br/>${item.marker} ${
-            item.seriesName
-          }: Rp ${item.value.toLocaleString("id-ID")}`;
+          const formattedValue = item.value.toLocaleString("id-ID", {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+          });
+          tooltipText += `<br/>${item.marker} ${item.seriesName}: Rp ${formattedValue}`;
         });
         return tooltipText;
       },
     },
     legend: {
-      data: ["Revenue", "Net Profit"],
+      data: [
+        "Revenue",
+        "Net Profit",
+        "Revenue/Employee",
+        "Net Profit/Employee",
+      ],
       bottom: 10,
     },
     grid: {
       left: "3%",
       right: "4%",
-      top: "5%",
-      bottom: "18%",
+      top: "10%",
+      bottom: "20%",
       containLabel: true,
     },
     xAxis: {
@@ -88,6 +98,7 @@ const ProductivityChartCard = () => {
       boundaryGap: false,
       data: chartData?.months || [],
     },
+    // 1. Sumbu Y diubah kembali menjadi satu objek (bukan array)
     yAxis: {
       type: "value",
       axisLabel: {
@@ -98,6 +109,7 @@ const ProductivityChartCard = () => {
         },
       },
     },
+    // 2. Properti `yAxisIndex` dihapus dari semua seri
     series: [
       {
         name: "Revenue",
@@ -105,9 +117,6 @@ const ProductivityChartCard = () => {
         smooth: true,
         data: chartData?.revenue || [],
         color: "#3B82F6",
-        symbol: "circle",
-        symbolSize: 6,
-        lineStyle: { width: 2 },
       },
       {
         name: "Net Profit",
@@ -115,9 +124,20 @@ const ProductivityChartCard = () => {
         smooth: true,
         data: chartData?.netProfit || [],
         color: "#10B981",
-        symbol: "circle",
-        symbolSize: 6,
-        lineStyle: { width: 2 },
+      },
+      {
+        name: "Revenue/Employee",
+        type: "line",
+        smooth: true,
+        data: chartData?.revenuePerEmployee || [],
+        color: "#F97316",
+      },
+      {
+        name: "Net Profit/Employee",
+        type: "line",
+        smooth: true,
+        data: chartData?.netProfitPerEmployee || [],
+        color: "#EF4444",
       },
     ],
   };
@@ -132,16 +152,14 @@ const ProductivityChartCard = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
-      <div className="h-24">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-3">
-            <h3 className="font-bold text-lg text-gray-800">Productivity</h3>
-            <p className="text-sm text-gray-500">{period.year}</p>
-          </div>
-          <button className="text-gray-500 hover:text-gray-800">
-            <Settings className="h-5 w-5" />
-          </button>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-3">
+          <h3 className="font-bold text-lg text-gray-800">Productivity</h3>
+          <p className="text-sm text-gray-500">{period.year}</p>
         </div>
+        <button className="text-gray-500 hover:text-gray-800">
+          <Settings className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="flex-grow min-h-0">

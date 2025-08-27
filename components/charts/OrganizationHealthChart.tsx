@@ -64,7 +64,13 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
         type: "bar",
         data: data.previousYearData,
         barWidth: "40%",
-        label: { show: false }, // Label di dalam bar disembunyikan agar lebih rapi
+        label: {
+          show: true,
+          position: "insideRight", // Posisi di dalam bar, sebelah kanan
+          color: "#fff", // Warna teks putih
+          fontWeight: "bold",
+          formatter: "{c}", // Tampilkan nilai data
+        }, // Label di dalam bar disembunyikan agar lebih rapi
         itemStyle: { color: "#adb5bd" },
       },
       {
@@ -72,7 +78,13 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
         type: "bar",
         data: data.currentYearData,
         barWidth: "40%",
-        label: { show: false }, // Label di dalam bar disembunyikan agar lebih rapi
+        label: {
+          show: true,
+          position: "insideRight",
+          color: "#fff",
+          fontWeight: "bold",
+          formatter: "{c}",
+        }, // Label di dalam bar disembunyikan agar lebih rapi
         itemStyle: { color: "#6c757d" },
       },
     ].filter((series) => series.data && series.data.length > 0),
@@ -82,7 +94,7 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
     <div className="bg-white p-6 rounded-lg shadow-md w-full h-full">
       <h2 className="text-xl font-semibold">Organization Health Index</h2>
       <div className="my-2">
-        <span className="text-6xl font-bold text-gray-800">
+        <span className="text-3xl font-bold text-gray-800">
           {data.currentYearScore.toLocaleString("id-ID", {
             minimumFractionDigits: 1,
             maximumFractionDigits: 1,

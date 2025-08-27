@@ -1,12 +1,16 @@
+// File: /components/widgets/TotalHeadcountCard.tsx
+
 "use client";
-import { Mars, Venus } from "lucide-react";
+import { Mars, Venus, TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 
+// 1. Perbarui interface untuk menerima 'change'
 interface HeadcountData {
   total: number;
   male: number;
   female: number;
+  change?: string; // <-- Tambahkan properti opsional 'change'
 }
 
 const TotalHeadcountCard = () => {
@@ -37,7 +41,7 @@ const TotalHeadcountCard = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const apiData = await response.json();
+        const apiData: HeadcountData = await response.json(); // Terapkan tipe baru
         setData(apiData);
       } catch (error) {
         console.error("Fetch error for Headcount:", error);
@@ -50,15 +54,23 @@ const TotalHeadcountCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  const isPositive = data?.change?.startsWith("+");
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow-md text-white h-full flex flex-col">
       <div>
         <p className="text-gray-400 text-sm">Total Headcount</p>
         <p className="text-4xl font-bold mt-1">
-          {loading ? "..." : data?.total ?? 0}{" "}
+          {loading ? "..." : data?.total.toLocaleString("id-ID") ?? 0}{" "}
           <span className="text-xl font-normal">Employee</span>
         </p>
-        <p className="text-green-500 text-sm mt-1">+10% | Year on Year</p>
+
+        {/* 2. Tampilkan data YoY secara dinamis */}
+        {data?.change && (
+          <p className="text-green-500 text-sm mt-1 flex items-center gap-1">
+            {data.change}
+          </p>
+        )}
       </div>
 
       <div className="border-t border-gray-700 my-4"></div>
@@ -66,24 +78,22 @@ const TotalHeadcountCard = () => {
       <div className="flex justify-between mt-auto">
         <div className="flex flex-col items-center flex-1">
           <div className="p-3 bg-blue-900/30 rounded-full mb-2">
-            <Mars className="h-8 w-8 text-blue-400" /> {/* Perbesar ikon */}
+            <Mars className="h-8 w-8 text-blue-400" />
           </div>
           <p className="text-2xl font-bold">
-            {loading ? "..." : data?.male ?? 0}
+            {loading ? "..." : data?.male.toLocaleString("id-ID") ?? 0}
           </p>
-          <p className="text-sm text-gray-400 mt-1">Male</p>{" "}
-          {/* Perbesar teks */}
+          <p className="text-sm text-gray-400 mt-1">Male</p>
         </div>
 
         <div className="flex flex-col items-center flex-1">
           <div className="p-3 bg-pink-900/30 rounded-full mb-2">
-            <Venus className="h-8 w-8 text-pink-400" /> {/* Perbesar ikon */}
+            <Venus className="h-8 w-8 text-pink-400" />
           </div>
           <p className="text-2xl font-bold">
-            {loading ? "..." : data?.female ?? 0}
+            {loading ? "..." : data?.female.toLocaleString("id-ID") ?? 0}
           </p>
-          <p className="text-sm text-gray-400 mt-1">Female</p>{" "}
-          {/* Perbesar teks */}
+          <p className="text-sm text-gray-400 mt-1">Female</p>
         </div>
       </div>
     </div>

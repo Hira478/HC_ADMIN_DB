@@ -66,11 +66,11 @@ const EmployeeCostChartCard = () => {
     },
     legend: {
       data: chartData?.series.map((s) => s.name) || [],
-      top: "top",
+      top: "bottom",
       itemWidth: 15,
       itemHeight: 10,
     },
-    grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+    grid: { left: "3%", right: "4%", bottom: "15%", containLabel: true },
     xAxis: {
       type: "category",
       boundaryGap: false, // lebih cocok untuk line chart
