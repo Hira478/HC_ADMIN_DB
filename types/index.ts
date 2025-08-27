@@ -35,6 +35,7 @@ export interface HeadcountData {
 // Tipe untuk data kartu productivity & employee cost
 export interface MetricData {
   value: string;
+  change?: string;
 }
 
 export interface ProductivityCardData {
@@ -46,7 +47,8 @@ export interface ProductivityCardData {
 
 export interface EmployeeCostCardData {
   total: MetricData;
-  ratio: MetricData;
+  costPerEmployee: MetricData; // <-- Ganti nama dari 'ratio'
+  ratio: MetricData; // <-- Tambahkan properti baru
 }
 
 // Tipe gabungan untuk semua data demografi yang di-fetch oleh page.tsx

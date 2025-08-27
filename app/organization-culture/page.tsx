@@ -9,6 +9,13 @@ import { useFilters } from "@/contexts/FilterContext";
 import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
 import { CultureMaturityData } from "@/app/api/charts/culture-maturity/route";
 import HcmaBarChart from "@/components/charts/HcmaBarChart";
+import FormationRasioChart from "@/components/charts/FormationRasioChart";
+
+interface FormationRasioMonthData {
+  month: string;
+  totalHeadcount: number;
+  categories: { [key: string]: number };
+}
 
 interface SimpleChartData {
   categories: string[];
@@ -44,6 +51,35 @@ export default function OrganizationCulturePage() {
   const [orgStructureData, setOrgStructureData] =
     useState<OrgStructureData | null>(null);
   const [isLoadingOrgStructure, setIsLoadingOrgStructure] = useState(true);
+  const [formationRasioData, setFormationRasioData] = useState<
+    FormationRasioMonthData[] | null
+  >(null);
+  const [isLoadingFormation, setIsLoadingFormation] = useState(true);
+
+  useEffect(() => {
+    if (selectedCompany && period.year) {
+      setIsLoadingFormation(true);
+      const fetchData = async () => {
+        try {
+          const res = await fetch(
+            `/api/charts/formation-rasio?companyId=${selectedCompany}&year=${period.year}`
+          );
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          setFormationRasioData(data);
+        } catch (error) {
+          console.error(error);
+          setFormationRasioData([]);
+        } finally {
+          setIsLoadingFormation(false);
+        }
+      };
+      fetchData();
+    } else {
+      setFormationRasioData(null);
+      setIsLoadingFormation(false);
+    }
+  }, [selectedCompany, period.year]);
 
   useEffect(() => {
     if (selectedCompany && period.year) {
@@ -207,12 +243,19 @@ export default function OrganizationCulturePage() {
       {/* --- SECTION 1 --- */}
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-full lg:w-3/4">
-          <AreaLineChart
+          {/* <AreaLineChart
             key="formation-ratio"
             title="Employee Formation Rasio"
             subtitle={period.year.toString()}
             chartData={orgStructureData?.formationRatioChart || null}
             isLoading={isLoadingOrgStructure}
+          />
+          */}
+          <FormationRasioChart
+            title="Employee Formation Rasio"
+            subtitle={period.year.toString()}
+            data={formationRasioData}
+            isLoading={isLoadingFormation}
           />
         </div>
         <div className="w-full lg:w-1/4 flex flex-col gap-6">
@@ -226,7 +269,7 @@ export default function OrganizationCulturePage() {
                   : `${orgStructureData?.formationRatioCard.enabler || 0}/${
                       orgStructureData?.formationRatioCard.revenueGenerator || 0
                     }`,
-                label: "Enabler/Revenue Generator",
+                label: "Enabler/\nRevenue Generator",
               },
             ]}
           />

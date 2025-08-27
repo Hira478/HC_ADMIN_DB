@@ -11,7 +11,7 @@ export default function WorkforcePlanningPage() {
   // 3. Siapkan data dummy untuk chart di Section 2
   const newEmployeeData = {
     categories: ["Jan", "Feb", "Mar", "Apr", "May"],
-    data: [3, 5, 3, 2, 3],
+    data: [45, 30, 70, 29, 54],
   };
 
   const costOfHireData = {

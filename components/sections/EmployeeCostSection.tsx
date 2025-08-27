@@ -1,7 +1,6 @@
 "use client";
 
 import StatCard from "@/components/widgets/StatCard";
-import { DollarSign, Divide } from "lucide-react";
 import EmployeeCostChartCard from "@/components/widgets/EmployeeCostChartCard";
 import type { EmployeeCostCardData } from "@/types";
 
@@ -16,7 +15,15 @@ const EmployeeCostSection = ({
     return (
       <section>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Employee Cost</h2>
-        <div className="text-center p-10">Memuat data biaya...</div>
+        {/* Skeleton loading untuk 3 kartu */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md h-28 animate-pulse"></div>
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md h-28 animate-pulse"></div>
+            <div className="bg-gray-700 p-6 rounded-lg shadow-md h-28 animate-pulse"></div>
+          </div>
+          <div className="lg:col-span-3 bg-gray-200 rounded-lg animate-pulse"></div>
+        </div>
       </section>
     );
   }
@@ -36,27 +43,34 @@ const EmployeeCostSection = ({
     <section>
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Employee Cost</h2>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Kolom Kiri: 2 Stat Card */}
+        {/* Kolom Kiri: 3 Stat Card */}
         <div className="lg:col-span-1 flex flex-col gap-6">
+          {/* KARTU 1: Total Employee Cost */}
           <StatCard
             title="Total Employee Cost"
             value={data.total.value}
-            change="+10% | Year on Year"
-            comparison="" // <-- Tambahkan ini
-            rkdapInfo=""
-            // icon={<DollarSign size={24} />}
+            change={data.total.change || ""}
+            rkdapInfo="Total Employee Cost Key Data"
             variant="dark"
-            className="flex-1" // <-- Tambahkan className="flex-1"
+            className="flex-1"
           />
+          {/* KARTU 2: Cost per Employee */}
+          <StatCard
+            title="Cost per Employee"
+            value={data.costPerEmployee.value}
+            change={data.costPerEmployee.change || ""}
+            rkdapInfo="Cost per Employee Key Data"
+            variant="dark"
+            className="flex-1"
+          />
+          {/* KARTU 3: Employee Cost Rasio */}
           <StatCard
             title="Employee Cost Rasio"
             value={data.ratio.value}
-            change="+1% | Year on Year"
-            comparison="" // <-- Tambahkan ini
-            rkdapInfo=""
-            // icon={<Divide size={24} />}
+            change={data.ratio.change || ""}
+            rkdapInfo="Employee Cost Rasio Key Data"
             variant="dark"
-            className="flex-1" // <-- Tambahkan className="flex-1"
+            className="flex-1"
           />
         </div>
 
@@ -68,4 +82,5 @@ const EmployeeCostSection = ({
     </section>
   );
 };
+
 export default EmployeeCostSection;

@@ -1,4 +1,6 @@
-import { PrismaClient, ProductivityStat, Headcount } from "@prisma/client";
+// File: app/api/productivity/metrics/route.ts
+
+import { PrismaClient, ProductivityStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
@@ -9,123 +11,197 @@ const sumProductivity = (stats: ProductivityStat[]) =>
       acc.revenue += current.revenue;
       acc.netProfit += current.netProfit;
       acc.totalEmployeeCost += current.totalEmployeeCost;
+      acc.totalCost += current.totalCost;
       return acc;
     },
-    { revenue: 0, netProfit: 0, totalEmployeeCost: 0 }
+    { revenue: 0, netProfit: 0, totalEmployeeCost: 0, totalCost: 0 }
   );
 
-const sumHeadcount = (stats: Headcount[]) =>
-  stats.reduce(
-    (acc, current) => {
-      acc.totalCount += current.totalCount;
-      return acc;
-    },
-    { totalCount: 0 }
-  );
-
-// VERSI BARU FUNGSI FORMATTING
 const formatCurrency = (value: number, isPerEmployee = false) => {
   const absValue = Math.abs(value);
   const sign = value < 0 ? "-" : "";
-
-  // Untuk nilai per karyawan, gunakan 2 angka desimal
   if (isPerEmployee) {
     return `${sign}Rp ${absValue.toLocaleString("id-ID", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
   }
-
-  // Untuk nilai total (revenue, profit, cost), tampilkan angka penuh tanpa desimal
   return `${sign}Rp ${absValue.toLocaleString("id-ID", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })}`;
 };
 
+const calculateYoY = (current: number, previous: number): number => {
+  if (previous === 0) {
+    return 0;
+  }
+  const denominator = Math.abs(previous);
+  const percentageChange = ((current - previous) / denominator) * 100;
+  return percentageChange;
+};
+
+const formatYoYString = (percentage: number): string => {
+  const sign = percentage >= 0 ? "+" : "";
+  return `${sign}${percentage.toFixed(1)}% | Year on Year`;
+};
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyIdStr = searchParams.get("companyId");
-  const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
-  // Perubahan: Hilangkan 'type' karena sekarang hanya bulanan
-  const year = parseInt(searchParams.get("year") || "2025");
-  const value = parseInt(searchParams.get("value") || "6");
+  const companyId = parseInt(searchParams.get("companyId") || "0");
+  const currentYear = parseInt(searchParams.get("year") || "2025");
+  const monthValue = parseInt(searchParams.get("value") || "1");
+  const previousYear = currentYear - 1;
 
-  if (!companyId || isNaN(companyId)) {
+  if (!companyId) {
     return NextResponse.json(
       { error: "Company ID diperlukan." },
       { status: 400 }
     );
   }
 
-  // Logika baru untuk mengambil bulan secara kumulatif
   const monthsToFetch: number[] = Array.from(
-    { length: value },
+    { length: monthValue },
     (_, i) => i + 1
   );
 
   try {
-    const productivityData = await prisma.productivityStat.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
-    });
+    const [
+      currentYearProductivity,
+      previousYearProductivity,
+      currentYearHeadcount,
+      previousYearHeadcount,
+    ] = await Promise.all([
+      prisma.productivityStat.findMany({
+        where: { companyId, year: currentYear, month: { in: monthsToFetch } },
+      }),
+      prisma.productivityStat.findMany({
+        where: { companyId, year: previousYear, month: { in: monthsToFetch } },
+      }),
+      prisma.headcount.findFirst({
+        where: { companyId, year: currentYear, month: monthValue },
+      }),
+      prisma.headcount.findFirst({
+        where: { companyId, year: previousYear, month: monthValue },
+      }),
+    ]);
 
-    // Perubahan: Ambil headcount untuk bulan yang dipilih saja ('value')
-    const headcountData = await prisma.headcount.findFirst({
-      where: { companyId, year, month: value },
-    });
+    // --- Kalkulasi untuk TAHUN INI ---
+    const totalProductivityCurrent = sumProductivity(currentYearProductivity);
+    const headcountCurrent = currentYearHeadcount?.totalCount || 0;
 
-    if (productivityData.length === 0 || !headcountData) {
-      return NextResponse.json(
-        { error: "Data tidak lengkap untuk periode ini." },
-        { status: 404 }
-      );
-    }
-
-    // Perubahan: Sum productivity data secara kumulatif
-    const totalProductivity = sumProductivity(productivityData);
-
-    // Gunakan headcount dari bulan yang dipilih
-    const relevantHeadcount = headcountData.totalCount;
-
-    // Perhitungan metrik per karyawan
-    const revenuePerEmployee =
-      relevantHeadcount > 0 ? totalProductivity.revenue / relevantHeadcount : 0;
-    const netProfitPerEmployee =
-      relevantHeadcount > 0
-        ? totalProductivity.netProfit / relevantHeadcount
+    // 1. Ubah nama variabel untuk "Cost per Employee"
+    const costPerEmployeeCurrent =
+      headcountCurrent > 0
+        ? totalProductivityCurrent.totalEmployeeCost / headcountCurrent
         : 0;
-    const employeeCostRatio =
-      relevantHeadcount > 0
-        ? totalProductivity.totalEmployeeCost / relevantHeadcount
+
+    // 2. Tambahkan perhitungan untuk "Employee Cost Rasio" yang baru
+    const employeeCostRatioCurrent =
+      totalProductivityCurrent.totalCost > 0
+        ? (totalProductivityCurrent.totalEmployeeCost /
+            totalProductivityCurrent.totalCost) *
+          100
         : 0;
+
+    // --- Kalkulasi untuk TAHUN SEBELUMNYA ---
+    const totalProductivityPrevious = sumProductivity(previousYearProductivity);
+    const headcountPrevious = previousYearHeadcount?.totalCount || 0;
+    const costPerEmployeePrevious =
+      headcountPrevious > 0
+        ? totalProductivityPrevious.totalEmployeeCost / headcountPrevious
+        : 0;
+    const employeeCostRatioPrevious =
+      totalProductivityPrevious.totalCost > 0
+        ? (totalProductivityPrevious.totalEmployeeCost /
+            totalProductivityPrevious.totalCost) *
+          100
+        : 0;
+
+    // --- Hitung YoY untuk semua metrik ---
+    const yoyTotalEmployeeCost = calculateYoY(
+      totalProductivityCurrent.totalEmployeeCost,
+      totalProductivityPrevious.totalEmployeeCost
+    );
+    const yoyCostPerEmployee = calculateYoY(
+      costPerEmployeeCurrent,
+      costPerEmployeePrevious
+    );
+    const yoyEmployeeCostRatio = calculateYoY(
+      employeeCostRatioCurrent,
+      employeeCostRatioPrevious
+    );
+
+    // (Perhitungan YoY untuk productivity tidak perlu diubah)
+    const yoyRevenue = calculateYoY(
+      totalProductivityCurrent.revenue,
+      totalProductivityPrevious.revenue
+    );
+    const yoyNetProfit = calculateYoY(
+      totalProductivityCurrent.netProfit,
+      totalProductivityPrevious.netProfit
+    );
+    const yoyRevenuePerEmployee = calculateYoY(
+      headcountCurrent > 0
+        ? totalProductivityCurrent.revenue / headcountCurrent
+        : 0,
+      headcountPrevious > 0
+        ? totalProductivityPrevious.revenue / headcountPrevious
+        : 0
+    );
+    const yoyNetProfitPerEmployee = calculateYoY(
+      headcountCurrent > 0
+        ? totalProductivityCurrent.netProfit / headcountCurrent
+        : 0,
+      headcountPrevious > 0
+        ? totalProductivityPrevious.netProfit / headcountPrevious
+        : 0
+    );
 
     const response = {
       productivity: {
         revenue: {
-          value: formatCurrency(totalProductivity.revenue),
-          unit: "(dalam Juta)",
+          value: formatCurrency(totalProductivityCurrent.revenue),
+          change: formatYoYString(yoyRevenue),
         },
         netProfit: {
-          value: formatCurrency(totalProductivity.netProfit),
-          unit: "(dalam Juta)",
+          value: formatCurrency(totalProductivityCurrent.netProfit),
+          change: formatYoYString(yoyNetProfit),
         },
         revenuePerEmployee: {
-          value: formatCurrency(revenuePerEmployee, true),
-          unit: "(Juta/Karyawan)",
+          value: formatCurrency(
+            headcountCurrent > 0
+              ? totalProductivityCurrent.revenue / headcountCurrent
+              : 0,
+            true
+          ),
+          change: formatYoYString(yoyRevenuePerEmployee),
         },
         netProfitPerEmployee: {
-          value: formatCurrency(netProfitPerEmployee, true),
-          unit: "(Juta/Karyawan)",
+          value: formatCurrency(
+            headcountCurrent > 0
+              ? totalProductivityCurrent.netProfit / headcountCurrent
+              : 0,
+            true
+          ),
+          change: formatYoYString(yoyNetProfitPerEmployee),
         },
       },
+      // 3. Sesuaikan struktur respons employeeCost
       employeeCost: {
         total: {
-          value: formatCurrency(totalProductivity.totalEmployeeCost),
-          unit: "(dalam Juta)",
+          value: formatCurrency(totalProductivityCurrent.totalEmployeeCost),
+          change: formatYoYString(yoyTotalEmployeeCost),
+        },
+        costPerEmployee: {
+          // <-- Nama baru
+          value: formatCurrency(costPerEmployeeCurrent, true),
+          change: formatYoYString(yoyCostPerEmployee),
         },
         ratio: {
-          value: formatCurrency(employeeCostRatio, true),
-          unit: "(Juta/Karyawan)",
+          // <-- Metrik baru
+          value: `${employeeCostRatioCurrent.toFixed(1)}%`,
+          change: formatYoYString(yoyEmployeeCostRatio),
         },
       },
     };

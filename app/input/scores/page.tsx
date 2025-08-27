@@ -8,11 +8,12 @@ import CultureMaturityForm from "@/components/forms/CultureMaturityForm";
 import EmployeeEngagementForm from "@/components/forms/EmployeeEngagementForm";
 import OrganizationStructureForm from "@/components/forms/OrganizationStructureForm";
 import OrganizationHealthForm from "@/components/forms/OrganizationHealthForm";
+import FormationRasioForm from "@/components/forms/FormationRasioForm";
 import { Company } from "@/types";
 
 // 2. Definisikan semua tab di dalam satu array agar rapi
 const TABS = [
-  { id: "org-structure", label: "Struktur Organisasi" },
+  { id: "formation-rasio", label: "Formation Rasio" },
   { id: "org-health", label: "Organization Health" },
   { id: "hcma", label: "Skor HCMA" },
   { id: "culture", label: "Skor Culture Maturity" },
@@ -56,8 +57,8 @@ export default function InputScoresPage() {
       </div>
 
       <div>
-        {activeTab === "org-structure" && (
-          <OrganizationStructureForm companies={companies} />
+        {activeTab === "formation-rasio" && (
+          <FormationRasioForm companies={companies} />
         )}
         {activeTab === "org-health" && (
           <OrganizationHealthForm companies={companies} />

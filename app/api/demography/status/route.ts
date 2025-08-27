@@ -1,23 +1,36 @@
-import { PrismaClient, EmployeeStatusStat } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-// Fungsi ini tidak lagi digunakan, bisa dihapus
-// const sumStatusStats = (stats: EmployeeStatusStat[]) => { ... };
+// Fungsi helper untuk menghitung YoY
+const calculateYoY = (current: number, previous: number): number => {
+  if (previous === 0) return 0;
+  const denominator = Math.abs(previous);
+  return ((current - previous) / denominator) * 100;
+};
+
+// Fungsi helper untuk memformat string YoY
+const formatYoYString = (percentage: number): string => {
+  const sign = percentage >= 0 ? "+" : "";
+  return `${sign}${percentage.toFixed(1)}% | Year on Year`;
+};
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyIdStr = searchParams.get("companyId");
-  const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
-
+  const companyId = parseInt(searchParams.get("companyId") || "0");
   const type = searchParams.get("type") || "monthly";
-  const year = parseInt(searchParams.get("year") || "2025");
-  const value = parseInt(searchParams.get("value") || "8");
+  const currentYear = parseInt(
+    searchParams.get("year") || new Date().getFullYear().toString()
+  );
+  const value = parseInt(
+    searchParams.get("value") || (new Date().getMonth() + 1).toString()
+  );
+  const previousYear = currentYear - 1;
 
-  if (!companyId || isNaN(companyId)) {
+  if (!companyId) {
     return NextResponse.json(
-      { error: "Company ID diperlukan dan harus berupa angka." },
+      { error: "Company ID diperlukan." },
       { status: 400 }
     );
   }
@@ -44,66 +57,43 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const statusDataFromDb = await prisma.employeeStatusStat.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
-      orderBy: {
-        month: "asc",
+    const [statusCurrentYear, statusPreviousYear] = await Promise.all([
+      prisma.employeeStatusStat.findMany({
+        where: { companyId, year: currentYear, month: { in: monthsToFetch } },
+        orderBy: { month: "asc" },
+      }),
+      prisma.employeeStatusStat.findMany({
+        where: { companyId, year: previousYear, month: { in: monthsToFetch } },
+        orderBy: { month: "asc" },
+      }),
+    ]);
+
+    const latestMonth = Math.max(...monthsToFetch);
+    const dataCurrent = statusCurrentYear.find((s) => s.month === latestMonth);
+    const dataPrevious = statusPreviousYear.find(
+      (s) => s.month === latestMonth
+    );
+
+    const permanentCurrent = dataCurrent?.permanentCount ?? 0;
+    const contractCurrent = dataCurrent?.contractCount ?? 0;
+    const permanentPrevious = dataPrevious?.permanentCount ?? 0;
+    const contractPrevious = dataPrevious?.contractCount ?? 0;
+
+    const yoyPermanent = calculateYoY(permanentCurrent, permanentPrevious);
+    const yoyContract = calculateYoY(contractCurrent, contractPrevious);
+
+    const response = {
+      chartData: [
+        { name: "Permanent", value: permanentCurrent },
+        { name: "Contract", value: contractCurrent },
+      ],
+      yoy: {
+        permanent: formatYoYString(yoyPermanent),
+        contract: formatYoYString(yoyContract),
       },
-    });
+    };
 
-    // Siapkan data default jika tidak ada data yang ditemukan
-    const defaultDataForChart = [
-      {
-        name: "Permanent",
-        value: 0,
-        itemStyle: { color: "#C53030" },
-        label: { show: false },
-      },
-      {
-        name: "Contract",
-        value: 0,
-        itemStyle: { color: "#4A5568" },
-        label: { show: false },
-      },
-    ];
-
-    if (statusDataFromDb.length === 0) {
-      return NextResponse.json(defaultDataForChart);
-    }
-
-    // <<< MULAI LOGIKA BARU UNTUK MEMILIH DATA >>>
-    let dataForPeriod: EmployeeStatusStat | undefined;
-
-    if (type === "monthly") {
-      dataForPeriod = statusDataFromDb[0];
-    } else {
-      const latestMonth = Math.max(...monthsToFetch);
-      dataForPeriod = statusDataFromDb.find(
-        (stat) => stat.month === latestMonth
-      );
-    }
-
-    if (!dataForPeriod) {
-      // Jika data bulan terakhir tidak ada, kembalikan data default
-      return NextResponse.json(defaultDataForChart);
-    }
-    // <<< AKHIR LOGIKA BARU >>>
-
-    // <<< GUNAKAN 'dataForPeriod' UNTUK MENGISI DATA CHART >>>
-    const dataForChart = [
-      {
-        name: "Permanent",
-        value: dataForPeriod.permanentCount,
-        itemStyle: { color: "#C53030" },
-      },
-      {
-        name: "Contract",
-        value: dataForPeriod.contractCount,
-        itemStyle: { color: "#4A5568" },
-      },
-    ];
-
-    return NextResponse.json(dataForChart);
+    return NextResponse.json(response);
   } catch (error) {
     console.error("API Error in /status:", error);
     return NextResponse.json(

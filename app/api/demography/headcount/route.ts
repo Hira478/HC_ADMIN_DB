@@ -1,31 +1,42 @@
+// File: app/api/demography/headcount/route.ts
+
 import { PrismaClient, Headcount } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-// Fungsi ini tidak lagi digunakan, bisa dihapus
-// const sumHeadcounts = (stats: Headcount[]) => { ... };
+// --- Tambahkan fungsi helper dari API sebelumnya ---
+const calculateYoY = (current: number, previous: number): number => {
+  if (previous === 0) return 0;
+  const denominator = Math.abs(previous);
+  return ((current - previous) / denominator) * 100;
+};
+
+const formatYoYString = (percentage: number): string => {
+  const sign = percentage >= 0 ? "+" : "";
+  return `${sign}${percentage.toFixed(1)}% | Year on Year`;
+};
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyIdStr = searchParams.get("companyId");
-  const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
-
+  const companyId = parseInt(searchParams.get("companyId") || "0");
   const type = searchParams.get("type") || "monthly";
-  const year = parseInt(searchParams.get("year") || "2025");
-  const value = parseInt(searchParams.get("value") || "8");
+  const currentYear = parseInt(searchParams.get("year") || "2025");
+  const value = parseInt(searchParams.get("value") || "1");
+  const previousYear = currentYear - 1;
 
-  if (!companyId || isNaN(companyId)) {
+  if (!companyId) {
     return NextResponse.json(
-      { error: "Company ID diperlukan dan harus berupa angka." },
+      { error: "Company ID diperlukan." },
       { status: 400 }
     );
   }
 
+  // Tentukan bulan mana saja yang perlu diambil datanya
   let monthsToFetch: number[] = [];
-  if (type === "monthly") {
-    monthsToFetch = [value];
-  } else if (type === "quarterly") {
+  if (type === "monthly") monthsToFetch = [value];
+  // ... (logika lain untuk quarterly, semesterly, yearly tetap sama) ...
+  else if (type === "quarterly") {
     const quarterMonths = [
       [1, 2, 3],
       [4, 5, 6],
@@ -44,46 +55,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const headcountDataFromDb = await prisma.headcount.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
-      orderBy: {
-        month: "asc",
-      },
-    });
+    // Ambil data untuk tahun ini dan tahun lalu secara bersamaan
+    const [headcountCurrentYear, headcountPreviousYear] = await Promise.all([
+      prisma.headcount.findMany({
+        where: { companyId, year: currentYear, month: { in: monthsToFetch } },
+        orderBy: { month: "asc" },
+      }),
+      prisma.headcount.findMany({
+        where: { companyId, year: previousYear, month: { in: monthsToFetch } },
+        orderBy: { month: "asc" },
+      }),
+    ]);
 
-    if (headcountDataFromDb.length === 0) {
-      return NextResponse.json({ total: 0, male: 0, female: 0 });
-    }
+    // Logika untuk mendapatkan data di akhir periode (bulan terakhir)
+    const latestMonthInPeriod = Math.max(...monthsToFetch);
+    const dataForCurrentPeriod = headcountCurrentYear.find(
+      (stat) => stat.month === latestMonthInPeriod
+    );
+    const dataForPreviousPeriod = headcountPreviousYear.find(
+      (stat) => stat.month === latestMonthInPeriod
+    );
 
-    // <<< MULAI LOGIKA BARU UNTUK MEMILIH DATA >>>
-    let dataForPeriod: Headcount | undefined;
+    // Dapatkan nilai total headcount untuk kedua periode
+    const totalCurrent = dataForCurrentPeriod?.totalCount ?? 0;
+    const totalPrevious = dataForPreviousPeriod?.totalCount ?? 0;
 
-    if (type === "monthly") {
-      dataForPeriod = headcountDataFromDb[0];
-    } else {
-      const latestMonth = Math.max(...monthsToFetch);
-      dataForPeriod = headcountDataFromDb.find(
-        (stat) => stat.month === latestMonth
-      );
-    }
+    // Hitung YoY dan format stringnya
+    const yoyPercentage = calculateYoY(totalCurrent, totalPrevious);
+    const yoyString = formatYoYString(yoyPercentage);
 
-    if (!dataForPeriod) {
-      return NextResponse.json({
-        total: 0,
-        male: 0,
-        female: 0,
-        message: `Data headcount untuk bulan terakhir (${Math.max(
-          ...monthsToFetch
-        )}) tidak ditemukan.`,
-      });
-    }
-    // <<< AKHIR LOGIKA BARU >>>
-
-    // <<< GUNAKAN 'dataForPeriod' UNTUK MENGISI RESPON >>>
+    // Kirim respons lengkap
     return NextResponse.json({
-      total: dataForPeriod.totalCount,
-      male: dataForPeriod.maleCount,
-      female: dataForPeriod.femaleCount,
+      total: totalCurrent,
+      male: dataForCurrentPeriod?.maleCount ?? 0,
+      female: dataForCurrentPeriod?.femaleCount ?? 0,
+      change: yoyString, // <-- Tambahkan properti 'change'
     });
   } catch (error) {
     console.error("API Error in /headcount:", error);

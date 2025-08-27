@@ -7,6 +7,7 @@ import {
   Globe,
   Briefcase,
   ClipboardEdit,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // <-- Import hook untuk mendeteksi path
@@ -65,7 +66,6 @@ const Sidebar = () => {
           icon={<Globe className="h-6 w-6" />}
           title="Organization & Culture"
         />
-        {/*
         <SidebarItem
           href="/workforce-planning"
           icon={<Briefcase className="h-6 w-6" />}
@@ -76,14 +76,14 @@ const Sidebar = () => {
           icon={<ClipboardEdit className="h-6 w-6" />}
           title="Input Skor"
         />
-        */}
 
         {/* 3. Nonaktifkan sementara tautan input dan upload */}
-        {/* <SidebarItem
+        <SidebarItem
           href="/input/productivity"
           icon={<DollarSign className="h-6 w-6" />}
           title="Input Productivity Data"
         />
+        {/*
         <SidebarItem
           href="/input/employee-cost"
           icon={<Wallet className="h-6 w-6" />}

@@ -3,15 +3,23 @@ import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
 
+// 1. Definisikan tipe data yang lebih lengkap sesuai respons API
 interface StatusData {
   name: string;
   value: number;
-  itemStyle?: { color: string };
+}
+interface EmployeeStatusState {
+  chartData: StatusData[];
+  yoy: {
+    permanent: string;
+    contract: string;
+  };
 }
 
 const EmployeeStatusCard = () => {
   const { selectedCompany, period } = useFilters();
-  const [chartData, setChartData] = useState<StatusData[]>([]);
+  // 2. Gunakan state baru yang bisa menampung chartData dan yoy
+  const [data, setData] = useState<EmployeeStatusState | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,11 +42,12 @@ const EmployeeStatusCard = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
-        setChartData(data);
+        // 3. Simpan seluruh objek respons dari API ke dalam state
+        const apiData: EmployeeStatusState = await response.json();
+        setData(apiData);
       } catch (error) {
         console.error("Fetch error for status chart:", error);
-        setChartData([]);
+        setData(null);
       } finally {
         setLoading(false);
       }
@@ -67,10 +76,17 @@ const EmployeeStatusCard = () => {
         label: {
           show: true,
           position: "inside",
-          formatter: "{b}\n{c}", // tampilkan jumlah
+          formatter: "{b}\n{c}",
           fontSize: 14,
           color: "#fff",
           fontWeight: "bold",
+          textBorderColor: "#000",
+          textBorderWidth: 2,
+          textBorderType: "solid",
+          textShadowColor: "rgba(0,0,0,0.5)",
+          textShadowBlur: 2,
+          textShadowOffsetX: 1,
+          textShadowOffsetY: 1,
         },
         labelLine: {
           show: false,
@@ -82,9 +98,13 @@ const EmployeeStatusCard = () => {
             show: true,
             fontSize: 18,
             fontWeight: "bold",
+            textBorderColor: "#000",
+            textBorderWidth: 2,
+            textBorderType: "solid",
           },
         },
-        data: chartData.map((item) => ({
+        // 4. Arahkan sumber data chart ke `data.chartData`
+        data: (data?.chartData || []).map((item) => ({
           ...item,
           itemStyle: {
             color: item.name === "Permanent" ? "#C53030" : "#4A5568",
@@ -94,10 +114,18 @@ const EmployeeStatusCard = () => {
     ],
   };
 
-  if (loading && chartData.length === 0) {
+  if (loading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
         Memuat...
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
+        Data tidak tersedia.
       </div>
     );
   }
@@ -106,6 +134,7 @@ const EmployeeStatusCard = () => {
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
       <h3 className="font-bold text-xl text-gray-800 mb-2">Employee Status</h3>
 
+      {/* Tampilan legenda kustom Anda tetap sama */}
       <div className="flex justify-center gap-8 mt-4">
         <div className="flex items-center translate-y-[60px]">
           <span className="h-4 w-4 rounded-full bg-red-700 mr-2"></span>
@@ -117,6 +146,7 @@ const EmployeeStatusCard = () => {
         </div>
       </div>
 
+      {/* Tampilan chart Anda tetap sama */}
       <div className="flex-1 flex items-center justify-center -mt-2">
         <ReactECharts
           option={option}
@@ -127,14 +157,14 @@ const EmployeeStatusCard = () => {
         />
       </div>
 
+      {/* 5. Ganti teks statis dengan data YoY yang dinamis */}
       <div className="text-base text-gray-600 -mt-3 text-center space-y-1 transform -translate-y-1">
-        {" "}
-        {/* Added -translate-y-1 */}
         <p className="font-medium">
-          Permanent: <span className="text-green-600">+2%</span> | Year on Year
+          Permanent:{" "}
+          <span className="text-green-600">{data.yoy.permanent}</span>
         </p>
         <p className="font-medium">
-          Contract: <span className="text-green-600">+2%</span> | Year on Year
+          Contract: <span className="text-green-600">{data.yoy.contract}</span>
         </p>
       </div>
     </div>

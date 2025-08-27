@@ -111,8 +111,8 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
         <div className="md:w-1/4 text-center md:text-left md:pl-4">
           <h2 className="text-xl font-semibold">{title}</h2>
           <div className="my-2">
-            <span className="text-6xl font-bold">{mainScore}</span>
-            <p className="text-lg">{scoreLabel}</p>
+            <span className="text-3xl font-bold">{mainScore}</span>
+            <p className="text-base">{scoreLabel}</p>
             <p className="text-sm text-green-500">{trend}</p>
           </div>
         </div>
