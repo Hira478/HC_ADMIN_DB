@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import CardLoader from "../widgets/CardLoader";
 
@@ -26,13 +26,26 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
   yAxisUnitLabel,
   containerClassName = "bg-white",
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const chartRef = useRef<ReactECharts>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Re-render chart ketika data berubah
+  useEffect(() => {
+    if (chartRef.current && chartData) {
+      chartRef.current.getEchartsInstance().resize();
+    }
+  }, [chartData]);
+
   const options = {
     tooltip: {
       trigger: "axis",
     },
-    // 1. Beri ruang lebih di kiri untuk label sumbu Y
     grid: {
-      left: "8%",
+      left: "3%",
       right: "4%",
       bottom: "3%",
       containLabel: true,
@@ -44,9 +57,14 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
     },
     yAxis: {
       type: "value",
-      // 2. Batasi jumlah garis agar tidak tumpang tindih
       splitNumber: 4,
-      // 3. Hapus formatter agar menampilkan angka biasa (tidak ada "K" atau "M")
+      axisLabel: {
+        formatter: (value: number) => {
+          if (value >= 1e6) return value / 1e6 + "M";
+          if (value >= 1e3) return value / 1e3 + "K";
+          return value;
+        },
+      },
     },
     series: [
       {
@@ -106,7 +124,14 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
         )}
       </div>
       <div className="flex-grow min-h-0">
-        <ReactECharts option={options} style={{ height: "100%" }} />
+        {isMounted && (
+          <ReactECharts
+            ref={chartRef}
+            option={options}
+            style={{ height: "100%", minHeight: "220px" }}
+            opts={{ renderer: "canvas" }}
+          />
+        )}
       </div>
     </div>
   );

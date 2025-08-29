@@ -31,6 +31,7 @@ model Company {
   divisionStats DivisionStat[]
   manpowerPlannings ManpowerPlanning[]
   talentAcquisitionStats   TalentAcquisitionStat[]
+  turnoverStats            TurnoverStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -339,7 +340,20 @@ model TalentAcquisitionStat {
 
   newHireCount Int     @default(0) // Jumlah karyawan baru di bulan tsb
   costOfHire   Float   @default(0) // Biaya rekrutmen di bulan tsb (dalam Juta)
+  newHireRetention  Float   @default(0)
 
   company      Company @relation(fields: [companyId], references: [id])
+  @@unique([year, month, companyId])
+}
+
+model TurnoverStat {
+  id          Int     @id @default(autoincrement())
+  month       Int
+  year        Int
+  companyId   Int
+
+  resignCount Int     @default(0) // Jumlah karyawan resign di bulan tsb
+
+  company     Company @relation(fields: [companyId], references: [id])
   @@unique([year, month, companyId])
 }

@@ -1,53 +1,102 @@
-// components/charts/TurnOverChart.tsx
-
 "use client";
 
 import React from "react";
 import ReactECharts from "echarts-for-react";
+import type { TurnoverData } from "@/types";
 
-const TurnOverChart = () => {
-  const options = {
-    grid: { left: "20%", right: "5%", top: "5%", bottom: "5%" },
+interface TurnOverChartProps {
+  data: TurnoverData | null;
+  isLoading: boolean;
+}
+
+const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
+  const option = {
+    grid: {
+      left: "3%",
+      right: "4%",
+      top: "20%",
+      bottom: "3%",
+      containLabel: true,
+    },
     xAxis: {
-      type: "value",
-      show: false, // Sembunyikan sumbu X
+      type: "category",
+      boundaryGap: false,
+      data: data?.chartData.categories || [],
+      // 1. Ubah warna label sumbu X menjadi terang
+      axisLabel: {
+        color: "#A0AEC0", // Warna abu-abu terang
+      },
     },
     yAxis: {
-      type: "category",
-      data: ["May", "Apr", "Mar", "Feb", "Jan"], // Dibalik agar Mei di bawah
-      axisLine: { show: false },
-      axisTick: { show: false },
-      axisLabel: { color: "#E5E7EB" },
+      type: "value",
+      splitNumber: 3,
+      // 2. Ubah warna label sumbu Y menjadi terang
+      axisLabel: {
+        color: "#A0AEC0", // Warna abu-abu terang
+      },
     },
     series: [
       {
-        name: "Turn Over",
-        type: "bar",
-        data: [2, 5, 2, 3, 2], // Dibalik juga
-        barWidth: "60%",
-        itemStyle: { color: "#DC2626" },
+        name: "Resignations",
+        type: "line",
+        smooth: false,
+        showSymbol: true,
+        symbol: "circle",
+        symbolSize: 6,
+        data: data?.chartData.data || [],
+        areaStyle: {
+          color: "rgba(220, 38, 38, 0.1)",
+        },
+        itemStyle: {
+          color: "#DC2626",
+        },
+        lineStyle: {
+          color: "#DC2626",
+          width: 2,
+        },
         label: {
           show: true,
-          position: "insideRight",
-          color: "#fff",
-          fontWeight: "bold",
-          distance: 5,
+          position: "top",
+          // 3. Ubah warna label data menjadi putih
+          color: "#FFFFFF",
+          fontWeight: "normal",
         },
       },
     ],
-    backgroundColor: "transparent",
   };
 
-  return (
-    <div className="bg-[#343A40] p-6 rounded-lg shadow-md text-white h-full">
-      <div className="flex justify-between items-baseline mb-4">
-        <h3 className="text-md font-semibold text-gray-300">Turn Over Ratio</h3>
-        <div>
-          <span className="text-4xl font-bold">6.4%</span>
-          <span className="ml-2 text-red-400">-2%</span>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
+        Memuat...
       </div>
-      <ReactECharts option={options} style={{ height: "250px" }} />
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
+        Data tidak tersedia.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md h-full flex">
+      {/* Kolom Kiri: KPI */}
+      <div className="w-1/4 flex flex-col justify-center items-center pr-4 border-r border-gray-600">
+        <p className="text-gray-400 text-sm">Turn Over Ratio</p>
+        <p className="text-5xl font-bold my-1">{data.cumulativeRatio}%</p>
+        <p className="text-sm text-red-400">{data.change}</p>
+      </div>
+
+      {/* Kolom Kanan: Chart */}
+      <div className="w-3/4 pl-4">
+        <ReactECharts
+          option={option}
+          style={{ height: "100%", minHeight: "200px" }}
+        />
+      </div>
     </div>
   );
 };
