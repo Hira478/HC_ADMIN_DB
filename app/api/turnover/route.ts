@@ -1,5 +1,3 @@
-// File: app/api/turnover/route.ts
-
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -39,20 +37,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Definisikan periode kumulatif berdasarkan filter bulan
+  // Definisikan periode kumulatif untuk mengambil data resign
   const monthsToFetchCumulative = Array.from(
     { length: monthValue },
     (_, i) => i + 1
   );
 
   try {
-    // --- AMBIL SEMUA DATA YANG DIPERLUKAN ---
     const [
       turnoverCumulativeCurrent,
-      headcountCumulativeCurrent,
+      headcountCurrentMonth, // <-- Hanya ambil headcount bulan terpilih
       turnoverCumulativePrevious,
-      headcountCumulativePrevious,
-      turnoverForChart, // Data untuk chart tetap ambil 1 tahun penuh
+      headcountPreviousMonth, // <-- Hanya ambil headcount bulan terpilih tahun lalu
+      turnoverForChart,
     ] = await Promise.all([
       prisma.turnoverStat.findMany({
         where: {
@@ -61,11 +58,13 @@ export async function GET(request: NextRequest) {
           month: { in: monthsToFetchCumulative },
         },
       }),
-      prisma.headcount.findMany({
+      prisma.headcount.findUnique({
         where: {
-          companyId,
-          year: currentYear,
-          month: { in: monthsToFetchCumulative },
+          year_month_companyId: {
+            year: currentYear,
+            month: monthValue,
+            companyId,
+          },
         },
       }),
       prisma.turnoverStat.findMany({
@@ -75,11 +74,13 @@ export async function GET(request: NextRequest) {
           month: { in: monthsToFetchCumulative },
         },
       }),
-      prisma.headcount.findMany({
+      prisma.headcount.findUnique({
         where: {
-          companyId,
-          year: previousYear,
-          month: { in: monthsToFetchCumulative },
+          year_month_companyId: {
+            year: previousYear,
+            month: monthValue,
+            companyId,
+          },
         },
       }),
       prisma.turnoverStat.findMany({
@@ -88,41 +89,32 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    // --- KALKULASI KUMULATIF TAHUN INI ---
+    // --- KALKULASI YTD TAHUN INI ---
     const totalResignCurrent = turnoverCumulativeCurrent.reduce(
       (sum, item) => sum + item.resignCount,
       0
     );
-    const totalHeadcountCurrent = headcountCumulativeCurrent.reduce(
-      (sum, item) => sum + item.totalCount,
-      0
-    );
-    const cumulativeRatioCurrent =
-      totalHeadcountCurrent > 0
-        ? (totalResignCurrent / totalHeadcountCurrent) * 100
+    const headcountCountCurrent = headcountCurrentMonth?.totalCount ?? 0;
+    const ytdRatioCurrent =
+      headcountCountCurrent > 0
+        ? (totalResignCurrent / headcountCountCurrent) * 100
         : 0;
 
-    // --- KALKULASI KUMULATIF TAHUN LALU ---
+    // --- KALKULASI YTD TAHUN LALU ---
     const totalResignPrevious = turnoverCumulativePrevious.reduce(
       (sum, item) => sum + item.resignCount,
       0
     );
-    const totalHeadcountPrevious = headcountCumulativePrevious.reduce(
-      (sum, item) => sum + item.totalCount,
-      0
-    );
-    const cumulativeRatioPrevious =
-      totalHeadcountPrevious > 0
-        ? (totalResignPrevious / totalHeadcountPrevious) * 100
+    const headcountCountPrevious = headcountPreviousMonth?.totalCount ?? 0;
+    const ytdRatioPrevious =
+      headcountCountPrevious > 0
+        ? (totalResignPrevious / headcountCountPrevious) * 100
         : 0;
 
-    // --- KALKULASI YoY DARI RASIO KUMULATIF ---
-    const yoyPercentage = calculateYoY(
-      cumulativeRatioCurrent,
-      cumulativeRatioPrevious
-    );
+    // --- KALKULASI YoY DARI RASIO YTD ---
+    const yoyPercentage = calculateYoY(ytdRatioCurrent, ytdRatioPrevious);
 
-    // --- DATA UNTUK CHART (NON-KUMULATIF) ---
+    // --- DATA UNTUK CHART (TETAP SAMA) ---
     const monthLabels = turnoverForChart.map((item) =>
       getMonthName(item.month)
     );
@@ -130,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     const response = {
       // Ganti nama properti agar lebih jelas
-      cumulativeRatio: parseFloat(cumulativeRatioCurrent.toFixed(1)),
+      cumulativeRatio: parseFloat(ytdRatioCurrent.toFixed(1)),
       change: formatYoYString(yoyPercentage),
       chartData: {
         categories: monthLabels,
