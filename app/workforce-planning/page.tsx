@@ -6,6 +6,8 @@ import SummaryCard from "@/components/ui/SummaryCard";
 import WorkforcePlanningTable from "@/components/tables/WorkforcePlanningTable";
 import StatCard from "@/components/widgets/StatCard";
 import TalentAcquisitionChart from "@/components/charts/TalentAcquisitionChart";
+import TurnOverChart from "@/components/charts/TurnOverChart";
+import type { TurnoverData } from "@/types";
 
 // --- Tipe Data untuk Section 1 ---
 interface WorkforceTableRow {
@@ -32,6 +34,7 @@ interface TalentData {
   cards: {
     totalHire: number;
     totalCostHire: number;
+    newHireRetention: number;
   };
   charts: {
     newEmployee: { categories: string[]; data: number[] };
@@ -52,6 +55,9 @@ export default function WorkforcePlanningPage() {
   // --- State untuk Section 2 ---
   const [talentData, setTalentData] = useState<TalentData | null>(null);
   const [loadingTalent, setLoadingTalent] = useState(true);
+
+  const [turnoverData, setTurnoverData] = useState<TurnoverData | null>(null);
+  const [loadingTurnover, setLoadingTurnover] = useState(true);
 
   // --- useEffect untuk Section 1 ---
   useEffect(() => {
@@ -101,6 +107,33 @@ export default function WorkforcePlanningPage() {
       }
     };
     fetchTalentData();
+  }, [selectedCompany, period]);
+
+  useEffect(() => {
+    if (!selectedCompany || !period) {
+      setLoadingTurnover(false);
+      return;
+    }
+    const fetchTurnoverData = async () => {
+      setLoadingTurnover(true);
+      const params = new URLSearchParams({
+        companyId: String(selectedCompany),
+        year: String(period.year),
+        value: String(period.value), // <-- 1. Tambahkan 'value' (bulan) ke parameter
+      });
+      try {
+        const res = await fetch(`/api/turnover?${params.toString()}`);
+        if (!res.ok) throw new Error("Failed to fetch turnover data");
+        const result: TurnoverData = await res.json();
+        setTurnoverData(result);
+      } catch (error) {
+        console.error(error);
+        setTurnoverData(null);
+      } finally {
+        setLoadingTurnover(false);
+      }
+    };
+    fetchTurnoverData();
   }, [selectedCompany, period]);
 
   return (
@@ -154,19 +187,14 @@ export default function WorkforcePlanningPage() {
           Talent Acquisition
         </h2>
         {loadingTalent ? (
-          <div className="text-center p-10">
-            Memuat data Talent Acquisition...
-          </div>
+          <div className="text-center p-10">Memuat data...</div>
         ) : !talentData ? (
-          <div className="text-center p-10">
-            Data Talent Acquisition tidak tersedia.
-          </div>
+          <div className="text-center p-10">Data tidak tersedia.</div>
         ) : (
-          // --- PERUBAHAN UTAMA LAYOUT DI SINI ---
-          // Kita gunakan grid 2 kolom
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* 1. Kolom kartu dibuat lebih lebar (col-span-4) dan mengisi tinggi (h-full) */}
-            <div className="lg:col-span-4 flex flex-col gap-6 h-full">
+          // --- STRUKTUR LAYOUT 2x2 BARU ---
+          <div className="flex flex-col gap-6">
+            {/* BARIS ATAS: KARTU-KARTU */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <StatCard
                 title="Total Hire"
                 value={talentData.cards.totalHire.toLocaleString("id-ID")}
@@ -174,7 +202,6 @@ export default function WorkforcePlanningPage() {
                 variant="dark"
                 change=""
                 rkdapInfo="Total Hire"
-                className="flex-1" // <-- 2. Tambahkan flex-1 agar kartu mengisi ruang
               />
               <StatCard
                 title="Total Cost Hire"
@@ -183,12 +210,19 @@ export default function WorkforcePlanningPage() {
                 variant="dark"
                 change=""
                 rkdapInfo="Total Cost Hire"
-                className="flex-1" // <-- 2. Tambahkan flex-1 agar kartu mengisi ruang
+              />
+              <StatCard
+                title="New Hire Retention"
+                value={`${talentData.cards.newHireRetention}%`} // <-- Tambahkan '%'
+                variant="dark"
+                change=""
+                rkdapInfo="New Hire Retention"
+                className="flex-1"
               />
             </div>
 
-            {/* Kolom Kanan: Charts disesuaikan lebarnya */}
-            <div className="lg:col-span-8 flex flex-col gap-6 h-full">
+            {/* BARIS BAWAH: CHART-CHART */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TalentAcquisitionChart
                 title="New Employee"
                 subtitle={String(period.year)}
@@ -206,6 +240,13 @@ export default function WorkforcePlanningPage() {
             </div>
           </div>
         )}
+      </div>
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Turn Over</h2>
+        {/* Container ini sekarang full-width, tidak lagi dalam grid 2 kolom */}
+        <div>
+          <TurnOverChart data={turnoverData} isLoading={loadingTurnover} />
+        </div>
       </div>
     </main>
   );

@@ -67,3 +67,12 @@ export interface DashboardData {
   employeeCost: EmployeeCostCardData;
   demography: DemographyData;
 }
+
+export interface TurnoverData {
+  cumulativeRatio: number;
+  change: string;
+  chartData: {
+    categories: string[];
+    data: number[];
+  };
+}
