@@ -28,6 +28,8 @@ model Company {
   organizationHealthStats OrganizationHealthStat[]
   organizationStructureStats OrganizationStructureStat[]
   formationRasioStats FormationRasioStat[]
+  divisionStats DivisionStat[]
+  manpowerPlannings ManpowerPlanning[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -298,4 +300,32 @@ model FormationRasioStat {
   company               Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])
+}
+
+model ManpowerPlanning {
+  id           Int     @id @default(autoincrement())
+  year         Int
+  month        Int
+  companyId    Int
+  
+  plannedCount Int // Jumlah karyawan yang direncanakan
+
+  company      Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId])
+}
+
+model DivisionStat {
+  id           Int    @id @default(autoincrement())
+  year         Int
+  month        Int
+  companyId    Int
+  
+  divisionName String // Nama Divisi, misal "Sumber Daya Manusia"
+  plannedCount Int    // Man Power Planning untuk divisi ini
+  actualCount  Int    // Headcount aktual untuk divisi ini
+
+  company      Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, month, companyId, divisionName])
 }

@@ -1,50 +1,30 @@
-// components/tables/WorkforcePlanningTable.tsx
+"use client";
 
 import React from "react";
 import { CogIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
-type StatusType = "Stretch" | "Fit" | "Overload";
-
-// Data dummy sesuai mockup
-const dummyData: {
+// Tipe untuk setiap baris data
+interface TableRow {
   division: string;
   manPowerPlanning: number;
   headcount: number;
   rasio: string;
-  status: StatusType;
-}[] = [
-  {
-    division: "Sumber Daya Manusia",
-    manPowerPlanning: 32,
-    headcount: 30,
-    rasio: "94%",
-    status: "Stretch",
-  },
-  {
-    division: "Keuangan",
-    manPowerPlanning: 20,
-    headcount: 20,
-    rasio: "100%",
-    status: "Fit",
-  },
-  {
-    division: "Hukum",
-    manPowerPlanning: 15,
-    headcount: 11,
-    rasio: "73%",
-    status: "Overload",
-  },
-  {
-    division: "Corporate Strategy",
-    manPowerPlanning: 20,
-    headcount: 18,
-    rasio: "90%",
-    status: "Stretch",
-  },
-];
+  status: "Stretch" | "Fit" | "Overload";
+}
 
-// Helper untuk styling status
-const getStatusClass = (status: StatusType) => {
+// Tipe untuk props komponen utama
+interface TableProps {
+  data: TableRow[];
+  meta: {
+    currentPage: number;
+    totalPages: number;
+  };
+  onPageChange: (page: number) => void;
+}
+
+// Fungsi untuk styling 'Status'
+const getStatusClass = (status: TableRow["status"]) => {
   switch (status) {
     case "Fit":
       return "bg-green-100 text-green-800";
@@ -57,31 +37,76 @@ const getStatusClass = (status: StatusType) => {
   }
 };
 
-const Pagination = () => (
-  <div className="flex justify-center items-center gap-2 mt-6">
-    <button className="px-3 py-1 rounded-md text-sm bg-gray-200 text-gray-700">
-      1
-    </button>
-    <button className="px-3 py-1 rounded-md text-sm text-gray-500 hover:bg-gray-100">
-      2
-    </button>
-    <button className="px-3 py-1 rounded-md text-sm text-white bg-gray-800">
-      3
-    </button>
-    <button className="px-3 py-1 rounded-md text-sm text-gray-500 hover:bg-gray-100">
-      4
-    </button>
-    <button className="px-3 py-1 rounded-md text-sm text-gray-500 hover:bg-gray-100">
-      5
-    </button>
-    <span className="text-gray-500">...</span>
-    <button className="px-3 py-1 rounded-md text-sm text-gray-500 hover:bg-gray-100">
-      20
-    </button>
-  </div>
-);
+// Komponen Paginasi yang Fungsional
+const Pagination: React.FC<Omit<TableProps, "data">> = ({
+  meta,
+  onPageChange,
+}) => {
+  const { currentPage, totalPages } = meta;
 
-const WorkforcePlanningTable = () => {
+  // Logic untuk membuat daftar nomor halaman (misal: 1 ... 5 6 7 ... 20)
+  const getPaginationItems = () => {
+    const items: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) items.push(i);
+    } else {
+      items.push(1);
+      if (currentPage > 3) items.push("...");
+      if (currentPage > 2) items.push(currentPage - 1);
+      if (currentPage > 1 && currentPage < totalPages) items.push(currentPage);
+      if (currentPage < totalPages - 1) items.push(currentPage + 1);
+      if (currentPage < totalPages - 2) items.push("...");
+      items.push(totalPages);
+    }
+    return Array.from(new Set(items)); // Hilangkan duplikat jika ada
+  };
+
+  const pageItems = getPaginationItems();
+
+  return (
+    <div className="flex justify-center items-center gap-2 mt-6">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+      >
+        <ChevronLeftIcon className="h-5 w-5" />
+      </button>
+      {pageItems.map((item, index) =>
+        typeof item === "number" ? (
+          <button
+            key={index}
+            onClick={() => onPageChange(item)}
+            className={`px-3 py-1 rounded-md text-sm ${
+              item === currentPage
+                ? "bg-gray-800 text-white"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            {item}
+          </button>
+        ) : (
+          <span key={index} className="px-3 py-1 text-sm text-gray-400">
+            ...
+          </span>
+        )
+      )}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="p-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+      >
+        <ChevronRightIcon className="h-5 w-5" />
+      </button>
+    </div>
+  );
+};
+
+const WorkforcePlanningTable: React.FC<TableProps> = ({
+  data,
+  meta,
+  onPageChange,
+}) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mt-6">
       <div className="flex justify-between items-center mb-4">
@@ -112,27 +137,39 @@ const WorkforcePlanningTable = () => {
             </tr>
           </thead>
           <tbody>
-            {dummyData.map((row) => (
-              <tr key={row.division} className="border-b">
-                <td className="p-4 text-gray-800">{row.division}</td>
-                <td className="p-4 text-gray-800">{row.manPowerPlanning}</td>
-                <td className="p-4 text-gray-800">{row.headcount}</td>
-                <td className="p-4 text-gray-800">{row.rasio}</td>
-                <td className="p-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(
-                      row.status
-                    )}`}
-                  >
-                    {row.status}
-                  </span>
+            {data.length > 0 ? (
+              data.map((row) => (
+                <tr key={row.division} className="border-b hover:bg-gray-50">
+                  <td className="p-4 text-gray-800 font-medium">
+                    {row.division}
+                  </td>
+                  <td className="p-4 text-gray-800">{row.manPowerPlanning}</td>
+                  <td className="p-4 text-gray-800">{row.headcount}</td>
+                  <td className="p-4 text-gray-800">{row.rasio}</td>
+                  <td className="p-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(
+                        row.status
+                      )}`}
+                    >
+                      {row.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="text-center p-8 text-gray-500">
+                  Tidak ada data untuk ditampilkan.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
-      <Pagination />
+      {meta.totalPages > 1 && (
+        <Pagination meta={meta} onPageChange={onPageChange} />
+      )}
     </div>
   );
 };

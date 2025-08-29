@@ -1,23 +1,59 @@
-// app/workforce-planning/page.tsx
+"use client";
 
+import { useEffect, useState } from "react";
+import { useFilters } from "@/contexts/FilterContext";
 import SummaryCard from "@/components/ui/SummaryCard";
 import WorkforcePlanningTable from "@/components/tables/WorkforcePlanningTable";
-import StatCard from "@/components/ui/StatCard"; // <-- 1. Impor komponen baru
-import AreaLineChart from "@/components/charts/AreaLineChart"; // <-- 2. Impor chart yang sudah ada
-import TurnOverChart from "@/components/charts/TurnOverChart";
-import NotesList from "@/components/ui/NotesList";
+
+// 1. Buat interface spesifik untuk baris tabel
+interface WorkforceTableRow {
+  division: string;
+  manPowerPlanning: number;
+  headcount: number;
+  rasio: string;
+  status: "Stretch" | "Fit" | "Overload";
+}
+
+// 2. Buat interface untuk seluruh data halaman
+interface WorkforceData {
+  summary: {
+    totalManpowerPlanning: { value: number; trend: string };
+    totalHeadcount: { value: number; trend: string };
+    fulfilment: { value: string };
+  };
+  table: {
+    // 3. Gunakan interface yang baru, bukan `any[]`
+    data: WorkforceTableRow[];
+    meta: { currentPage: number; totalPages: number };
+  };
+}
 
 export default function WorkforcePlanningPage() {
-  // 3. Siapkan data dummy untuk chart di Section 2
-  const newEmployeeData = {
-    categories: ["Jan", "Feb", "Mar", "Apr", "May"],
-    data: [45, 30, 70, 29, 54],
-  };
+  const { selectedCompany, period } = useFilters();
+  const [data, setData] = useState<WorkforceData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const costOfHireData = {
-    categories: ["Jan", "Feb", "Mar", "Apr", "May"],
-    data: [50, 70, 45, 43, 57],
-  };
+  useEffect(() => {
+    if (selectedCompany && period.year && period.value) {
+      setIsLoading(true);
+      const fetchData = async () => {
+        const url = `/api/workforce/planning?companyId=${selectedCompany}&year=${period.year}&month=${period.value}&page=${currentPage}`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Failed to fetch");
+          const result: WorkforceData = await res.json(); // Terapkan tipe di sini
+          setData(result);
+        } catch (error) {
+          console.error(error);
+          setData(null);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [selectedCompany, period.year, period.value, currentPage]);
 
   return (
     <main className="p-8 bg-gray-100 min-h-screen">
@@ -25,67 +61,42 @@ export default function WorkforcePlanningPage() {
         Workforce Planning
       </h1>
 
-      {/* --- SECTION 1: Manpower Planning vs Headcount --- */}
-      <div className="flex flex-col md:flex-row gap-6">
-        <SummaryCard
-          title="Total Manpower Planning"
-          value="621"
-          unit="Employee"
-          trend="+2% | Year on Year"
-        />
-        <SummaryCard
-          title="Total Headcount"
-          value="600"
-          unit="Employee"
-          trend="+0% | Year on Year"
-        />
-        <SummaryCard title="Fulfilment" value="89.2%" />
-      </div>
-      <WorkforcePlanningTable />
-
-      {/* --- SECTION 2: Talent Acquisition --- */}
-      {/* --- SECTION 2: Talent Acquisition --- */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">
-          Talent Acquisition
-        </h2>
-        {/* Beri 'items-stretch' agar kolom memiliki tinggi yang sama */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-          {/* Kolom Kiri: Stat Cards */}
-          <div className="lg:col-span-1 flex flex-col gap-6">
-            <StatCard title="Total Hire" value={16} unit="Employee" />
-            <StatCard title="Total Cost Hire" value={350} unit="Juta" />
-            <StatCard title="New Hire Retention" value="70%" unit="" />
-            <StatCard title="Quality of Hire" value="70%" unit="" />
-          </div>
-
-          {/* Kolom Kanan: Charts */}
-          {/* Pastikan container ini mengisi tinggi kolom grid */}
-          <div className="lg:col-span-2 flex flex-col gap-6 h-full">
-            <AreaLineChart
-              title="New Employee"
-              subtitle="2025"
-              chartData={newEmployeeData}
-              containerClassName="bg-gray-50 flex-1" // Tambahkan flex-1 di sini
-              isLoading={false}
+      {isLoading ? (
+        <div className="text-center p-10">Memuat data...</div>
+      ) : !data ? (
+        <div className="text-center p-10">
+          Data tidak tersedia untuk filter yang dipilih.
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col md:flex-row gap-6">
+            <SummaryCard
+              title="Total Manpower Planning"
+              value={data.summary.totalManpowerPlanning.value.toLocaleString(
+                "id-ID"
+              )}
+              unit="Employee"
+              trend={data.summary.totalManpowerPlanning.trend}
             />
-            <AreaLineChart
-              title="Cost of Hire"
-              subtitle="2025"
-              chartData={costOfHireData}
-              containerClassName="bg-gray-50 flex-1" // Dan di sini juga
-              isLoading={false}
+            <SummaryCard
+              title="Total Headcount"
+              value={data.summary.totalHeadcount.value.toLocaleString("id-ID")}
+              unit="Employee"
+              trend={data.summary.totalHeadcount.trend}
+            />
+            <SummaryCard
+              title="Fulfilment"
+              value={data.summary.fulfilment.value}
             />
           </div>
-        </div>
-      </div>
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Turn Over</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          <TurnOverChart />
-          <NotesList />
-        </div>
-      </div>
+
+          <WorkforcePlanningTable
+            data={data.table.data}
+            meta={data.table.meta}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
     </main>
   );
 }

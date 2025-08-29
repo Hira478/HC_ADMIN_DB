@@ -291,24 +291,6 @@ export default function OrganizationCulturePage() {
               },
             ]}
           />
-          <InfoCard
-            title="AVG Span of Control"
-            metrics={[
-              // Ambil data dari state 'orgStructureData'
-              {
-                value: isLoadingOrgStructure
-                  ? "..."
-                  : orgStructureData?.avgSpanCard.department || 0,
-                label: "Department",
-              },
-              {
-                value: isLoadingOrgStructure
-                  ? "..."
-                  : orgStructureData?.avgSpanCard.employee || 0,
-                label: "Employee",
-              },
-            ]}
-          />
         </div>
       </div>
 
