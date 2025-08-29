@@ -10,7 +10,7 @@ interface TableRow {
   manPowerPlanning: number;
   headcount: number;
   rasio: string;
-  status: "Stretch" | "Fit" | "Overload";
+  status?: "Stretch" | "Fit" | "Overload"; // Status dibuat opsional
 }
 
 // Tipe untuk props komponen utama
@@ -23,18 +23,37 @@ interface TableProps {
   onPageChange: (page: number) => void;
 }
 
-// Fungsi untuk styling 'Status'
-const getStatusClass = (status: TableRow["status"]) => {
-  switch (status) {
-    case "Fit":
-      return "bg-green-100 text-green-800";
-    case "Stretch":
-      return "bg-yellow-100 text-yellow-800";
-    case "Overload":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
+// Fungsi logika baru untuk menentukan Status dan warnanya
+const getStatusInfo = (rasioString: string) => {
+  const rasio = parseFloat(rasioString);
+
+  if (rasio > 100) {
+    return {
+      text: "Overload",
+      className: "bg-red-100 text-red-800",
+    };
+  } else if (rasio === 100) {
+    return {
+      text: "Fit",
+      className: "bg-green-100 text-green-800",
+    };
+  } else if (rasio >= 1 && rasio <= 99) {
+    return {
+      text: "Stretch",
+      className: "bg-yellow-100 text-yellow-800",
+    };
+  } else if (rasio === 0) {
+    return {
+      text: "-",
+      className: "bg-gray-100 text-gray-800",
+    };
   }
+
+  // Default jika tidak cocok dengan kondisi di atas
+  return {
+    text: "N/A",
+    className: "bg-gray-100 text-gray-800",
+  };
 };
 
 // Komponen Paginasi yang Fungsional
@@ -44,7 +63,6 @@ const Pagination: React.FC<Omit<TableProps, "data">> = ({
 }) => {
   const { currentPage, totalPages } = meta;
 
-  // Logic untuk membuat daftar nomor halaman (misal: 1 ... 5 6 7 ... 20)
   const getPaginationItems = () => {
     const items: (number | string)[] = [];
     if (totalPages <= 7) {
@@ -58,7 +76,7 @@ const Pagination: React.FC<Omit<TableProps, "data">> = ({
       if (currentPage < totalPages - 2) items.push("...");
       items.push(totalPages);
     }
-    return Array.from(new Set(items)); // Hilangkan duplikat jika ada
+    return Array.from(new Set(items));
   };
 
   const pageItems = getPaginationItems();
@@ -102,6 +120,7 @@ const Pagination: React.FC<Omit<TableProps, "data">> = ({
   );
 };
 
+// Komponen Tabel Utama
 const WorkforcePlanningTable: React.FC<TableProps> = ({
   data,
   meta,
@@ -138,25 +157,29 @@ const WorkforcePlanningTable: React.FC<TableProps> = ({
           </thead>
           <tbody>
             {data.length > 0 ? (
-              data.map((row) => (
-                <tr key={row.division} className="border-b hover:bg-gray-50">
-                  <td className="p-4 text-gray-800 font-medium">
-                    {row.division}
-                  </td>
-                  <td className="p-4 text-gray-800">{row.manPowerPlanning}</td>
-                  <td className="p-4 text-gray-800">{row.headcount}</td>
-                  <td className="p-4 text-gray-800">{row.rasio}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(
-                        row.status
-                      )}`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
+              data.map((row) => {
+                const statusInfo = getStatusInfo(row.rasio);
+
+                return (
+                  <tr key={row.division} className="border-b hover:bg-gray-50">
+                    <td className="p-4 text-gray-800 font-medium">
+                      {row.division}
+                    </td>
+                    <td className="p-4 text-gray-800">
+                      {row.manPowerPlanning}
+                    </td>
+                    <td className="p-4 text-gray-800">{row.headcount}</td>
+                    <td className="p-4 text-gray-800">{row.rasio}</td>
+                    <td className="p-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.className}`}
+                      >
+                        {statusInfo.text}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={5} className="text-center p-8 text-gray-500">
