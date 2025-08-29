@@ -1,20 +1,13 @@
 // File: components/widgets/ProductivityChartCard.tsx
 
 "use client";
-
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { Settings } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import CardLoader from "./CardLoader";
 
-interface EChartsTooltipParams {
-  seriesName: string;
-  value: number;
-  axisValueLabel: string;
-  marker: string;
-}
-
+// Interface untuk data chart
 interface ProductivityChartData {
   months: string[];
   revenue: number[];
@@ -30,19 +23,18 @@ const ProductivityChartCard = () => {
   );
   const [loading, setLoading] = useState(true);
 
+  // Logika fetch data tetap sama
   useEffect(() => {
     if (!selectedCompany || !period) {
       setLoading(false);
       return;
     }
-
     const fetchData = async () => {
       setLoading(true);
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
         year: String(period.year),
       });
-
       try {
         const response = await fetch(
           `/api/charts/productivity?${params.toString()}`
@@ -56,27 +48,11 @@ const ProductivityChartCard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [selectedCompany, period]);
 
-  // Konfigurasi ECharts dengan satu Sumbu Y
   const option = {
-    tooltip: {
-      trigger: "axis",
-      formatter: (params: EChartsTooltipParams[]) => {
-        if (!params || params.length === 0) return "";
-        let tooltipText = `<strong>${params[0].axisValueLabel}</strong>`;
-        params.forEach((item) => {
-          const formattedValue = item.value.toLocaleString("id-ID", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-          });
-          tooltipText += `<br/>${item.marker} ${item.seriesName}: Rp ${formattedValue}`;
-        });
-        return tooltipText;
-      },
-    },
+    tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
     legend: {
       data: [
         "Revenue",
@@ -86,70 +62,78 @@ const ProductivityChartCard = () => {
       ],
       bottom: 10,
     },
-    grid: {
-      left: "3%",
-      right: "4%",
-      top: "10%",
-      bottom: "20%",
-      containLabel: true,
-    },
     xAxis: {
       type: "category",
       boundaryGap: false,
       data: chartData?.months || [],
     },
-    // 1. Sumbu Y diubah kembali menjadi satu objek (bukan array)
+    // --- PERUBAHAN UTAMA ADA DI SINI ---
     yAxis: {
+      // <-- Diubah dari array [ {..}, {..} ] menjadi satu objek saja
       type: "value",
+      name: "Nilai (Juta)", // <-- Nama diubah menjadi lebih generik
+      position: "left",
       axisLabel: {
-        formatter: (value: number) => {
-          if (value >= 1e6 || value <= -1e6) return `${value / 1e6}M`;
-          if (value >= 1e3 || value <= -1e3) return `${value / 1e3}K`;
-          return value;
-        },
+        formatter: (val: number) =>
+          val >= 1e6
+            ? `${(val / 1e6).toFixed(1)}M`
+            : `${(val / 1e3).toFixed(1)}K`,
       },
     },
-    // 2. Properti `yAxisIndex` dihapus dari semua seri
     series: [
       {
         name: "Revenue",
         type: "line",
-        smooth: true,
+        smooth: false,
         data: chartData?.revenue || [],
         color: "#3B82F6",
+        areaStyle: { opacity: 0.3 },
+        // yAxisIndex: 0 tidak perlu ditulis karena default
       },
       {
         name: "Net Profit",
         type: "line",
-        smooth: true,
+        smooth: false,
         data: chartData?.netProfit || [],
-        color: "#10B981",
+        color: "#84CC16",
+        areaStyle: { opacity: 0.3 },
       },
       {
         name: "Revenue/Employee",
         type: "line",
-        smooth: true,
+        smooth: false,
+        // yAxisIndex: 1, // <-- Dihapus, akan otomatis menggunakan sumbu Y pertama
         data: chartData?.revenuePerEmployee || [],
         color: "#F97316",
+        areaStyle: { opacity: 0.3 },
       },
       {
         name: "Net Profit/Employee",
         type: "line",
-        smooth: true,
+        smooth: false,
+        // yAxisIndex: 1, // <-- Dihapus, akan otomatis menggunakan sumbu Y pertama
         data: chartData?.netProfitPerEmployee || [],
         color: "#EF4444",
+        areaStyle: { opacity: 0.3 },
       },
     ],
+    // --- AKHIR DARI PERUBAHAN ---
+    grid: {
+      left: "3%",
+      right: "4%",
+      bottom: "15%",
+      containLabel: true,
+    },
   };
 
+  // Logika rendering JSX tetap sama
   if (loading) return <CardLoader />;
   if (!chartData)
     return (
       <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center text-gray-500">
-        Data tidak tersedia untuk periode ini.
+        Data tidak tersedia.
       </div>
     );
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
@@ -161,7 +145,6 @@ const ProductivityChartCard = () => {
           <Settings className="h-5 w-5" />
         </button>
       </div>
-
       <div className="flex-grow min-h-0">
         <ReactECharts option={option} style={{ height: "100%" }} />
       </div>
