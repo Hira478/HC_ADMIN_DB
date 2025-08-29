@@ -30,6 +30,7 @@ model Company {
   formationRasioStats FormationRasioStat[]
   divisionStats DivisionStat[]
   manpowerPlannings ManpowerPlanning[]
+  talentAcquisitionStats   TalentAcquisitionStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -328,4 +329,17 @@ model DivisionStat {
   company      Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId, divisionName])
+}
+
+model TalentAcquisitionStat {
+  id           Int     @id @default(autoincrement())
+  month        Int
+  year         Int
+  companyId    Int
+
+  newHireCount Int     @default(0) // Jumlah karyawan baru di bulan tsb
+  costOfHire   Float   @default(0) // Biaya rekrutmen di bulan tsb (dalam Juta)
+
+  company      Company @relation(fields: [companyId], references: [id])
+  @@unique([year, month, companyId])
 }
