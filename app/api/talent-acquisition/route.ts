@@ -1,5 +1,3 @@
-// File: app/api/talent-acquisition/route.ts
-
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -16,7 +14,6 @@ export async function GET(request: NextRequest) {
   const year = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
   );
-  // 1. Ambil 'value' (bulan) dari filter yang dikirim frontend
   const monthValue = parseInt(
     searchParams.get("value") || (new Date().getMonth() + 1).toString()
   );
@@ -46,26 +43,26 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Kalkulasi untuk Kartu Total (tetap menjumlahkan semua data yang ada di tahun itu)
+    // --- Kalkulasi untuk Kartu ---
+
+    // 1. "Total Hire" dihitung secara kumulatif (total setahun)
     const totalHire = talentDataForYear.reduce(
       (sum, item) => sum + item.newHireCount,
       0
     );
-    const totalCostHire = talentDataForYear.reduce(
-      (sum, item) => sum + item.costOfHire,
-      0
-    );
 
-    // --- PERBAIKAN LOGIKA DI SINI ---
-    // 2. Cari data spesifik untuk bulan yang dipilih dari filter (`monthValue`)
+    // 2. Cari data spesifik untuk bulan yang dipilih dari filter
     const selectedMonthData = talentDataForYear.find(
       (d) => d.month === monthValue
     );
 
-    // 3. Gunakan data bulan tersebut untuk New Hire Retention
+    // 3. "Total Cost Hire" hanya untuk bulan yang dipilih di filter
+    const totalCostHire = selectedMonthData?.costOfHire ?? 0;
+
+    // 4. "New Hire Retention" hanya untuk bulan yang dipilih di filter
     const newHireRetention = selectedMonthData?.newHireRetention ?? 0;
 
-    // Persiapan data untuk Chart (tetap menampilkan semua bulan yang ada datanya)
+    // --- Persiapan data untuk Chart (tetap menampilkan semua bulan yang ada datanya) ---
     const availableMonths = talentDataForYear.map((item) => item.month);
     const monthLabels = availableMonths.map(getMonthName);
     const newEmployeeData = talentDataForYear.map((item) => item.newHireCount);
