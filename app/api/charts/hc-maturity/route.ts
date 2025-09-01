@@ -59,20 +59,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Persiapkan data untuk chart
+    // Persiapkan data untuk chart (tetap sama)
     const chartData = {
       categories: hcmaIndicators.map((ind) =>
         ind.replace(/([A-Z])/g, " $1").trim()
-      ), // Format nama (e.g. talentSuccession -> Talent Succession)
+      ),
       data: hcmaIndicators.map(
         (ind) => hcmaCurrent[ind as keyof typeof hcmaCurrent] as number
       ),
     };
 
-    // Hitung data untuk summary
-    const totalScoreCurrent = hcmaCurrent.totalScore;
+    // --- PERBAIKAN LOGIKA UTAMA DI SINI ---
+    // Hitung ulang total skor secara manual dari 8 indikator
+    const totalScoreCurrent = hcmaIndicators.reduce((sum, indicator) => {
+      return (
+        sum + (hcmaCurrent[indicator as keyof typeof hcmaCurrent] as number)
+      );
+    }, 0);
+
     const averageScoreCurrent = totalScoreCurrent / hcmaIndicators.length;
 
+    // Untuk YoY, kita tetap bandingkan dengan totalScore dari DB tahun lalu
     const totalScorePrevious = hcmaPrevious?.totalScore ?? 0;
     const yoyPercentage = calculateYoY(totalScoreCurrent, totalScorePrevious);
 
