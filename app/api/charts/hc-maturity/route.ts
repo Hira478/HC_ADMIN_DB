@@ -15,6 +15,13 @@ const formatYoYString = (percentage: number): string => {
   return `${sign}${percentage.toFixed(1)}% | Year on Year`;
 };
 
+const toTitleCase = (str: string) => {
+  return str
+    .replace(/([A-Z])/g, " $1")
+    .trim() // talentSuccession -> talent Succession
+    .replace(/\b\w/g, (char) => char.toUpperCase()); // talent -> Talent
+};
+
 // Daftar indikator HCMA
 const hcmaIndicators = [
   "talentSuccession",
@@ -61,9 +68,7 @@ export async function GET(request: NextRequest) {
 
     // Persiapkan data untuk chart (tetap sama)
     const chartData = {
-      categories: hcmaIndicators.map((ind) =>
-        ind.replace(/([A-Z])/g, " $1").trim()
-      ),
+      categories: hcmaIndicators.map(toTitleCase), // <-- PERUBAHAN DI SINI
       data: hcmaIndicators.map(
         (ind) => hcmaCurrent[ind as keyof typeof hcmaCurrent] as number
       ),

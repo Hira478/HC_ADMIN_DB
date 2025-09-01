@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 import SummaryCard from "@/components/ui/SummaryCard";
 import WorkforcePlanningTable from "@/components/tables/WorkforcePlanningTable";
-import StatCard from "@/components/widgets/StatCard";
 import TalentAcquisitionChart from "@/components/charts/TalentAcquisitionChart";
 import TurnOverChart from "@/components/charts/TurnOverChart";
 import type { TurnoverData } from "@/types";
@@ -194,30 +193,24 @@ export default function WorkforcePlanningPage() {
           // --- STRUKTUR LAYOUT 2x2 BARU ---
           <div className="flex flex-col gap-6">
             {/* BARIS ATAS: KARTU-KARTU */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <StatCard
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Menggunakan SummaryCard, bukan StatCard */}
+              <SummaryCard
                 title="Total Hire"
                 value={talentData.cards.totalHire.toLocaleString("id-ID")}
-                valueUnit="Employee"
-                variant="dark"
-                change=""
-                rkdapInfo="Total Hire"
+                unit="Employee"
+                trend="" // API belum menyediakan data trend untuk ini
               />
-              <StatCard
+              <SummaryCard
                 title="Total Cost Hire"
                 value={talentData.cards.totalCostHire.toLocaleString("id-ID")}
-                valueUnit="Juta"
-                variant="dark"
-                change=""
-                rkdapInfo="Total Cost Hire"
+                unit="Juta"
+                trend="" // API belum menyediakan data trend untuk ini
               />
-              <StatCard
+              <SummaryCard
                 title="New Hire Retention"
-                value={`${talentData.cards.newHireRetention}%`} // <-- Tambahkan '%'
-                variant="dark"
-                change=""
-                rkdapInfo="New Hire Retention"
-                className="flex-1"
+                value={`${talentData.cards.newHireRetention}%`}
+                trend="" // API belum menyediakan data trend untuk ini
               />
             </div>
 

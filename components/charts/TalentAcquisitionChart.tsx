@@ -84,7 +84,7 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
         showSymbol: true,
         symbolSize: 6,
         label: {
-          show: true,
+          show: false,
           position: "top",
           color: "#374151",
           fontWeight: "normal",
