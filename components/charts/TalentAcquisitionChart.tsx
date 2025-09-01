@@ -70,7 +70,7 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
       {
         data: chartData?.data || [],
         type: "line",
-        smooth: true,
+        smooth: false,
         areaStyle: {
           color: "#FEE2E2",
           opacity: 0.6,

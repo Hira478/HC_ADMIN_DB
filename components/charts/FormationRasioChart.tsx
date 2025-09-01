@@ -33,6 +33,13 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   data,
   isLoading,
 }) => {
+  const categoryDetails: { [key: string]: string } = {
+    "R&D": "R&D (Strategi, Riset, & Pengembangan Bisnis)",
+    Business: "Business (Aspen, Asjiw, CMI)",
+    Finance: "Finance (Keuangan dan Akuntansi)",
+    Compliance: "Compliance (Audit & Manajemen Risiko)",
+    // Kategori lain bisa ditambahkan di sini jika perlu detail tambahan
+  };
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md w-full h-[484px] flex justify-center items-center">
@@ -76,12 +83,16 @@ const FormationRasioChart: React.FC<ChartProps> = ({
         const monthData = data.find((d) => d.month === monthName);
         if (!monthData) return "";
 
-        let tooltipText = `${monthName}<br/><b>Total Headcount: ${monthData.totalHeadcount}</b><br/><hr class='my-1'>`;
+        let tooltipText = `${monthName}<br/><b>Total Headcount: ${monthData.totalHeadcount}</b><br/><hr class='my-1' style='border-color: #ddd; margin: 4px 0;'>`;
         params.forEach((param: TooltipParam) => {
           const seriesName = param.seriesName;
           const value = monthData.categories[seriesName];
           const percent = param.value.toFixed(2);
-          tooltipText += `${param.marker} ${seriesName}: ${value} (${percent}%)<br/>`;
+
+          // Ambil nama detail dari kamus. Jika tidak ada, gunakan nama aslinya.
+          const detailedName = categoryDetails[seriesName] || seriesName;
+
+          tooltipText += `${param.marker} ${detailedName}: ${value} (${percent}%)<br/>`;
         });
         return tooltipText;
       },
