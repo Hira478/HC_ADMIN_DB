@@ -1,6 +1,5 @@
 // app/organization-culture/page.tsx
 "use client";
-import AreaLineChart from "@/components/charts/AreaLineChart";
 import GroupedBarChart from "@/components/charts/GroupedBarChart";
 import OrganizationHealthChart from "@/components/charts/OrganizationHealthChart";
 import InfoCard from "@/components/ui/InfoCard";
@@ -11,15 +10,22 @@ import { CultureMaturityData } from "@/app/api/charts/culture-maturity/route";
 import HcmaBarChart from "@/components/charts/HcmaBarChart";
 import FormationRasioChart from "@/components/charts/FormationRasioChart";
 
+interface HcmaData {
+  chartData: {
+    categories: string[];
+    data: number[];
+  };
+  summary: {
+    totalScore: number;
+    averageScore: number;
+    yoy: string;
+  };
+}
+
 interface FormationRasioMonthData {
   month: string;
   totalHeadcount: number;
   categories: { [key: string]: number };
-}
-
-interface SimpleChartData {
-  categories: string[];
-  data: number[];
 }
 
 interface OrgStructureData {
@@ -36,10 +42,6 @@ export default function OrganizationCulturePage() {
   );
   const [isLoadingHealth, setIsLoadingHealth] = useState(true);
 
-  const [maturityData, setMaturityData] = useState<SimpleChartData | null>(
-    null
-  );
-  const [isLoadingMaturity, setIsLoadingMaturity] = useState(true);
   const [cultureData, setCultureData] = useState<CultureMaturityData | null>(
     null
   );
@@ -55,6 +57,8 @@ export default function OrganizationCulturePage() {
     FormationRasioMonthData[] | null
   >(null);
   const [isLoadingFormation, setIsLoadingFormation] = useState(true);
+  const [hcmaData, setHcmaData] = useState<HcmaData | null>(null);
+  const [isLoadingHcma, setIsLoadingHcma] = useState(true);
 
   useEffect(() => {
     if (selectedCompany && period.year) {
@@ -186,26 +190,26 @@ export default function OrganizationCulturePage() {
 
   useEffect(() => {
     if (selectedCompany && period.year) {
-      setIsLoadingMaturity(true);
+      setIsLoadingHcma(true);
       const fetchData = async () => {
         try {
           const res = await fetch(
             `/api/charts/hc-maturity?companyId=${selectedCompany}&year=${period.year}`
           );
-          if (!res.ok) throw new Error("Failed to fetch maturity data");
-          const data: SimpleChartData = await res.json();
-          setMaturityData(data);
+          if (!res.ok) throw new Error("Failed to fetch HCMA data");
+          const data: HcmaData = await res.json();
+          setHcmaData(data);
         } catch (error) {
           console.error(error);
-          setMaturityData(null);
+          setHcmaData(null);
         } finally {
-          setIsLoadingMaturity(false);
+          setIsLoadingHcma(false);
         }
       };
       fetchData();
     } else {
-      setMaturityData(null);
-      setIsLoadingMaturity(false);
+      setHcmaData(null);
+      setIsLoadingHcma(false);
     }
   }, [selectedCompany, period.year]);
 
@@ -241,7 +245,7 @@ export default function OrganizationCulturePage() {
       </h1>
 
       {/* --- SECTION 1 --- */}
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
         <div className="w-full lg:w-3/4">
           {/* <AreaLineChart
             key="formation-ratio"
@@ -323,12 +327,12 @@ export default function OrganizationCulturePage() {
       {/* --- SECTION 3 --- */}
       <div className="mt-8">
         <HcmaBarChart
-          key="hc-maturity"
           title="HC Maturity Assessment"
           subtitle={period.year.toString()}
-          chartData={maturityData}
-          isLoading={isLoadingMaturity}
-          containerClassName="bg-gray-50"
+          // Kirim seluruh objek data baru
+          data={hcmaData}
+          isLoading={isLoadingHcma}
+          containerClassName="bg-white" // Ubah jadi bg-white agar kontras
         />
       </div>
     </main>

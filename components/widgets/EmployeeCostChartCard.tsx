@@ -66,14 +66,14 @@ const EmployeeCostChartCard = () => {
     },
     legend: {
       data: chartData?.series.map((s) => s.name) || [],
-      top: "bottom",
+      bottom: 10,
       itemWidth: 15,
       itemHeight: 10,
     },
     grid: { left: "3%", right: "4%", bottom: "15%", containLabel: true },
     xAxis: {
       type: "category",
-      boundaryGap: false, // lebih cocok untuk line chart
+      boundaryGap: false,
       data: chartData?.labels || [],
     },
     yAxis: {
@@ -91,7 +91,8 @@ const EmployeeCostChartCard = () => {
         name: s.name,
         type: "line",
         data: s.data,
-        smooth: true, // opsional: membuat garis lebih halus
+        smooth: false, // 1. Diubah agar garis tidak smooth
+        areaStyle: { opacity: 0.2 }, // 2. Ditambahkan untuk efek area chart
         symbol: "circle",
         symbolSize: 6,
         lineStyle: {
