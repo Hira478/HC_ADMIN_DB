@@ -32,6 +32,7 @@ model Company {
   manpowerPlannings ManpowerPlanning[]
   talentAcquisitionStats   TalentAcquisitionStat[]
   turnoverStats            TurnoverStat[]
+  formationRasioGroupedStats FormationRasioGroupedStat[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -355,5 +356,25 @@ model TurnoverStat {
   resignCount Int     @default(0) // Jumlah karyawan resign di bulan tsb
 
   company     Company @relation(fields: [companyId], references: [id])
+  @@unique([year, month, companyId])
+}
+
+model FormationRasioGroupedStat {
+  id         Int @id @default(autoincrement())
+  year       Int
+  month      Int
+  companyId  Int
+
+  // 7 Kategori Baru
+  strategy   Int @default(0)
+  business   Int @default(0)
+  finance    Int @default(0)
+  hcGa       Int @default(0) @map("hc_ga")
+  operation  Int @default(0)
+  compliance Int @default(0)
+  it         Int @default(0)
+
+  company    Company @relation(fields: [companyId], references: [id])
+
   @@unique([year, month, companyId])
 }
