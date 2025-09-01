@@ -34,11 +34,13 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   isLoading,
 }) => {
   const categoryDetails: { [key: string]: string } = {
-    "R&D": "R&D (Strategi, Riset, & Pengembangan Bisnis)",
-    Business: "Business (Aspen, Asjiw, CMI)",
-    Finance: "Finance (Keuangan dan Akuntansi)",
-    Compliance: "Compliance (Audit & Manajemen Risiko)",
-    // Kategori lain bisa ditambahkan di sini jika perlu detail tambahan
+    "Strategy and R&D":
+      "Strategy and R&D (Strategi, Riset & Pengembangan Bisnis)",
+    Finance: "Finance (Keuangan & Akuntansi)",
+    "HC & GA": "HC & GA (HR, GA & Sekretaris Perusahaan)",
+    Operation: "Operation (Aktuaria dan Operasi)",
+    Compliance: "Compliance (Hukum, Manajemen Risiko dan SKAI)",
+    IT: "IT", // Tetap IT karena tidak ada gabungan
   };
   if (isLoading) {
     return (

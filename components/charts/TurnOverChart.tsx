@@ -22,17 +22,15 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
       type: "category",
       boundaryGap: false,
       data: data?.chartData.categories || [],
-      // 1. Ubah warna label sumbu X menjadi terang
       axisLabel: {
-        color: "#A0AEC0", // Warna abu-abu terang
+        color: "#A0AEC0",
       },
     },
     yAxis: {
       type: "value",
       splitNumber: 3,
-      // 2. Ubah warna label sumbu Y menjadi terang
       axisLabel: {
-        color: "#A0AEC0", // Warna abu-abu terang
+        color: "#A0AEC0",
       },
     },
     series: [
@@ -57,7 +55,6 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
         label: {
           show: true,
           position: "top",
-          // 3. Ubah warna label data menjadi putih
           color: "#FFFFFF",
           fontWeight: "normal",
         },
@@ -86,8 +83,9 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
       {/* Kolom Kiri: KPI */}
       <div className="w-1/4 flex flex-col justify-center items-center pr-4 border-r border-gray-600">
         <p className="text-gray-400 text-sm">Turn Over Ratio</p>
-        <p className="text-5xl font-bold my-1">{data.cumulativeRatio}%</p>
-        <p className="text-sm text-red-400">{data.change}</p>
+        {/* Gunakan 'monthlyRatio' dan tambahkan null check untuk keamanan */}
+        <p className="text-5xl font-bold my-1">{data?.monthlyRatio ?? 0}%</p>
+        <p className="text-sm text-red-400">{data?.change}</p>
       </div>
 
       {/* Kolom Kanan: Chart */}

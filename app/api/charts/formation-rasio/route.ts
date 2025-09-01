@@ -1,68 +1,77 @@
-// app/api/charts/formation-rasio/route.ts
+// File: /api/charts/formation-rasio/route.ts
 
-import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const companyId = searchParams.get("companyId");
-  const year = searchParams.get("year");
+const getMonthName = (monthNumber: number) => {
+  const date = new Date(2000, monthNumber - 1, 1);
+  return date.toLocaleString("id-ID", { month: "long" }); // Gunakan 'long' untuk nama bulan penuh
+};
 
-  if (!companyId || !year) {
-    return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const companyId = parseInt(searchParams.get("companyId") || "0");
+  const year = parseInt(
+    searchParams.get("year") || new Date().getFullYear().toString()
+  );
+
+  if (!companyId) {
+    return NextResponse.json(
+      { error: "Company ID diperlukan." },
+      { status: 400 }
+    );
   }
 
-  const companyIdNum = parseInt(companyId);
-  const yearNum = parseInt(year);
-
   try {
-    // 1. Ambil data rasio per bulan dari tabel baru
-    const rasioRecords = await prisma.formationRasioStat.findMany({
-      where: { year: yearNum, companyId: companyIdNum },
-      orderBy: { month: "asc" },
+    // 1. Ambil data mentah (10 kategori) dan data headcount untuk setahun
+    const [formationRasioRaw, headcountData] = await Promise.all([
+      prisma.formationRasioStat.findMany({
+        where: { companyId, year },
+        orderBy: { month: "asc" },
+      }),
+      prisma.headcount.findMany({
+        where: { companyId, year },
+        orderBy: { month: "asc" },
+      }),
+    ]);
+
+    // Buat map headcount agar mudah dicari
+    const headcountMap = new Map<number, number>();
+    headcountData.forEach((hc) => {
+      headcountMap.set(hc.month, hc.totalCount);
     });
 
-    // 2. Ambil data total headcount per bulan
-    const headcountRecords = await prisma.headcount.findMany({
-      where: { year: yearNum, companyId: companyIdNum },
-      orderBy: { month: "asc" },
-    });
+    // 2. Proses dan kelompokkan data mentah menjadi 7 kategori
+    const processedData = formationRasioRaw.map((monthData) => {
+      const raw = monthData;
 
-    // Buat map untuk akses cepat total headcount
-    const headcountMap = new Map(
-      headcountRecords.map((h) => [h.month, h.totalCount])
-    );
+      // --- LOGIKA PENGELOMPOKAN DIMULAI DI SINI ---
+      const groupedCategories = {
+        "Strategy and R&D": raw.rd,
+        Business: raw.business,
+        Finance: raw.finance,
+        "HC & GA":
+          raw.humanResources + raw.corporateSecretary + raw.generalAffairs,
+        Operation: raw.actuary,
+        Compliance: raw.compliance + raw.legal,
+        IT: raw.informationTechnology,
+      };
+      // --- LOGIKA PENGELOMPOKAN SELESAI ---
 
-    // 3. Gabungkan data: hanya proses bulan yang memiliki data rasio
-    const responseData = rasioRecords.map((record) => {
       return {
-        month: new Date(0, record.month - 1).toLocaleString("en-US", {
-          month: "long",
-        }),
-        totalHeadcount: headcountMap.get(record.month) || 0, // Ambil total dari tabel Headcount
-        // Data mentah per kategori
-        categories: {
-          "R&D": record.rd,
-          Business: record.business,
-          Finance: record.finance,
-          "Human Resources": record.humanResources,
-          Actuary: record.actuary,
-          Compliance: record.compliance,
-          Legal: record.legal,
-          IT: record.informationTechnology,
-          "Corporate Secretary": record.corporateSecretary,
-          "General Affairs": record.generalAffairs,
-        },
+        month: getMonthName(raw.month),
+        totalHeadcount: headcountMap.get(raw.month) || 0, // Ambil total headcount dari map
+        categories: groupedCategories,
       };
     });
 
-    return NextResponse.json(responseData);
+    return NextResponse.json(processedData);
   } catch (error) {
-    console.error("Failed to fetch formation rasio data:", error);
+    console.error("API Error in /formation-rasio:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Gagal mengambil data." },
       { status: 500 }
     );
   }

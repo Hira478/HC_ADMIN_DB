@@ -3,7 +3,7 @@ import React from "react";
 import ReactECharts from "echarts-for-react";
 import { CogIcon } from "@heroicons/react/24/outline";
 
-// Tipe data baru yang diterima dari API
+// Tipe data yang diterima dari API
 interface HcmaData {
   chartData: {
     categories: string[];
@@ -31,10 +31,9 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
   isLoading,
   containerClassName = "bg-white",
 }) => {
-  const reversedCategories = data
-    ? [...data.chartData.categories].reverse()
-    : [];
-  const reversedData = data ? [...data.chartData.data].reverse() : [];
+  // Ambil data untuk chart vertikal (tidak perlu dibalik)
+  const categories = data ? data.chartData.categories : [];
+  const scores = data ? data.chartData.data : [];
 
   const options = {
     tooltip: {
@@ -43,47 +42,46 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
     },
     grid: {
       left: "3%",
-      right: "10%",
+      right: "4%",
       bottom: "3%",
-      top: "3%",
       containLabel: true,
     },
+    // Konfigurasi untuk chart vertikal
     xAxis: {
+      type: "category",
+      data: categories,
+      axisTick: { alignWithLabel: true },
+      axisLabel: {
+        interval: 0,
+        rotate: 30, // Miringkan label jika terlalu panjang
+      },
+    },
+    yAxis: {
       type: "value",
-      max: 4,
+      max: 5, // Skor maksimal adalah 5
       splitLine: {
-        show: true,
         lineStyle: {
           type: "dashed",
           color: "#E5E7EB",
         },
       },
-      axisLabel: { show: false },
-      axisLine: { show: false },
-      axisTick: { show: false },
-    },
-    yAxis: {
-      type: "category",
-      data: reversedCategories,
-      axisLine: { show: false },
-      axisTick: { show: false },
     },
     series: [
       {
         name: "Skor",
         type: "bar",
-        data: reversedData,
+        data: scores,
         label: {
           show: true,
-          position: "right",
+          position: "top", // Label di atas bar
           formatter: "{c}",
           color: "#374151",
         },
         itemStyle: {
           color: "#EF4444",
-          borderRadius: [0, 5, 5, 0],
+          borderRadius: [5, 5, 0, 0], // Lengkungan di ujung atas bar
         },
-        barWidth: "60%",
+        barWidth: "40%",
       },
     ],
   };
@@ -95,7 +93,6 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
           <h2 className="text-xl font-semibold">{title}</h2>
           <p className="text-sm text-gray-500">{subtitle}</p>
         </div>
-        {/* 1. Tambahkan "Satuan: Skor" di sini */}
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">Satuan: Skor</span>
           <CogIcon className="h-6 w-6 text-gray-500 cursor-pointer" />
@@ -111,41 +108,26 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
           <p>Data tidak tersedia.</p>
         </div>
       ) : (
-        <div
-          className="flex flex-col lg:flex-row gap-6"
-          style={{ height: "400px" }}
-        >
-          {/* Kolom Kiri: Chart */}
-          <div className="w-full lg:w-2/3 h-full">
+        // Layout Baru: Skor di Atas, Chart di Bawah
+        <div>
+          {/* Bagian Skor Rata-rata */}
+          <div className="text-center p-4 border-b mb-4">
+            <p className="text-sm text-gray-500">Average Score</p>
+            <p className="text-5xl font-bold text-gray-800 my-1">
+              {data.summary.averageScore}
+            </p>
+            <p className="text-sm font-semibold text-green-600">
+              {data.summary.yoy}
+            </p>
+            <p className="text-sm text-gray-400">out of 5.0</p>
+          </div>
+
+          {/* Bagian Chart */}
+          <div style={{ height: "350px", width: "100%" }}>
             <ReactECharts
               option={options}
               style={{ height: "100%", width: "100%" }}
             />
-          </div>
-
-          {/* Kolom Kanan: Summary Skor */}
-          {/* 2. Tambahkan 'items-center' untuk menengahkan secara horizontal */}
-          <div className="w-full lg:w-1/3 h-full flex flex-col justify-center items-center border-l pl-6">
-            <div className="mb-6 text-center">
-              {" "}
-              {/* 3. Tengahkan teks */}
-              <h2 className="text-xl font-semibold">Total Score</h2>
-              <p className="text-4xl font-bold text-gray-800">
-                {data.summary.totalScore}
-              </p>
-              <p className="text-sm font-semibold text-green-600">
-                {data.summary.yoy}
-              </p>
-            </div>
-            <div className="text-center">
-              {" "}
-              {/* 3. Tengahkan teks */}
-              <p className="text-sm text-gray-500">Average Score</p>
-              <p className="text-4xl font-bold text-gray-800">
-                {data.summary.averageScore}
-              </p>
-              <p className="text-sm text-gray-400">out of 5.0</p>
-            </div>
           </div>
         </div>
       )}
