@@ -33,15 +33,6 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   data,
   isLoading,
 }) => {
-  const categoryDetails: { [key: string]: string } = {
-    "Strategy and R&D":
-      "Strategy and R&D (Strategi, Riset & Pengembangan Bisnis)",
-    Finance: "Finance (Keuangan & Akuntansi)",
-    "HC & GA": "HC & GA (HR, GA & Sekretaris Perusahaan)",
-    Operation: "Operation (Aktuaria dan Operasi)",
-    Compliance: "Compliance (Hukum, Manajemen Risiko dan SKAI)",
-    IT: "IT", // Tetap IT karena tidak ada gabungan
-  };
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md w-full h-[484px] flex justify-center items-center">
@@ -92,9 +83,7 @@ const FormationRasioChart: React.FC<ChartProps> = ({
           const percent = param.value.toFixed(2);
 
           // Ambil nama detail dari kamus. Jika tidak ada, gunakan nama aslinya.
-          const detailedName = categoryDetails[seriesName] || seriesName;
-
-          tooltipText += `${param.marker} ${detailedName}: ${value} (${percent}%)<br/>`;
+          tooltipText += `${param.marker} ${seriesName}: ${value} (${percent}%)<br/>`;
         });
         return tooltipText;
       },

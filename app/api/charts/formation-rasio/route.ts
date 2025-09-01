@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 const getMonthName = (monthNumber: number) => {
   const date = new Date(2000, monthNumber - 1, 1);
-  return date.toLocaleString("id-ID", { month: "long" }); // Gunakan 'long' untuk nama bulan penuh
+  return date.toLocaleString("id-ID", { month: "long" });
 };
 
 export async function GET(request: NextRequest) {
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    // Buat map headcount agar mudah dicari
+    // Buat map headcount agar mudah dicari berdasarkan bulan
     const headcountMap = new Map<number, number>();
     headcountData.forEach((hc) => {
       headcountMap.set(hc.month, hc.totalCount);
@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
     const processedData = formationRasioRaw.map((monthData) => {
       const raw = monthData;
 
-      // --- LOGIKA PENGELOMPOKAN DIMULAI DI SINI ---
+      // --- LOGIKA UTAMA: PENGELOMPOKAN DARI 10 KE 7 KATEGORI ---
       const groupedCategories = {
-        "Strategy and R&D": raw.rd,
+        Strategy: raw.rd,
         Business: raw.business,
         Finance: raw.finance,
         "HC & GA":
@@ -58,11 +58,10 @@ export async function GET(request: NextRequest) {
         Compliance: raw.compliance + raw.legal,
         IT: raw.informationTechnology,
       };
-      // --- LOGIKA PENGELOMPOKAN SELESAI ---
 
       return {
         month: getMonthName(raw.month),
-        totalHeadcount: headcountMap.get(raw.month) || 0, // Ambil total headcount dari map
+        totalHeadcount: headcountMap.get(raw.month) || 0,
         categories: groupedCategories,
       };
     });
