@@ -1,6 +1,5 @@
 // File: app/api/demography/headcount/route.ts
 
-import { PrismaClient, Headcount } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 import prisma from "@/lib/prisma";

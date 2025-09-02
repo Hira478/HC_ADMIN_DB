@@ -1,4 +1,4 @@
-import { PrismaClient, EducationStat } from "@prisma/client";
+import { EducationStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 import prisma from "@/lib/prisma";

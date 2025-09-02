@@ -1,7 +1,7 @@
 // app/api/charts/employee-engagement/route.ts
 
 import { NextResponse } from "next/server";
-import { PrismaClient, EmployeeEngagementStat } from "@prisma/client";
+import { EmployeeEngagementStat } from "@prisma/client";
 
 // Kita bisa gunakan kembali tipe data ini karena strukturnya sama
 import { CultureMaturityData as GroupedChartData } from "../culture-maturity/route";

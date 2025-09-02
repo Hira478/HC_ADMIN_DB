@@ -1,6 +1,6 @@
 // File: app/api/productivity/metrics/route.ts
 
-import { PrismaClient, ProductivityStat } from "@prisma/client";
+import { ProductivityStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 import prisma from "@/lib/prisma";

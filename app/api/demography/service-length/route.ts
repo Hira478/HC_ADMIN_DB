@@ -1,4 +1,4 @@
-import { PrismaClient, LengthOfServiceStat } from "@prisma/client";
+import { LengthOfServiceStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 import prisma from "@/lib/prisma";
