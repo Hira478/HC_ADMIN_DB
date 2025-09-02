@@ -1,7 +1,4 @@
-// File: app/api/talent-acquisition/route.ts
-
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
 
 const getMonthName = (monthNumber: number) => {
@@ -27,12 +24,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Ambil semua data untuk tahun yang dipilih
     const talentDataForYear = await prisma.talentAcquisitionStat.findMany({
       where: { companyId, year },
       orderBy: { month: "asc" },
     });
 
-    // Jika tidak ada data sama sekali, KEMBALIKAN STRUKTUR LENGKAP DENGAN NILAI NOL
     if (talentDataForYear.length === 0) {
       return NextResponse.json({
         cards: { totalHire: 0, totalCostHire: 0, newHireRetention: 0 },
@@ -43,16 +40,30 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // --- KALKULASI BARU UNTUK KARTU ---
+
+    // 1. Filter data untuk perhitungan kumulatif (dari Januari s/d bulan terpilih)
+    const cumulativeData = talentDataForYear.filter(
+      (d) => d.month <= monthValue
+    );
+
+    // 2. "Total Hire" & "Total Cost Hire" dihitung secara kumulatif
+    const totalHire = cumulativeData.reduce(
+      (sum, item) => sum + item.newHireCount,
+      0
+    );
+    const totalCostHire = cumulativeData.reduce(
+      (sum, item) => sum + item.costOfHire,
+      0
+    );
+
+    // 3. "New Hire Retention" dihitung per bulan
     const selectedMonthData = talentDataForYear.find(
       (d) => d.month === monthValue
     );
-
-    // Kalkulasi untuk Kartu
-    const totalHire = selectedMonthData?.newHireCount ?? 0;
-    const totalCostHire = selectedMonthData?.costOfHire ?? 0;
     const newHireRetention = selectedMonthData?.newHireRetention ?? 0;
 
-    // Persiapan data untuk Chart
+    // --- Persiapan data untuk Chart (tetap menampilkan semua bulan) ---
     const monthLabels = talentDataForYear.map((item) =>
       getMonthName(item.month)
     );

@@ -116,7 +116,7 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
             <p className="text-5xl font-bold text-gray-800 my-1">
               {data.summary.averageScore}
             </p>
-            <p className="text-sm text-gray-400">out of 5.0</p>
+            <p className="text-sm text-gray-400">out of 4.0</p>
           </div>
 
           {/* Bagian Chart */}
