@@ -69,7 +69,7 @@ export interface DashboardData {
 }
 
 export interface TurnoverData {
-  monthlyRatio: number; // <-- Ganti nama properti
+  ytdRatio: number;
   change: string;
   chartData: {
     categories: string[];
