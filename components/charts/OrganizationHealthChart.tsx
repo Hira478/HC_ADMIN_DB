@@ -1,4 +1,3 @@
-// components/charts/OrganizationHealthChart.tsx
 "use client";
 
 import React from "react";
@@ -11,72 +10,36 @@ interface ChartProps {
 }
 
 const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
-  if (isLoading) {
-    // Hapus tinggi minimum agar container bisa fleksibel
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center">
-        <p>Memuat data...</p>
-      </div>
-    );
-  }
-
-  if (!data || data.currentYearData.length === 0) {
-    // Hapus tinggi minimum agar container bisa fleksibel
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md w-full flex justify-center items-center">
-        <p>Data tidak tersedia untuk filter yang dipilih.</p>
-      </div>
-    );
-  }
-
-  // --- PERUBAHAN UTAMA: HITUNG TINGGI DINAMIS ---
-  // Kita tentukan tinggi per bar (misal 45px) + padding atas/bawah (misal 80px)
-  const barHeight = 45;
-  const padding = 80;
-  const chartHeight = data.categories.length * barHeight + padding;
-
+  // Opsi chart dipindahkan ke atas agar bisa diakses nanti
   const options = {
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
     legend: {
-      data: [data.previousYear?.toString(), data.currentYear.toString()].filter(
-        Boolean
-      ),
+      data: [
+        data?.previousYear?.toString(),
+        data?.currentYear.toString(),
+      ].filter(Boolean),
       bottom: 10,
     },
     grid: {
       left: "3%",
       right: "4%",
       top: "5%",
-      bottom: "15%", // Beri ruang untuk legenda dan padding
+      bottom: "15%",
       containLabel: true,
     },
     xAxis: { type: "value", show: false },
     yAxis: {
       type: "category",
-      data: data.categories,
+      data: data?.categories || [],
       axisLine: { show: false },
       axisTick: { show: false },
       inverse: true,
     },
     series: [
       {
-        name: data.previousYear?.toString(),
+        name: data?.previousYear?.toString(),
         type: "bar",
-        data: data.previousYearData,
-        barWidth: "40%",
-        label: {
-          show: true,
-          position: "insideRight", // Posisi di dalam bar, sebelah kanan
-          color: "#fff", // Warna teks putih
-          fontWeight: "bold",
-          formatter: "{c}", // Tampilkan nilai data
-        }, // Label di dalam bar disembunyikan agar lebih rapi
-        itemStyle: { color: "#adb5bd" },
-      },
-      {
-        name: data.currentYear.toString(),
-        type: "bar",
-        data: data.currentYearData,
+        data: data?.previousYearData,
         barWidth: "40%",
         label: {
           show: true,
@@ -84,26 +47,62 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
           color: "#fff",
           fontWeight: "bold",
           formatter: "{c}",
-        }, // Label di dalam bar disembunyikan agar lebih rapi
+        },
+        itemStyle: { color: "#adb5bd" },
+      },
+      {
+        name: data?.currentYear.toString(),
+        type: "bar",
+        data: data?.currentYearData,
+        barWidth: "40%",
+        label: {
+          show: true,
+          position: "insideRight",
+          color: "#fff",
+          fontWeight: "bold",
+          formatter: "{c}",
+        },
         itemStyle: { color: "#6c757d" },
       },
     ].filter((series) => series.data && series.data.length > 0),
   };
 
+  // Hitung tinggi chart jika data ada
+  const chartHeight = data ? data.categories.length * 45 + 80 : 400;
+
+  // --- 1. Struktur utama kartu sekarang ada di luar kondisi ---
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md w-full h-full">
+    <div className="bg-white p-6 rounded-lg shadow-md w-full h-full flex flex-col">
       <h2 className="text-xl font-semibold">Organization Health Index</h2>
-      <div className="my-2">
-        <span className="text-3xl font-bold text-gray-800">
-          {data.currentYearScore.toLocaleString("id-ID", {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-          })}
-        </span>
-        <span className="ml-2 text-lg text-gray-500">Medium</span>
+
+      {/* Tampilkan skor hanya jika tidak loading dan data ada */}
+      {!isLoading && data && data.currentYearData.length > 0 && (
+        <div className="my-2">
+          <span className="text-3xl font-bold text-gray-800">
+            {data.currentYearScore.toLocaleString("id-ID", {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: 1,
+            })}
+          </span>
+          <span className="ml-2 text-lg text-gray-500">Medium</span>
+        </div>
+      )}
+
+      {/* --- 2. Area konten dengan tinggi yang pasti --- */}
+      {/* min-h-[300px] memastikan area ini tidak kolaps */}
+      <div className="flex-1 flex items-center justify-center min-h-[300px]">
+        {/* --- 3. Logika kondisional sekarang ada di DALAM area konten --- */}
+        {isLoading ? (
+          <p>Memuat data...</p>
+        ) : !data || data.currentYearData.length === 0 ? (
+          <p className="text-gray-500">Data Belum Ada</p>
+        ) : (
+          <ReactECharts
+            option={options}
+            style={{ height: `${chartHeight}px`, width: "100%" }}
+          />
+        )}
       </div>
-      {/* Gunakan tinggi dinamis yang sudah dihitung */}
-      <ReactECharts option={options} style={{ height: `${chartHeight}px` }} />
     </div>
   );
 };

@@ -3,6 +3,7 @@
 import React from "react";
 import ReactECharts from "echarts-for-react";
 import { CogIcon } from "@heroicons/react/24/outline";
+import InfoTooltip from "../ui/InfoTooltip";
 
 // Tipe data yang diterima dari API
 interface MonthData {
@@ -33,6 +34,14 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   data,
   isLoading,
 }) => {
+  const legendDetails: { [key: string]: string } = {
+    Strategy: "Strategi, Riset, & Pengembangan Bisnis",
+    Finance: "Keuangan & Akuntansi",
+    "HC & GA": "HR, GA & Sekretaris Perusahaan",
+    Operation: "Aktuaria dan Operasi",
+    Compliance: "Hukum, Manajemen Risiko dan SKAI",
+  };
+
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md w-full h-[484px] flex justify-center items-center">
@@ -52,19 +61,30 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   const seriesNames = data.length > 0 ? Object.keys(data[0].categories) : [];
   const months = data.map((d) => d.month);
 
-  const seriesData = seriesNames.map((name) => {
-    return {
-      name: name,
-      type: "bar",
-      stack: "Total",
-      emphasis: { focus: "series" },
-      data: data.map((monthData) => {
-        const total = monthData.totalHeadcount;
-        const value = monthData.categories[name];
-        return total > 0 ? parseFloat(((value / total) * 100).toFixed(2)) : 0;
-      }),
-    };
-  });
+  const gradientPalette = [
+    "#DBEAFE", // blue-100
+    "#BFDBFE", // blue-200
+    "#93C5FD", // blue-300
+    "#60A5FA", // blue-400
+    "#3B82F6", // blue-500
+    "#2563EB", // blue-600
+    "#1D4ED8", // blue-700
+  ];
+
+  const seriesData = seriesNames.map((name, index) => ({
+    name: name,
+    type: "bar",
+    stack: "Total",
+    emphasis: { focus: "series" },
+    itemStyle: {
+      color: gradientPalette[index % gradientPalette.length],
+    },
+    data: data.map((monthData) => {
+      const total = monthData.totalHeadcount;
+      const value = monthData.categories[name];
+      return total > 0 ? parseFloat(((value / total) * 100).toFixed(2)) : 0;
+    }),
+  }));
 
   const options = {
     tooltip: {
@@ -88,12 +108,12 @@ const FormationRasioChart: React.FC<ChartProps> = ({
         return tooltipText;
       },
     },
-    legend: { data: seriesNames, bottom: 0, type: "scroll" },
+    legend: { show: false },
     grid: {
       left: "3%",
       right: "4%",
       top: "15%",
-      bottom: "20%",
+      bottom: "5%", // Kurangi bottom karena legenda kustom ada di luar
       containLabel: true,
     },
     xAxis: {
@@ -127,6 +147,24 @@ const FormationRasioChart: React.FC<ChartProps> = ({
         option={options}
         style={{ height: "400px", width: "100%" }}
       />
+      <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 pt-4">
+        {seriesNames.map((name, index) => (
+          <div
+            key={name}
+            className="flex items-center gap-2 text-sm text-gray-700"
+          >
+            <span
+              className="w-3 h-3 rounded-sm"
+              style={{
+                backgroundColor:
+                  gradientPalette[index % gradientPalette.length],
+              }}
+            ></span>
+            <span>{name}</span>
+            <InfoTooltip content={legendDetails[name] || name} position="top" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

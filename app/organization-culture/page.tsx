@@ -6,21 +6,11 @@ import InfoCard from "@/components/ui/InfoCard";
 import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
-import { CultureMaturityData } from "@/app/api/charts/culture-maturity/route";
+import { CultureMaturityData as GroupedChartData } from "@/app/api/charts/culture-maturity/route";
 import HcmaBarChart from "@/components/charts/HcmaBarChart";
 import FormationRasioChart from "@/components/charts/FormationRasioChart";
 
-interface HcmaData {
-  chartData: {
-    categories: string[];
-    data: number[];
-  };
-  summary: {
-    totalScore: number;
-    averageScore: number;
-    yoy: string;
-  };
-}
+type HcmaData = GroupedChartData;
 
 interface FormationRasioMonthData {
   month: string;
@@ -42,13 +32,13 @@ export default function OrganizationCulturePage() {
   );
   const [isLoadingHealth, setIsLoadingHealth] = useState(true);
 
-  const [cultureData, setCultureData] = useState<CultureMaturityData | null>(
-    null
-  );
+  const [cultureData, setCultureData] = useState<HcmaData | null>(null);
   const [isLoadingCulture, setIsLoadingCulture] = useState(true);
-  const [engagementData, setEngagementData] =
-    useState<CultureMaturityData | null>(null);
+  const [engagementData, setEngagementData] = useState<HcmaData | null>(null);
   const [isLoadingEngagement, setIsLoadingEngagement] = useState(true);
+
+  const [hcmaData, setHcmaData] = useState<HcmaData | null>(null);
+  const [isLoadingHcma, setIsLoadingHcma] = useState(true);
 
   const [orgStructureData, setOrgStructureData] =
     useState<OrgStructureData | null>(null);
@@ -57,8 +47,6 @@ export default function OrganizationCulturePage() {
     FormationRasioMonthData[] | null
   >(null);
   const [isLoadingFormation, setIsLoadingFormation] = useState(true);
-  const [hcmaData, setHcmaData] = useState<HcmaData | null>(null);
-  const [isLoadingHcma, setIsLoadingHcma] = useState(true);
 
   useEffect(() => {
     if (selectedCompany && period.year) {
@@ -144,7 +132,7 @@ export default function OrganizationCulturePage() {
             `/api/charts/employee-engagement?companyId=${selectedCompany}&year=${period.year}`
           );
           if (!res.ok) throw new Error("Failed to fetch engagement data");
-          const data: CultureMaturityData = await res.json();
+          const data: HcmaData = await res.json();
           setEngagementData(data);
         } catch (error) {
           console.error(error);
@@ -222,7 +210,7 @@ export default function OrganizationCulturePage() {
             `/api/charts/culture-maturity?companyId=${selectedCompany}&year=${period.year}`
           );
           if (!res.ok) throw new Error("Failed to fetch culture data");
-          const data: CultureMaturityData = await res.json();
+          const data: HcmaData = await res.json();
           setCultureData(data);
         } catch (error) {
           console.error(error);
@@ -279,15 +267,19 @@ export default function OrganizationCulturePage() {
             ]}
           />
           <InfoCard
-            title="Design Organization"
+            title="Total Division"
             metrics={[
-              // Ambil data dari state 'orgStructureData'
               {
                 value: isLoadingOrgStructure
                   ? "..."
                   : orgStructureData?.designOrgCard.division || 0,
                 label: "Division",
               },
+            ]}
+          />
+          <InfoCard
+            title="Total Department"
+            metrics={[
               {
                 value: isLoadingOrgStructure
                   ? "..."
@@ -325,16 +317,35 @@ export default function OrganizationCulturePage() {
         </div>
       </div>
 
-      {/* --- SECTION 3 --- */}
       <div className="mt-8">
-        <HcmaBarChart
-          title="HC Maturity Assessment"
-          subtitle={period.year.toString()}
-          // Kirim seluruh objek data baru
-          data={hcmaData}
-          isLoading={isLoadingHcma}
-          containerClassName="bg-white" // Ubah jadi bg-white agar kontras
-        />
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          HC Maturity Assessment
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <InfoCard
+              title="Total Score"
+              metrics={[
+                {
+                  value: isLoadingHcma ? "..." : hcmaData?.mainScore || 0,
+                  label: "out of 5.0",
+                },
+              ]}
+            />
+            <InfoCard
+              title="Placeholder Card"
+              metrics={[{ value: "...", label: "Data belum ditentukan" }]}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <GroupedBarChart
+              data={hcmaData}
+              isLoading={isLoadingHcma}
+              cardClassName="bg-white text-gray-800"
+              showSummary={false}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );
