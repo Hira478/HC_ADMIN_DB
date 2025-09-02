@@ -71,18 +71,22 @@ const Sidebar = () => {
           icon={<Briefcase className="h-6 w-6" />}
           title="Workforce Planning"
         />
+        {/*
         <SidebarItem
           href="/input/scores"
           icon={<ClipboardEdit className="h-6 w-6" />}
           title="Input Skor"
         />
+        */}
 
         {/* 3. Nonaktifkan sementara tautan input dan upload */}
+        {/*
         <SidebarItem
           href="/input/productivity"
           icon={<DollarSign className="h-6 w-6" />}
           title="Input Productivity Data"
         />
+        */}
         {/*
         <SidebarItem
           href="/input/employee-cost"

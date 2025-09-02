@@ -29,7 +29,7 @@ const Header = () => {
     companies,
     availablePeriods,
     selectedCompany,
-    setSelectedCompany,
+    //setSelectedCompany,
     period,
     setPeriod,
     loading,
@@ -55,15 +55,15 @@ const Header = () => {
   }));
 
   const getActiveFilterText = () => {
+    // Teks sekarang akan selalu menampilkan nama perusahaan ID 7
     const companyName =
-      companies.find((c) => c.id === selectedCompany)?.name ||
-      "Pilih Perusahaan";
+      companies.find((c) => c.id === selectedCompany)?.name || "Loading...";
     const monthName = months.find((m) => m.value === period.value)?.name || "";
     return `${companyName} | ${monthName} ${period.year}`;
   };
 
   return (
-    <header className="flex h-20 w-full items-center justify-between border-b border-gray-200 bg-white px-6">
+    <header className="flex h-20 w-full items-center justify-between border-b bg-gray-200 bg-white px-6">
       <h1 className="text-xl font-bold text-gray-800">HC Dashboard IFG</h1>
 
       <div className="relative" ref={filterRef}>
@@ -90,29 +90,16 @@ const Header = () => {
             </div>
 
             <div className="space-y-4">
-              {/* Company & Year Filters */}
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={selectedCompany ?? ""}
-                  onChange={(e) => setSelectedCompany(Number(e.target.value))}
-                  disabled={loading}
-                  className="w-full rounded-md border bg-white p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Pilih Perusahaan</option>
-                  {loading ? (
-                    <option>Memuat...</option>
-                  ) : (
-                    companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))
-                  )}
-                </select>
+              {/* --- PERUBAHAN UTAMA DI SINI --- */}
+              {/* Dropdown perusahaan dihapus, hanya menyisakan tahun */}
+              <div>
+                <label className="text-xs font-semibold text-gray-600">
+                  Tahun
+                </label>
                 <select
                   value={period.year}
                   onChange={(e) => handleYearChange(Number(e.target.value))}
-                  className="w-full rounded-md border bg-white p-2 text-sm"
+                  className="w-full mt-1 rounded-md border bg-white p-2 text-sm"
                 >
                   {uniqueYears.map((y) => (
                     <option key={y} value={y}>
@@ -122,12 +109,12 @@ const Header = () => {
                 </select>
               </div>
 
-              {/* Monthly Filter */}
+              {/* Filter Bulanan */}
               <div>
                 <label className="text-xs font-semibold text-gray-600">
                   Bulan
                 </label>
-                <div className="mt-2">
+                <div className="mt-1">
                   <select
                     value={period.value}
                     onChange={(e) => handleValueChange(Number(e.target.value))}

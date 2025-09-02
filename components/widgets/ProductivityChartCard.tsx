@@ -72,7 +72,7 @@ const ProductivityChartCard = () => {
       // <-- Diubah dari array [ {..}, {..} ] menjadi satu objek saja
       type: "value",
 
-      name: "Nilai (Juta)", // <-- Nama diubah menjadi lebih generik
+      name: "Unit: Million Rupiah", // <-- Nama diubah menjadi lebih generik
       position: "left",
       interval: 400000, // Atur interval menjadi 400K (400,000)
       axisLabel: {
