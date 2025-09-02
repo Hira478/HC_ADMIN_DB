@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 
 const getMonthName = (monthNumber: number) => {
   const date = new Date(2000, monthNumber - 1, 1);
-  return date.toLocaleString("id-ID", { month: "long" });
+  return date.toLocaleString("en-US", { month: "long" }); // <-- Bahasa Inggris
 };
 
 // Daftar 7 kategori sesuai urutan di form input

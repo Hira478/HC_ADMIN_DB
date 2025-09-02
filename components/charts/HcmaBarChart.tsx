@@ -94,7 +94,7 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
           <p className="text-sm text-gray-500">{subtitle}</p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">Satuan: Skor</span>
+          <span className="text-sm text-gray-600">Unit: Score</span>
           <CogIcon className="h-6 w-6 text-gray-500 cursor-pointer" />
         </div>
       </div>

@@ -98,7 +98,7 @@ const AreaLineChart: React.FC<AreaLineChartProps> = ({
           <p className="text-sm text-gray-500">{subtitle}</p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">Satuan: %</span>
+          <span className="text-sm text-gray-600">Unit: Percentage</span>
           <CogIcon className="h-6 w-6 text-gray-500 cursor-pointer" />
         </div>
       </div>

@@ -56,26 +56,31 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
         setAvailablePeriods(periodData);
 
         // --- PERUBAHAN UTAMA DI SINI ---
-        const defaultCompanyId = 7; // <-- Tentukan ID default yang Anda inginkan
+        const defaultCompanyId = 7;
+        setSelectedCompany(defaultCompanyId);
 
-        // Cari apakah perusahaan dengan ID default ada di dalam daftar
-        const defaultCompany = companyData.find(
-          (c: Company) => c.id === defaultCompanyId
-        );
+        // --- PERUBAHAN UTAMA DI SINI ---
+        if (periodData && periodData.length > 0) {
+          // 1. Cari tahun paling baru dari semua periode yang ada
+          const latestYear = Math.max(
+            ...periodData.map((p: { year: number }) => p.year)
+          );
 
-        if (defaultCompany) {
-          // Jika ditemukan, set sebagai default
-          setSelectedCompany(defaultCompany.id);
-        } else if (companyData.length > 0) {
-          // Jika tidak ditemukan, fallback ke perusahaan pertama (agar tidak error)
-          setSelectedCompany(companyData[0].id);
-        }
-        // ---------------------------------
-        if (periodData.length > 0) {
+          // 2. Filter periode hanya untuk tahun yang paling baru tersebut
+          const periodsInLatestYear = periodData.filter(
+            (p: { year: number }) => p.year === latestYear
+          );
+
+          // 3. Cari bulan paling baru di dalam tahun tersebut
+          const latestMonth = Math.max(
+            ...periodsInLatestYear.map((p: { month: number }) => p.month)
+          );
+
+          // 4. Set periode default ke tahun dan bulan paling baru
           setPeriod((prev) => ({
             ...prev,
-            year: periodData[0].year,
-            value: periodData[0].month,
+            year: latestYear,
+            value: latestMonth,
           }));
         }
         setLoading(false);
@@ -90,7 +95,7 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     companies,
     availablePeriods,
     selectedCompany,
-    setSelectedCompany,
+    setSelectedCompany: () => {}, // Fungsi kosong agar tidak bisa diubah
     period,
     setPeriod,
     loading,
