@@ -39,17 +39,26 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Definisikan periode kumulatif berdasarkan filter bulan
+  const monthsToFetchCumulative = Array.from(
+    { length: monthValue },
+    (_, i) => i + 1
+  );
+
   try {
-    // Ambil semua data yang diperlukan
     const [
-      turnoverForChart, // Semua data turnover tahun ini untuk chart
-      headcountThisMonth, // Data headcount SPESIFIK bulan ini
-      turnoverPreviousMonth, // Data turnover SPESIFIK bulan ini tahun lalu
-      headcountPreviousMonth, // Data headcount SPESIFIK bulan ini tahun lalu
+      turnoverCumulativeCurrent,
+      headcountCurrentMonth,
+      turnoverCumulativePrevious,
+      headcountPreviousMonth,
+      turnoverForChart,
     ] = await Promise.all([
       prisma.turnoverStat.findMany({
-        where: { companyId, year: currentYear },
-        orderBy: { month: "asc" },
+        where: {
+          companyId,
+          year: currentYear,
+          month: { in: monthsToFetchCumulative },
+        },
       }),
       prisma.headcount.findUnique({
         where: {
@@ -60,13 +69,11 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
-      prisma.turnoverStat.findUnique({
+      prisma.turnoverStat.findMany({
         where: {
-          year_month_companyId: {
-            year: previousYear,
-            month: monthValue,
-            companyId,
-          },
+          companyId,
+          year: previousYear,
+          month: { in: monthsToFetchCumulative },
         },
       }),
       prisma.headcount.findUnique({
@@ -78,39 +85,45 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
+      prisma.turnoverStat.findMany({
+        where: { companyId, year: currentYear },
+        orderBy: { month: "asc" },
+      }),
     ]);
 
-    // --- KALKULASI RASIO BULANAN ---
-    // Cari data resign bulan ini dari data setahun yang sudah diambil
-    const resignCountCurrent =
-      turnoverForChart.find((t) => t.month === monthValue)?.resignCount ?? 0;
-    const headcountCountCurrent = headcountThisMonth?.totalCount ?? 0;
-    const monthlyRatioCurrent =
-      headcountCountCurrent > 0
-        ? (resignCountCurrent / headcountCountCurrent) * 100
-        : 0;
-
-    // --- Kalkulasi YoY ---
-    const resignCountPrevious = turnoverPreviousMonth?.resignCount ?? 0;
-    const headcountCountPrevious = headcountPreviousMonth?.totalCount ?? 0;
-    const monthlyRatioPrevious =
-      headcountCountPrevious > 0
-        ? (resignCountPrevious / headcountCountPrevious) * 100
-        : 0;
-    const yoyPercentage = calculateYoY(
-      monthlyRatioCurrent,
-      monthlyRatioPrevious
+    // --- KALKULASI YTD TAHUN INI ---
+    const totalResignCurrent = turnoverCumulativeCurrent.reduce(
+      (sum, item) => sum + item.resignCount,
+      0
     );
+    const headcountCountCurrent = headcountCurrentMonth?.totalCount ?? 0;
+    const ytdRatioCurrent =
+      headcountCountCurrent > 0
+        ? (totalResignCurrent / headcountCountCurrent) * 100
+        : 0;
 
-    // --- Data untuk chart (menggunakan data setahun penuh) ---
+    // --- KALKULASI YTD TAHUN LALU ---
+    const totalResignPrevious = turnoverCumulativePrevious.reduce(
+      (sum, item) => sum + item.resignCount,
+      0
+    );
+    const headcountCountPrevious = headcountPreviousMonth?.totalCount ?? 0;
+    const ytdRatioPrevious =
+      headcountCountPrevious > 0
+        ? (totalResignPrevious / headcountCountPrevious) * 100
+        : 0;
+
+    // --- KALKULASI YoY DARI RASIO YTD ---
+    const yoyPercentage = calculateYoY(ytdRatioCurrent, ytdRatioPrevious);
+
+    // --- DATA UNTUK CHART (NON-KUMULATIF) ---
     const monthLabels = turnoverForChart.map((item) =>
       getMonthName(item.month)
     );
     const resignCounts = turnoverForChart.map((item) => item.resignCount);
 
     const response = {
-      // Gunakan nama 'monthlyRatio' agar jelas
-      monthlyRatio: parseFloat(monthlyRatioCurrent.toFixed(1)),
+      ytdRatio: parseFloat(ytdRatioCurrent.toFixed(1)),
       change: formatYoYString(yoyPercentage),
       chartData: {
         categories: monthLabels,

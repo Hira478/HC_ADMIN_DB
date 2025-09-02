@@ -190,45 +190,45 @@ export default function WorkforcePlanningPage() {
         ) : !talentData ? (
           <div className="text-center p-10">Data tidak tersedia.</div>
         ) : (
-          // --- STRUKTUR LAYOUT 2x2 BARU ---
           <div className="flex flex-col gap-6">
-            {/* BARIS ATAS: KARTU-KARTU */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Menggunakan SummaryCard, bukan StatCard */}
+              {/* Gunakan optional chaining (?.) untuk keamanan */}
               <SummaryCard
                 title="Total Hire"
-                value={talentData.cards.totalHire.toLocaleString("id-ID")}
+                value={
+                  talentData.cards?.totalHire?.toLocaleString("id-ID") ?? 0
+                }
                 unit="Employee"
-                trend="" // API belum menyediakan data trend untuk ini
+                trend=""
               />
               <SummaryCard
                 title="Total Cost Hire"
-                value={talentData.cards.totalCostHire.toLocaleString("id-ID")}
+                value={
+                  talentData.cards?.totalCostHire?.toLocaleString("id-ID") ?? 0
+                }
                 unit="Juta"
-                trend="" // API belum menyediakan data trend untuk ini
+                trend=""
               />
               <SummaryCard
                 title="New Hire Retention"
-                value={`${talentData.cards.newHireRetention}%`}
-                trend="" // API belum menyediakan data trend untuk ini
+                value={`${talentData.cards?.newHireRetention ?? 0}%`}
+                trend=""
               />
             </div>
-
-            {/* BARIS BAWAH: CHART-CHART */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TalentAcquisitionChart
                 title="New Employee"
                 subtitle={String(period.year)}
-                chartData={talentData.charts.newEmployee}
+                chartData={talentData.charts?.newEmployee}
                 isLoading={loadingTalent}
-                yAxisUnitLabel="Karyawan"
+                yAxisUnitLabel="Employee"
               />
               <TalentAcquisitionChart
                 title="Cost of Hire"
                 subtitle={String(period.year)}
-                chartData={talentData.charts.costOfHire}
+                chartData={talentData.charts?.costOfHire}
                 isLoading={loadingTalent}
-                yAxisUnitLabel="dalam juta rupiah"
+                yAxisUnitLabel="Million Rupiah"
               />
             </div>
           </div>

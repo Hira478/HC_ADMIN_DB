@@ -6,10 +6,15 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // Helper function untuk kalkulasi YoY (Year on Year)
-const calculateYoY = (current: number, previous: number) => {
-  if (previous === 0) return current > 0 ? "+100%" : "+0%";
-  const percentage = ((current - previous) / previous) * 100;
-  return `${percentage >= 0 ? "+" : ""}${percentage.toFixed(0)}%`;
+const calculateYoY = (current: number, previous: number): number => {
+  if (previous === 0) return 0;
+  const denominator = Math.abs(previous);
+  return ((current - previous) / denominator) * 100;
+};
+
+const formatYoYString = (percentage: number): string => {
+  const sign = percentage >= 0 ? "+" : "";
+  return `${sign}${percentage.toFixed(1)}% | Year on Year`;
 };
 
 // Helper function untuk menentukan status
@@ -65,20 +70,25 @@ export async function GET(request: Request) {
     const currentPlanned = currentManpower?.plannedCount || 0;
     const currentActual = currentHeadcount?.totalCount || 0;
 
+    const manpowerYoY = calculateYoY(
+      currentPlanned,
+      previousManpower?.plannedCount || 0
+    );
+    const headcountYoY = calculateYoY(
+      currentActual,
+      previousHeadcount?.totalCount || 0
+    );
+
     const summaryData = {
       totalManpowerPlanning: {
         value: currentPlanned,
-        trend: `${calculateYoY(
-          currentPlanned,
-          previousManpower?.plannedCount || 0
-        )} | Year on Year`,
+        // Gunakan fungsi format untuk string yang konsisten
+        trend: formatYoYString(manpowerYoY),
       },
       totalHeadcount: {
         value: currentActual,
-        trend: `${calculateYoY(
-          currentActual,
-          previousHeadcount?.totalCount || 0
-        )} | Year on Year`,
+        // Gunakan fungsi format untuk string yang konsisten
+        trend: formatYoYString(headcountYoY),
       },
       fulfilment: {
         value:

@@ -118,9 +118,7 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
           <p className="text-sm text-gray-500">{subtitle}</p>
         </div>
         {yAxisUnitLabel && (
-          <span className="text-sm text-gray-500">
-            Satuan : {yAxisUnitLabel}
-          </span>
+          <span className="text-sm text-gray-500">Unit : {yAxisUnitLabel}</span>
         )}
       </div>
       <div className="flex-grow min-h-0">
