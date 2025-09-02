@@ -1,7 +1,7 @@
 // app/api/charts/organization-health/route.ts
 
 import { NextResponse } from "next/server";
-import { PrismaClient, OrganizationHealthStat } from "@prisma/client";
+import { OrganizationHealthStat } from "@prisma/client";
 
 import prisma from "@/lib/prisma";
 

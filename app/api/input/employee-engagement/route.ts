@@ -1,7 +1,6 @@
 // app/api/input/employee-engagement/route.ts
 
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 
 import prisma from "@/lib/prisma";
 
