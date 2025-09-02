@@ -70,7 +70,7 @@ const KpiChartCard = () => {
     },
     yAxis: {
       type: "category",
-      data: ["KPI Korporasi", "KPI HC Transformation"],
+      data: ["KPI Korporasi", "KPI Human Capital"],
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {
