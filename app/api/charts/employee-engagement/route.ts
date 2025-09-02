@@ -6,7 +6,7 @@ import { PrismaClient, EmployeeEngagementStat } from "@prisma/client";
 // Kita bisa gunakan kembali tipe data ini karena strukturnya sama
 import { CultureMaturityData as GroupedChartData } from "../culture-maturity/route";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

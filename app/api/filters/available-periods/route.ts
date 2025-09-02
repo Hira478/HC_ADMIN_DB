@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // Definisikan tipe untuk hasil query mentah agar TypeScript tidak error
 type AvailablePeriod = {

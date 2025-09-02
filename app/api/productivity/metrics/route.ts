@@ -3,7 +3,7 @@
 import { PrismaClient, ProductivityStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 const sumProductivity = (stats: ProductivityStat[]) =>
   stats.reduce(
