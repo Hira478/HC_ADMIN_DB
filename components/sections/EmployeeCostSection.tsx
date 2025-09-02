@@ -11,8 +11,12 @@ const EmployeeCostSection = ({
   data: EmployeeCostCardData | undefined;
   loading: boolean;
 }) => {
-  const loremIpsum =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+  const totalEmployeCostDetails =
+    "Total employee cost adalah beban biaya karyawan termasuk gaji dan tujangan (salary), kompensasi kinerja (incentive), tunjangan Pph 21 dan dana pensiun (pension), beban training & rekrutmen  (training  & recruitment), dan beban karyawan lainnya (others).";
+  const constPerEmployeeDetails =
+    "Cost Per Employee adalah ukuran yang menunjukkan berapa besar biaya rata-rata yang dikeluarkan perusahaan untuk setiap karyawan dalam periode tertentu (biasanya 1 tahun).";
+  const employeeCostRasioDetails =
+    "Employee Cost Ratio (ECR) adalah ukuran yang menunjukkan porsi biaya karyawan (employee cost) dibandingkan dengan biaya operasional perusahaan.";
   if (loading) {
     return (
       <section>
@@ -54,7 +58,7 @@ const EmployeeCostSection = ({
             change={data.total.change || ""}
             valueUnit="Unit: Million Rupiah"
             rkdapInfo="Total Employee Cost Key Data"
-            details={loremIpsum}
+            details={totalEmployeCostDetails}
             variant="dark"
             className="flex-1"
           />
@@ -65,7 +69,7 @@ const EmployeeCostSection = ({
             valueUnit="Unit: Million Rupiah"
             change={data.costPerEmployee.change || ""}
             rkdapInfo="Cost per Employee Key Data"
-            details={loremIpsum}
+            details={constPerEmployeeDetails}
             variant="dark"
             className="flex-1"
           />
@@ -75,7 +79,7 @@ const EmployeeCostSection = ({
             value={data.ratio.value}
             change={data.ratio.change || ""}
             rkdapInfo="Employee Cost Rasio Key Data"
-            details={loremIpsum}
+            details={employeeCostRasioDetails}
             variant="dark"
             className="flex-1"
           />
