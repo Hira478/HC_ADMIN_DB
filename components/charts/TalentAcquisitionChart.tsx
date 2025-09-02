@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import CardLoader from "../widgets/CardLoader";
 
@@ -26,14 +26,23 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
   yAxisUnitLabel,
   containerClassName = "bg-white",
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const chartRef = useRef<ReactECharts>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Re-render chart ketika data berubah
+  useEffect(() => {
+    if (chartRef.current && chartData) {
+      chartRef.current.getEchartsInstance().resize();
+    }
+  }, [chartData]);
+
   const options = {
     tooltip: {
       trigger: "axis",
-      // 1. Format angka di tooltip agar tidak ada koma
-      valueFormatter: (value: number | string) =>
-        typeof value === "number"
-          ? Math.trunc(value).toLocaleString("id-ID")
-          : value,
     },
     grid: {
       left: "3%",
@@ -50,12 +59,10 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
       type: "value",
       splitNumber: 4,
       axisLabel: {
-        // 2. Format angka di sumbu Y agar tidak ada koma
         formatter: (value: number) => {
-          const intValue = Math.trunc(value);
-          if (intValue >= 1e6) return intValue / 1e6 + "M";
-          if (intValue >= 1e3) return intValue / 1e3 + "K";
-          return intValue;
+          if (value >= 1e6) return value / 1e6 + "M";
+          if (value >= 1e3) return value / 1e3 + "K";
+          return value;
         },
       },
     },
@@ -63,7 +70,7 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
       {
         data: chartData?.data || [],
         type: "line",
-        smooth: true,
+        smooth: false,
         areaStyle: {
           color: "#FEE2E2",
           opacity: 0.6,
@@ -77,13 +84,11 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
         showSymbol: true,
         symbolSize: 6,
         label: {
-          show: true,
+          show: false,
           position: "top",
           color: "#374151",
           fontWeight: "normal",
           fontSize: 12,
-          // 3. Format angka di atas titik data agar tidak ada koma
-          formatter: (params: { value: number }) => Math.trunc(params.value),
         },
       },
     ],
@@ -113,13 +118,18 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
           <p className="text-sm text-gray-500">{subtitle}</p>
         </div>
         {yAxisUnitLabel && (
-          <span className="text-sm text-gray-500">
-            Satuan : {yAxisUnitLabel}
-          </span>
+          <span className="text-sm text-gray-500">Unit : {yAxisUnitLabel}</span>
         )}
       </div>
       <div className="flex-grow min-h-0">
-        <ReactECharts option={options} style={{ height: "100%" }} />
+        {isMounted && (
+          <ReactECharts
+            ref={chartRef}
+            option={options}
+            style={{ height: "100%", minHeight: "220px" }}
+            opts={{ renderer: "canvas" }}
+          />
+        )}
       </div>
     </div>
   );
