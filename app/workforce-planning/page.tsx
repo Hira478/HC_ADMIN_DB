@@ -206,7 +206,7 @@ export default function WorkforcePlanningPage() {
                 value={Math.trunc(
                   talentData.cards.totalCostHire
                 ).toLocaleString("id-ID")}
-                unit="Juta"
+                unit="Million Rupiah"
                 trend=""
               />
               <SummaryCard
