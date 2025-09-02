@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // Definisikan bentuk data yang diharapkan dari form gabungan
 interface CombinedInput {

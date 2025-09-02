@@ -1,7 +1,7 @@
 import { PrismaClient, AgeStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // Fungsi sumAgeStats tidak lagi diperlukan dan bisa dihapus
 // const sumAgeStats = (stats: AgeStat[]) => { ... };

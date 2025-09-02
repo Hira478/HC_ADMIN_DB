@@ -3,7 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 const toTitleCase = (str: string) => {
   return str

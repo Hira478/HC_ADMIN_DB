@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // Helper function untuk kalkulasi YoY (Year on Year)
 const calculateYoY = (current: number, previous: number): number => {

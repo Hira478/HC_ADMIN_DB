@@ -3,7 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 const getMonthName = (monthNumber: number) => {
   const date = new Date(2000, monthNumber - 1, 1);

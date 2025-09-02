@@ -3,7 +3,7 @@
 import { PrismaClient, Headcount } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // --- Tambahkan fungsi helper dari API sebelumnya ---
 const calculateYoY = (current: number, previous: number): number => {

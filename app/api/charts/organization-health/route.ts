@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, OrganizationHealthStat } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export interface OrganizationHealthData {
   categories: string[];

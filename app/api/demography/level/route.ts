@@ -1,7 +1,7 @@
 import { PrismaClient, LevelStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 // Fungsi ini tidak lagi digunakan, bisa dihapus
 // const sumLevelStats = (stats: LevelStat[]) => { ... };
