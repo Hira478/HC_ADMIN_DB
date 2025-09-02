@@ -203,9 +203,9 @@ export default function WorkforcePlanningPage() {
               />
               <SummaryCard
                 title="Total Cost Hire"
-                value={
-                  talentData.cards?.totalCostHire?.toLocaleString("id-ID") ?? 0
-                }
+                value={Math.trunc(
+                  talentData.cards.totalCostHire
+                ).toLocaleString("id-ID")}
                 unit="Juta"
                 trend=""
               />
