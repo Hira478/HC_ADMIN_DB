@@ -328,7 +328,7 @@ export default function OrganizationCulturePage() {
               metrics={[
                 {
                   value: isLoadingHcma ? "..." : hcmaData?.mainScore || 0,
-                  label: "out of 5.0",
+                  label: "out of 4.0",
                 },
               ]}
             />
