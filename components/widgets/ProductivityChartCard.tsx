@@ -71,13 +71,16 @@ const ProductivityChartCard = () => {
     yAxis: {
       // <-- Diubah dari array [ {..}, {..} ] menjadi satu objek saja
       type: "value",
+
       name: "Nilai (Juta)", // <-- Nama diubah menjadi lebih generik
       position: "left",
+      interval: 400000, // Atur interval menjadi 400K (400,000)
       axisLabel: {
-        formatter: (val: number) =>
-          val >= 1e6
-            ? `${(val / 1e6).toFixed(1)}M`
-            : `${(val / 1e3).toFixed(1)}K`,
+        formatter: (value: number) => {
+          if (value >= 1e6 || value <= -1e6) return `${value / 1e6}M`;
+          if (value >= 1e3 || value <= -1e3) return `${value / 1e3}K`;
+          return value;
+        },
       },
     },
     series: [

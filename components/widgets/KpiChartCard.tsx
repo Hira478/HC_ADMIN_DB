@@ -81,7 +81,7 @@ const KpiChartCard = () => {
       {
         name: "KPI",
         type: "bar",
-        barWidth: "60%",
+        barWidth: "70%",
         data: [
           {
             value: kpiData?.kpiKorporasi || 0,
@@ -119,14 +119,15 @@ const KpiChartCard = () => {
           <h3 className="font-semibold text-base text-gray-800">KPI</h3>
           <p className="text-sm text-gray-500">{period.year}</p>
         </div>
-        <div className="flex space-x-6 text-sm text-gray-600 mb-2">
+        <div className="flex space-x-4 text-sm text-gray-600 mb-2">
           <div className="flex items-center">
-            <span className="h-3 w-3 rounded-full bg-red-700 mr-2"></span>KPI
-            Korporasi
+            <span className="h-3 w-3 rounded-full bg-red-700 mr-2"></span>
+            {/* Tambahkan leading-tight untuk spasi baris yang lebih rapat */}
+            <span className="leading-tight">KPI Korporasi</span>
           </div>
           <div className="flex items-center">
-            <span className="h-3 w-3 rounded-full bg-gray-700 mr-2"></span>KPI
-            HC Transformation
+            <span className="h-3 w-3 rounded-full bg-gray-700 mr-2"></span>
+            <span className="leading-tight">KPI HC Transformation</span>
           </div>
         </div>
       </div>
