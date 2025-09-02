@@ -267,13 +267,14 @@ export default function OrganizationCulturePage() {
             title="Employee Formation Rasio"
             metrics={[
               {
-                // Ambil data dari state 'orgStructureData'
                 value: isLoadingOrgStructure
                   ? "..."
-                  : `${orgStructureData?.formationRatioCard.enabler || 0}/${
+                  : // Ganti "/" menjadi ":"
+                    `${orgStructureData?.formationRatioCard.enabler || 0}:${
                       orgStructureData?.formationRatioCard.revenueGenerator || 0
                     }`,
-                label: "Enabler/\nRevenue Generator",
+                // Ganti juga di label agar konsisten
+                label: "Enabler : Revenue Generator",
               },
             ]}
           />

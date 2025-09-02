@@ -11,6 +11,8 @@ const EmployeeCostSection = ({
   data: EmployeeCostCardData | undefined;
   loading: boolean;
 }) => {
+  const loremIpsum =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
   if (loading) {
     return (
       <section>
@@ -50,7 +52,9 @@ const EmployeeCostSection = ({
             title="Total Employee Cost"
             value={data.total.value}
             change={data.total.change || ""}
+            valueUnit="Unit: Million Rupiah"
             rkdapInfo="Total Employee Cost Key Data"
+            details={loremIpsum}
             variant="dark"
             className="flex-1"
           />
@@ -58,8 +62,10 @@ const EmployeeCostSection = ({
           <StatCard
             title="Cost per Employee"
             value={data.costPerEmployee.value}
+            valueUnit="Unit: Million Rupiah"
             change={data.costPerEmployee.change || ""}
             rkdapInfo="Cost per Employee Key Data"
+            details={loremIpsum}
             variant="dark"
             className="flex-1"
           />
@@ -69,6 +75,7 @@ const EmployeeCostSection = ({
             value={data.ratio.value}
             change={data.ratio.change || ""}
             rkdapInfo="Employee Cost Rasio Key Data"
+            details={loremIpsum}
             variant="dark"
             className="flex-1"
           />

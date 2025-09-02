@@ -42,7 +42,7 @@ const ProductivitySection = ({
         <StatCard
           title="Revenue"
           value={data.revenue.value}
-          valueUnit="(dalam Juta)"
+          valueUnit="Unit: Million Rupiah"
           change={data.revenue.change || ""}
           rkdapInfo="Revenue Key Data"
           variant="dark"
@@ -50,7 +50,7 @@ const ProductivitySection = ({
         <StatCard
           title="Net Profit"
           value={data.netProfit.value}
-          valueUnit="(dalam Juta)"
+          valueUnit="Unit: Million Rupiah"
           change={data.netProfit.change || ""}
           rkdapInfo="Net Profit Key Data"
           variant="dark"
@@ -58,7 +58,7 @@ const ProductivitySection = ({
         <StatCard
           title="Revenue/Employee"
           value={data.revenuePerEmployee.value}
-          valueUnit="(dalam Juta)"
+          valueUnit="Unit: Million Rupiah"
           change={data.revenuePerEmployee.change || ""}
           rkdapInfo="Revenue per Employee Key Data"
           variant="light"
@@ -66,7 +66,7 @@ const ProductivitySection = ({
         <StatCard
           title="Net Profit/Employee"
           value={data.netProfitPerEmployee.value}
-          valueUnit="(dalam Juta)"
+          valueUnit="Unit: Million Rupiah"
           change={data.netProfitPerEmployee.change || ""}
           rkdapInfo="Net Profit per Employee Key Data"
           variant="light"

@@ -1,16 +1,17 @@
-// components/widgets/StatCard.tsx
+"use client";
+
 import React from "react";
+import InfoTooltip from "../ui/InfoTooltip";
 
 interface StatCardProps {
   title: string;
+  value: string | number;
   valueUnit?: string;
-  value: string;
-  change: string;
-  comparison?: string;
-  rkdapInfo: string;
-  icon?: React.ReactNode;
+  change?: string;
   variant?: "dark" | "light";
   className?: string;
+  rkdapInfo?: string;
+  details?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -18,61 +19,52 @@ const StatCard: React.FC<StatCardProps> = ({
   valueUnit,
   value,
   change,
-  comparison,
-  rkdapInfo,
-  icon,
   variant = "light",
   className,
+  details,
 }) => {
   const isDark = variant === "dark";
-  const cardBg = isDark ? "bg-gray-800" : "bg-white";
-  const titleColor = isDark ? "text-gray-400" : "text-gray-500";
-  const valueColor = isDark ? "text-white" : "text-gray-800";
-  const iconBg = isDark ? "bg-gray-700" : "bg-blue-50";
-  const iconColor = isDark ? "text-white" : "text-blue-600";
-
-  // TIDAK PERLU LAGI MEMISAHKAN "Rp" KARENA TAMPIL SATU BARIS
-  // const isCurrency = value.startsWith("Rp ");
-  // let currencySymbol = "";
-  // let amount = value;
-  // if (isCurrency) { ... }
+  const bgColor = isDark ? "bg-gray-800" : "bg-white";
+  const textColor = isDark ? "text-white" : "text-gray-800";
+  const subTextColor = isDark ? "text-gray-300" : "text-gray-500";
+  const changeTextColor = isDark ? "text-green-400" : "text-green-600";
 
   return (
     <div
-      className={`relative p-5 rounded-xl shadow-md flex flex-col justify-between ${cardBg} ${className}`}
+      className={`p-6 rounded-lg shadow-md ${bgColor} ${textColor} ${className}`}
     >
-      <div>
-        <div className="flex justify-between items-center">
-          <div className="flex items-baseline">
-            <p className={`text-sm font-medium ${titleColor}`}>{title}</p>
-            {valueUnit && (
-              <span
-                className={`ml-1.5 text-xs font-normal opacity-70 ${titleColor}`}
-              >
-                {valueUnit}
-              </span>
-            )}
-          </div>
-          {icon && (
-            <div className={`p-2.5 rounded-lg ${iconBg} ${iconColor}`}>
-              {icon}
-            </div>
+      <div className="flex justify-between items-center mb-1 gap-2">
+        {/* --- PERUBAHAN DI SINI --- */}
+        <p
+          className={`text-sm font-medium ${subTextColor} whitespace-nowrap overflow-hidden text-ellipsis`}
+          title={title} // Menampilkan judul penuh saat hover
+        >
+          {title}
+        </p>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {valueUnit && (
+            <p className={`text-xs ${subTextColor} whitespace-nowrap`}>
+              {valueUnit}
+            </p>
           )}
-        </div>
-
-        {/* --- PERUBAHAN UTAMA DI SINI --- */}
-        {/* Tampilkan nilai 'value' secara langsung dalam satu baris */}
-        <div className="mt-1">
-          <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
+          {details && <InfoTooltip content={details} />}
         </div>
       </div>
 
-      <div className="mt-4">
+      {/* Font size di sini sebelumnya text-2xl, disesuaikan kembali ke text-3xl */}
+      <p className={`text-2xl font-bold ${textColor} mb-2 whitespace-nowrap`}>
+        {value}
+      </p>
+
+      {change && (
         <div className="flex items-center text-xs">
-          <p className="text-green-500 font-semibold">{change}</p>
-          <p className={`ml-2 ${titleColor}`}>{comparison}</p>
+          <span
+            className={`${changeTextColor} font-semibold whitespace-nowrap`}
+          >
+            {change}
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 };

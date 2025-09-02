@@ -146,9 +146,6 @@ const AgeChartCard = () => {
         {" "}
         {/* Changed from items-start */}
         <h3 className="font-bold text-lg text-gray-800">Age</h3>
-        <div className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
-          Avg: 27.4 years
-        </div>
       </div>
       <div className="flex-1 -ml-1.5">
         {" "}

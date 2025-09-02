@@ -17,19 +17,15 @@ const sumProductivity = (stats: ProductivityStat[]) =>
     { revenue: 0, netProfit: 0, totalEmployeeCost: 0, totalCost: 0 }
   );
 
-const formatCurrency = (value: number, isPerEmployee = false) => {
+const formatCurrency = (value: number) => {
   const absValue = Math.abs(value);
   const sign = value < 0 ? "-" : "";
-  if (isPerEmployee) {
-    return `${sign}Rp ${absValue.toLocaleString("id-ID", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-  return `${sign}Rp ${absValue.toLocaleString("id-ID", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
+
+  const integerValue = Math.trunc(absValue);
+  const formattedNumber = integerValue.toLocaleString("id-ID");
+
+  // Kembalikan format dengan "Rp " di depannya
+  return `${sign}Rp ${formattedNumber}`;
 };
 
 const calculateYoY = (current: number, previous: number): number => {
@@ -172,8 +168,7 @@ export async function GET(request: NextRequest) {
           value: formatCurrency(
             headcountCurrent > 0
               ? totalProductivityCurrent.revenue / headcountCurrent
-              : 0,
-            true
+              : 0
           ),
           change: formatYoYString(yoyRevenuePerEmployee),
         },
@@ -181,25 +176,21 @@ export async function GET(request: NextRequest) {
           value: formatCurrency(
             headcountCurrent > 0
               ? totalProductivityCurrent.netProfit / headcountCurrent
-              : 0,
-            true
+              : 0
           ),
           change: formatYoYString(yoyNetProfitPerEmployee),
         },
       },
-      // 3. Sesuaikan struktur respons employeeCost
       employeeCost: {
         total: {
           value: formatCurrency(totalProductivityCurrent.totalEmployeeCost),
           change: formatYoYString(yoyTotalEmployeeCost),
         },
         costPerEmployee: {
-          // <-- Nama baru
-          value: formatCurrency(costPerEmployeeCurrent, true),
+          value: formatCurrency(costPerEmployeeCurrent),
           change: formatYoYString(yoyCostPerEmployee),
         },
         ratio: {
-          // <-- Metrik baru
           value: `${employeeCostRatioCurrent.toFixed(1)}%`,
           change: formatYoYString(yoyEmployeeCostRatio),
         },
