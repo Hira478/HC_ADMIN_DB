@@ -27,22 +27,20 @@ const StatCard: React.FC<StatCardProps> = ({
   const bgColor = isDark ? "bg-gray-800" : "bg-white";
   const textColor = isDark ? "text-white" : "text-gray-800";
   const subTextColor = isDark ? "text-gray-300" : "text-gray-500";
-
-  // --- PERUBAHAN DI SINI ---
-  // Logika warna disederhanakan agar selalu hijau
   const changeTextColor = isDark ? "text-green-400" : "text-green-600";
 
   return (
     <div
       className={`p-6 rounded-lg shadow-md ${bgColor} ${textColor} ${className}`}
     >
-      <div className="flex justify-between items-center mb-1">
-        <h3
-          className={`text-md font-semibold ${subTextColor} whitespace-nowrap overflow-hidden text-ellipsis min-w-0`}
-          title={title}
+      <div className="flex justify-between items-center mb-1 gap-2">
+        {/* --- PERUBAHAN DI SINI --- */}
+        <p
+          className={`text-sm font-medium ${subTextColor} whitespace-nowrap overflow-hidden text-ellipsis`}
+          title={title} // Menampilkan judul penuh saat hover
         >
           {title}
-        </h3>
+        </p>
         <div className="flex items-center gap-2 flex-shrink-0">
           {valueUnit && (
             <p className={`text-xs ${subTextColor} whitespace-nowrap`}>
@@ -53,12 +51,13 @@ const StatCard: React.FC<StatCardProps> = ({
         </div>
       </div>
 
-      <p className={`text-3xl font-bold ${textColor} mb-2 whitespace-nowrap`}>
+      {/* Font size di sini sebelumnya text-2xl, disesuaikan kembali ke text-3xl */}
+      <p className={`text-2xl font-bold ${textColor} mb-2 whitespace-nowrap`}>
         {value}
       </p>
 
       {change && (
-        <div className="flex items-center text-sm">
+        <div className="flex items-center text-xs">
           <span
             className={`${changeTextColor} font-semibold whitespace-nowrap`}
           >
