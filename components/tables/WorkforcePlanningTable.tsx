@@ -25,33 +25,42 @@ interface TableProps {
 
 // Fungsi logika baru untuk menentukan Status dan warnanya
 const getStatusInfo = (rasioString: string) => {
-  const rasio = parseFloat(rasioString);
+  const rasio = parseFloat(rasioString); // "94%" -> 94
 
   if (rasio > 100) {
     return {
-      text: "Overload",
-      className: "bg-red-100 text-red-800",
+      text: "🔵 Overstaffed",
+      className: "bg-blue-100 text-blue-800",
     };
-  } else if (rasio === 100) {
+  } else if (rasio >= 90) {
+    // Mencakup 90-100%
     return {
-      text: "Fit",
+      text: "🟢 Fit",
       className: "bg-green-100 text-green-800",
     };
-  } else if (rasio >= 1 && rasio <= 99) {
+  } else if (rasio >= 80) {
+    // Mencakup 80-89%
     return {
-      text: "Stretch",
-      className: "bg-yellow-100 text-yellow-800",
+      text: "🟠 Need",
+      className: "bg-orange-100 text-orange-800",
     };
-  } else if (rasio === 0) {
+  } else if (rasio >= 70) {
+    // Mencakup 70-79%
     return {
-      text: "-",
-      className: "bg-gray-100 text-gray-800",
+      text: "🔴 Urgently Need",
+      className: "bg-red-100 text-red-800",
+    };
+  } else if (rasio > 0) {
+    // Mencakup > 0 dan < 70%
+    return {
+      text: "🚨 Critical Gap",
+      className: "bg-red-200 text-red-900 font-bold", // Dibuat lebih menonjol
     };
   }
 
-  // Default jika tidak cocok dengan kondisi di atas
+  // Default untuk rasio 0% atau nilai tidak valid lainnya
   return {
-    text: "N/A",
+    text: "-",
     className: "bg-gray-100 text-gray-800",
   };
 };

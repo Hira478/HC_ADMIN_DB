@@ -11,12 +11,14 @@ interface GroupedBarChartProps {
   data: GroupedChartData | null;
   isLoading: boolean;
   cardClassName?: string;
+  showSummary?: boolean;
 }
 
 const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   data,
   isLoading,
   cardClassName = "bg-white text-gray-800",
+  showSummary = true,
 }) => {
   if (isLoading || !data) {
     const message = isLoading ? "Memuat data..." : "Data tidak tersedia.";
@@ -105,27 +107,32 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
     <div
       className={`p-6 rounded-lg shadow-md w-full h-full flex flex-col ${cardClassName}`}
     >
-      {/* 1. Buat container Flexbox untuk layout horizontal */}
-      <div className="flex flex-col md:flex-row gap-6 items-center">
-        {/* 2. Kolom Kiri untuk Teks Informasi */}
-        <div className="md:w-1/4 text-center md:text-left md:pl-4">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <div className="my-2">
-            <span className="text-3xl font-bold">{mainScore}</span>
-            <p className="text-base">{scoreLabel}</p>
-            <p className="text-sm text-green-500">{trend}</p>
+      {/* 3. Gunakan conditional rendering di sini */}
+      {showSummary ? (
+        // Tampilan LAMA: dengan teks ringkasan di kiri
+        <div className="flex flex-col md:flex-row gap-6 items-center">
+          <div className="md:w-1/4 text-center md:text-left md:pl-4">
+            <h2 className="text-xl font-semibold">{title}</h2>
+            <div className="my-2">
+              <span className="text-3xl font-bold">{mainScore}</span>
+              <p className="text-base">{scoreLabel}</p>
+              <p className="text-sm text-green-500">{trend}</p>
+            </div>
+          </div>
+          <div className="flex-1 w-full">
+            <ReactECharts
+              option={options}
+              style={{ height: "100%", minHeight: "250px" }}
+            />
           </div>
         </div>
-
-        {/* 3. Kolom Kanan untuk Chart */}
-        <div className="flex-1 w-full">
-          {/* 3. Ubah tinggi chart menjadi 100% */}
-          <ReactECharts
-            option={options}
-            style={{ height: "100%", minHeight: "250px" }}
-          />
-        </div>
-      </div>
+      ) : (
+        // Tampilan BARU: hanya chart saja
+        <ReactECharts
+          option={options}
+          style={{ height: "100%", minHeight: "250px" }}
+        />
+      )}
     </div>
   );
 };

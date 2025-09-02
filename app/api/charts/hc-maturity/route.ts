@@ -1,28 +1,17 @@
 // File: /api/charts/hc-maturity/route.ts
+
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
-const calculateYoY = (current: number, previous: number): number => {
-  if (previous === 0) return 0;
-  const denominator = Math.abs(previous);
-  return ((current - previous) / denominator) * 100;
-};
-
-const formatYoYString = (percentage: number): string => {
-  const sign = percentage >= 0 ? "+" : "";
-  return `${sign}${percentage.toFixed(1)}% | Year on Year`;
-};
-
 const toTitleCase = (str: string) => {
   return str
     .replace(/([A-Z])/g, " $1")
-    .trim() // talentSuccession -> talent Succession
-    .replace(/\b\w/g, (char) => char.toUpperCase()); // talent -> Talent
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-// Daftar indikator HCMA
 const hcmaIndicators = [
   "talentSuccession",
   "rewardRecognition",
@@ -66,35 +55,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Persiapkan data untuk chart (tetap sama)
+    // Hitung skor rata-rata
+    const totalScoreCurrent = hcmaIndicators.reduce(
+      (sum, indicator) =>
+        sum + (hcmaCurrent[indicator as keyof typeof hcmaCurrent] as number),
+      0
+    );
+    const averageScoreCurrent = totalScoreCurrent / hcmaIndicators.length;
+
+    // Siapkan data untuk grouped bar chart
     const chartData = {
-      categories: hcmaIndicators.map(toTitleCase), // <-- PERUBAHAN DI SINI
-      data: hcmaIndicators.map(
+      categories: hcmaIndicators.map(toTitleCase),
+      seriesPrevYear: hcmaPrevious
+        ? hcmaIndicators.map(
+            (ind) => hcmaPrevious[ind as keyof typeof hcmaPrevious] as number
+          )
+        : [],
+      seriesCurrYear: hcmaIndicators.map(
         (ind) => hcmaCurrent[ind as keyof typeof hcmaCurrent] as number
       ),
     };
 
-    // --- PERBAIKAN LOGIKA UTAMA DI SINI ---
-    // Hitung ulang total skor secara manual dari 8 indikator
-    const totalScoreCurrent = hcmaIndicators.reduce((sum, indicator) => {
-      return (
-        sum + (hcmaCurrent[indicator as keyof typeof hcmaCurrent] as number)
-      );
-    }, 0);
-
-    const averageScoreCurrent = totalScoreCurrent / hcmaIndicators.length;
-
-    // Untuk YoY, kita tetap bandingkan dengan totalScore dari DB tahun lalu
-    const totalScorePrevious = hcmaPrevious?.totalScore ?? 0;
-    const yoyPercentage = calculateYoY(totalScoreCurrent, totalScorePrevious);
-
+    // Susun respons agar sesuai dengan yang dibutuhkan komponen GroupedBarChart
     const response = {
-      chartData,
-      summary: {
-        totalScore: parseFloat(totalScoreCurrent.toFixed(2)),
-        averageScore: parseFloat(averageScoreCurrent.toFixed(2)),
-        yoy: formatYoYString(yoyPercentage),
-      },
+      title: "HC Maturity Assessment",
+      mainScore: parseFloat(averageScoreCurrent.toFixed(2)),
+      scoreLabel: "Average Score",
+      trend: "", // Trend bisa ditambahkan nanti jika perlu
+      chartData: chartData,
+      prevYear: hcmaPrevious ? previousYear : null,
+      currYear: currentYear,
     };
 
     return NextResponse.json(response);
