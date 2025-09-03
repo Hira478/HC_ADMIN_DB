@@ -70,7 +70,6 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
     },
     yAxis: {
       type: "value",
-      max: 4,
       splitLine: {
         lineStyle: {
           type: "dashed",
