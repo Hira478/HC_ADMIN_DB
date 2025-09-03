@@ -28,10 +28,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (kpiData.length === 0) {
-      return NextResponse.json(
-        { error: "Data KPI tidak ditemukan untuk bulan ini." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Data not found" }, { status: 404 });
     }
 
     // Kirim data KPI untuk bulan yang dipilih

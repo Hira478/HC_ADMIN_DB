@@ -4,7 +4,7 @@
 import React from "react";
 import ReactECharts from "echarts-for-react";
 // Sesuaikan path jika berbeda
-import { CultureMaturityData as GroupedChartData } from "@/app/api/charts/culture-maturity/route";
+import type { GroupedChartData } from "@/types";
 
 // PERUBAHAN 1: Interface disederhanakan, hanya terima data dan isLoading
 interface GroupedBarChartProps {
@@ -21,7 +21,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   showSummary = true,
 }) => {
   if (isLoading || !data) {
-    const message = isLoading ? "Memuat data..." : "Data tidak tersedia.";
+    const message = isLoading ? "Loading data..." : "Data tidak tersedia.";
     const height = cardClassName.includes("bg-[#343A40]") ? "410px" : "auto"; // Atur tinggi agar konsisten
     return (
       <div
@@ -49,7 +49,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
     grid: {
       left: "0%", // Kurangi jarak kiri untuk mengisi ruang kosong
       right: "4%",
-      bottom: "15%", // Tambah jarak bawah untuk label yang diputar
+      bottom: "1%", // Tambah jarak bawah untuk label yang diputar
       containLabel: true,
     },
     xAxis: {
@@ -60,11 +60,17 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
       axisLabel: {
         color: cardClassName.includes("bg-[#343A40]") ? "#ccc" : "#666",
         interval: 0, // Paksa semua label untuk tampil
-        rotate: 30, // Putar label 30 derajat
+        // rotate: 30, // <-- Dihapus, tidak perlu lagi dimiringkan
+        // 2. Tambahkan formatter untuk memecah teks menjadi 2 baris
+        formatter: function (value: string) {
+          // Ganti spasi dengan karakter newline (\n)
+          return value.split(" ").join("\n");
+        },
       },
     },
     yAxis: {
       type: "value",
+      max: 4,
       splitLine: {
         lineStyle: {
           type: "dashed",

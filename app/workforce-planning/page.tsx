@@ -143,7 +143,9 @@ export default function WorkforcePlanningPage() {
 
       {/* --- SECTION 1: Manpower Planning vs Headcount --- */}
       {loadingWorkforce ? (
-        <div className="text-center p-10">Memuat data Manpower Planning...</div>
+        <div className="text-center p-10">
+          Loading data Manpower Planning...
+        </div>
       ) : !workforceData ? (
         <div className="text-center p-10">
           Data Manpower Planning tidak tersedia.
@@ -186,7 +188,7 @@ export default function WorkforcePlanningPage() {
           Talent Acquisition
         </h2>
         {loadingTalent ? (
-          <div className="text-center p-10">Memuat data...</div>
+          <div className="text-center p-10">Loading data...</div>
         ) : !talentData ? (
           <div className="text-center p-10">Data tidak tersedia.</div>
         ) : (

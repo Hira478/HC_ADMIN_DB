@@ -45,7 +45,7 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md w-full h-[484px] flex justify-center items-center">
-        <p>Memuat data...</p>
+        <p>Loading data...</p>
       </div>
     );
   }

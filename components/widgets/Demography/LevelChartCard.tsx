@@ -88,7 +88,7 @@ const LevelChartCard = () => {
   if (loading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
-        Memuat...
+        Loading...
       </div>
     );
   }

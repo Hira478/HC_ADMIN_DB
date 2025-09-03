@@ -6,11 +6,8 @@ import InfoCard from "@/components/ui/InfoCard";
 import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
-import { CultureMaturityData as GroupedChartData } from "@/app/api/charts/culture-maturity/route";
-import HcmaBarChart from "@/components/charts/HcmaBarChart";
 import FormationRasioChart from "@/components/charts/FormationRasioChart";
-
-type HcmaData = GroupedChartData;
+import type { HcmaData, GroupedChartData } from "@/types";
 
 interface FormationRasioMonthData {
   month: string;
@@ -321,20 +318,28 @@ export default function OrganizationCulturePage() {
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           HC Maturity Assessment
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-1 flex flex-col gap-6">
+            {/* --- PERUBAHAN DI SINI --- */}
             <InfoCard
-              title="Total Score"
+              title="Average Score" // Judul diperbaiki
               metrics={[
                 {
+                  // Mengambil data Average Score perusahaan
                   value: isLoadingHcma ? "..." : hcmaData?.mainScore || 0,
-                  label: "out of 4.0",
+                  label: "out of 5.0",
                 },
               ]}
             />
             <InfoCard
-              title="Placeholder Card"
-              metrics={[{ value: "...", label: "Data belum ditentukan" }]}
+              title="Average IFG Group Score"
+              metrics={[
+                {
+                  // Mengambil data Average Score grup
+                  value: isLoadingHcma ? "..." : hcmaData?.ifgAverageScore || 0,
+                  label: "Out of 4.0",
+                },
+              ]}
             />
           </div>
           <div className="lg:col-span-2">

@@ -106,7 +106,7 @@ const AreaLineChart: React.FC<AreaLineChartProps> = ({
       <div className="flex-1 w-full min-h-[400px]">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <p>Memuat data...</p>
+            <p>Loading data...</p>
           </div>
         ) : !chartData || chartData.data.length === 0 ? (
           <div className="flex items-center justify-center h-full">

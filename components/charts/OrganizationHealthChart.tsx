@@ -93,9 +93,9 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
       <div className="flex-1 flex items-center justify-center min-h-[300px]">
         {/* --- 3. Logika kondisional sekarang ada di DALAM area konten --- */}
         {isLoading ? (
-          <p>Memuat data...</p>
+          <p>Loading data...</p>
         ) : !data || data.currentYearData.length === 0 ? (
-          <p className="text-gray-500">Data Belum Ada</p>
+          <p className="text-gray-500">Data not found</p>
         ) : (
           <ReactECharts
             option={options}

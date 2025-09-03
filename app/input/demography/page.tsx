@@ -149,7 +149,7 @@ const InputDemographyPage = () => {
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
             >
               {companiesLoading ? (
-                <option>Memuat...</option>
+                <option>Loading...</option>
               ) : (
                 companies.map((c) => (
                   <option key={c.id} value={c.id}>

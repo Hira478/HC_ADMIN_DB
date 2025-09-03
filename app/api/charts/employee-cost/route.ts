@@ -58,10 +58,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (costData.length === 0) {
-      return NextResponse.json(
-        { error: "Data tidak ditemukan" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Data not found" }, { status: 404 });
     }
 
     const response = {
