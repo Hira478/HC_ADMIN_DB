@@ -316,7 +316,7 @@ export default function OrganizationCulturePage() {
 
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          HC Maturity Assessment (2023)
+          HC Maturity Assessment
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-1 flex flex-col gap-6">
@@ -327,7 +327,7 @@ export default function OrganizationCulturePage() {
                 {
                   // Mengambil data Average Score perusahaan
                   value: isLoadingHcma ? "..." : hcmaData?.mainScore || 0,
-                  label: "out of 5.0",
+                  label: "out of 4.0",
                 },
               ]}
             />
@@ -348,6 +348,7 @@ export default function OrganizationCulturePage() {
               isLoading={isLoadingHcma}
               cardClassName="bg-white text-gray-800"
               showSummary={false}
+              yAxisMax={4}
             />
           </div>
         </div>

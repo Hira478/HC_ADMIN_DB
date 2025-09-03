@@ -12,6 +12,7 @@ interface GroupedBarChartProps {
   isLoading: boolean;
   cardClassName?: string;
   showSummary?: boolean;
+  yAxisMax?: number;
 }
 
 const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
@@ -19,6 +20,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   isLoading,
   cardClassName = "bg-white text-gray-800",
   showSummary = true,
+  yAxisMax,
 }) => {
   if (isLoading || !data) {
     const message = isLoading ? "Loading data..." : "Data tidak tersedia.";
@@ -70,6 +72,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
     },
     yAxis: {
       type: "value",
+      max: yAxisMax,
       splitLine: {
         lineStyle: {
           type: "dashed",
