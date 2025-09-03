@@ -76,3 +76,33 @@ export interface TurnoverData {
     data: number[];
   };
 }
+
+export interface HcmaData {
+  title: string;
+  mainScore: number; // Ini adalah Average Score perusahaan
+  scoreLabel: string;
+  trend: string;
+  ifgAverageScore: number; // Ini adalah Average Score Grup IFG
+  chartData: {
+    categories: string[];
+    seriesPrevYear: number[];
+    seriesCurrYear: number[];
+  };
+  prevYear: number | null;
+  currYear: number;
+}
+
+// TIPE STANDAR BARU UNTUK SEMUA GROUPED BAR CHART
+export interface GroupedChartData {
+  title: string;
+  mainScore: number; // Standarkan menjadi 'number'
+  scoreLabel: string;
+  trend: string;
+  chartData: {
+    categories: string[];
+    seriesPrevYear: number[];
+    seriesCurrYear: number[];
+  };
+  prevYear: number | null;
+  currYear: number;
+}

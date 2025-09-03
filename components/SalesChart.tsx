@@ -79,7 +79,7 @@ const SalesChart = () => {
   };
 
   if (loading) {
-    return <div className="text-center p-10">Memuat data chart...</div>;
+    return <div className="text-center p-10">Loading chart data...</div>;
   }
 
   return (

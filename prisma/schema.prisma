@@ -190,6 +190,7 @@ model HcmaScore {
   
   // Total Skor
   totalScore            Float
+  ifgAverageScore      Float   @default(0)
 
   // Relasi ke Company
   companyId             Int

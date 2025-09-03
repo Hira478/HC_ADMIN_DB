@@ -39,10 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (productivityStats.length === 0) {
-      return NextResponse.json(
-        { error: "Data produktivitas tidak ditemukan untuk periode ini" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Data not found" }, { status: 404 });
     }
 
     // 2. Buat map untuk headcount agar mudah diakses berdasarkan bulan

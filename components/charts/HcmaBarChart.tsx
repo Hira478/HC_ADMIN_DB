@@ -5,6 +5,7 @@ import { CogIcon } from "@heroicons/react/24/outline";
 
 // Tipe data yang diterima dari API
 interface HcmaData {
+  ifgAverageScore: number;
   chartData: {
     categories: string[];
     data: number[];
@@ -101,7 +102,7 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
 
       {isLoading ? (
         <div className="flex items-center justify-center h-[400px]">
-          <p>Memuat data...</p>
+          <p>Loading data...</p>
         </div>
       ) : !data ? (
         <div className="flex items-center justify-center h-[400px]">

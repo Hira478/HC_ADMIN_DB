@@ -19,7 +19,7 @@ const ProductivitySection = ({
     return (
       <section>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Productivity</h2>
-        <div className="text-center p-10">Memuat data produktivitas...</div>
+        <div className="text-center p-10">Loading productivity data...</div>
       </section>
     );
   }

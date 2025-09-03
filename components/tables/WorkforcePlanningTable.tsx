@@ -151,7 +151,7 @@ const WorkforcePlanningTable: React.FC<TableProps> = ({
                 Division
               </th>
               <th className="text-left font-semibold text-gray-600 p-4">
-                Man Power Planning
+                Manpower Planning
               </th>
               <th className="text-left font-semibold text-gray-600 p-4">
                 Headcount
@@ -192,7 +192,7 @@ const WorkforcePlanningTable: React.FC<TableProps> = ({
             ) : (
               <tr>
                 <td colSpan={5} className="text-center p-8 text-gray-500">
-                  Tidak ada data untuk ditampilkan.
+                  Data not found
                 </td>
               </tr>
             )}

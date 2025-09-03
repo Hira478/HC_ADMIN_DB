@@ -65,7 +65,7 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
   if (isLoading) {
     return (
       <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
-        Memuat...
+        Loading...
       </div>
     );
   }
