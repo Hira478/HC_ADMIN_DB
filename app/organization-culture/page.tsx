@@ -316,7 +316,7 @@ export default function OrganizationCulturePage() {
 
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          HC Maturity Assessment
+          HC Maturity Assessment (2023)
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <div className="lg:col-span-1 flex flex-col gap-6">

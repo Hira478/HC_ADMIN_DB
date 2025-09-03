@@ -25,14 +25,9 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const companyId = parseInt(searchParams.get("companyId") || "0");
 
-  // --- LOGIKA HIBRIDA ---
-  // 1. Tahun dinamis dari filter (untuk data kartu)
-  const filteredYear = parseInt(
-    searchParams.get("year") || new Date().getFullYear().toString()
-  );
-  // 2. Tahun statis/tetap (untuk data chart showcase)
-  const showcaseCurrentYear = 2025;
-  const showcasePreviousYear = 2024;
+  // --- PERUBAHAN UTAMA DI SINI ---
+  // Hapus logika dinamis dan atur tahun secara statis ke 2023
+  const staticYear = 2023;
 
   if (!companyId) {
     return NextResponse.json(
@@ -42,74 +37,49 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 3. Ambil 3 set data sekaligus
-    const [
-      hcmaForChartCurrent, // Data 2025 untuk chart
-      hcmaForChartPrevious, // Data 2024 untuk chart
-      hcmaForCard, // Data dinamis (berdasarkan filter) untuk kartu
-    ] = await Promise.all([
-      prisma.hcmaScore.findUnique({
-        where: { year_companyId: { year: showcaseCurrentYear, companyId } },
-      }),
-      prisma.hcmaScore.findUnique({
-        where: { year_companyId: { year: showcasePreviousYear, companyId } },
-      }),
-      prisma.hcmaScore.findUnique({
-        where: { year_companyId: { year: filteredYear, companyId } },
-      }),
-    ]);
+    // Sekarang kita hanya perlu mengambil data untuk satu tahun saja
+    const hcmaData = await prisma.hcmaScore.findUnique({
+      where: { year_companyId: { year: staticYear, companyId } },
+    });
 
-    if (!hcmaForChartCurrent || !hcmaForCard) {
+    if (!hcmaData) {
       return NextResponse.json(
-        { error: "Data HCMA tidak ditemukan untuk tahun ini." },
+        { error: `Data HCMA tidak ditemukan untuk tahun ${staticYear}.` },
         { status: 404 }
       );
     }
 
-    // --- Kalkulasi untuk KARTU (menggunakan data dinamis) ---
-    const totalScoreForCard = hcmaIndicators.reduce(
+    // Hitung skor rata-rata untuk tahun 2023
+    const totalScore = hcmaIndicators.reduce(
       (sum, indicator) =>
-        sum + (hcmaForCard[indicator as keyof typeof hcmaForCard] as number),
+        sum + (hcmaData[indicator as keyof typeof hcmaData] as number),
       0
     );
-    const averageScoreForCard = totalScoreForCard / hcmaIndicators.length;
-    const ifgAverageScoreForCard = hcmaForCard.ifgAverageScore;
+    const averageScore = totalScore / hcmaIndicators.length;
 
-    // --- Siapkan data untuk CHART (menggunakan data statis) ---
+    // Siapkan data untuk chart (hanya ada data tahun ini)
     const chartData = {
       categories: hcmaIndicators.map(toTitleCase),
-      seriesPrevYear: hcmaForChartPrevious
-        ? hcmaIndicators.map(
-            (ind) =>
-              hcmaForChartPrevious[
-                ind as keyof typeof hcmaForChartPrevious
-              ] as number
-          )
-        : [],
+      seriesPrevYear: [], // Kosongkan data tahun sebelumnya
       seriesCurrYear: hcmaIndicators.map(
-        (ind) =>
-          hcmaForChartCurrent[ind as keyof typeof hcmaForChartCurrent] as number
+        (ind) => hcmaData[ind as keyof typeof hcmaData] as number
       ),
     };
 
-    // Susun respons: gabungkan data dinamis dan statis
     const response = {
       title: "HC Maturity Assessment",
-      mainScore: parseFloat(averageScoreForCard.toFixed(2)),
+      mainScore: parseFloat(averageScore.toFixed(2)),
       scoreLabel: "Average Score",
-      trend: "",
-      ifgAverageScore: ifgAverageScoreForCard,
+      trend: "", // YoY tidak relevan karena data statis
+      ifgAverageScore: hcmaData.ifgAverageScore,
       chartData: chartData,
-      prevYear: hcmaForChartPrevious ? showcasePreviousYear : null,
-      currYear: showcaseCurrentYear,
+      prevYear: null, // Tidak ada tahun sebelumnya
+      currYear: staticYear,
     };
 
     return NextResponse.json(response);
   } catch (error) {
     console.error("API Error in /hc-maturity:", error);
-    return NextResponse.json(
-      { error: "Gagal mengambil data HCMA." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Data not found" }, { status: 500 });
   }
 }
