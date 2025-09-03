@@ -1,8 +1,6 @@
 // File: /api/charts/hc-maturity/route.ts
 
-import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
 
 const toTitleCase = (str: string) => {
@@ -26,15 +24,15 @@ const hcmaIndicators = [
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const companyId = parseInt(searchParams.get("companyId") || "0");
-  // --- LOGIKA TAHUN DINAMIS (Sementara Dinonaktifkan untuk Showcase) ---
-  // const currentYear = parseInt(
-  //   searchParams.get("year") || new Date().getFullYear().toString()
-  // );
-  // const previousYear = currentYear - 1;
 
-  // --- LOGIKA BARU UNTUK SHOWCASE (Selalu Membandingkan 2025 vs 2024) ---
-  const currentYear = 2025;
-  const previousYear = 2024;
+  // --- LOGIKA HIBRIDA ---
+  // 1. Tahun dinamis dari filter (untuk data kartu)
+  const filteredYear = parseInt(
+    searchParams.get("year") || new Date().getFullYear().toString()
+  );
+  // 2. Tahun statis/tetap (untuk data chart showcase)
+  const showcaseCurrentYear = 2025;
+  const showcasePreviousYear = 2024;
 
   if (!companyId) {
     return NextResponse.json(
@@ -44,53 +42,66 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [hcmaCurrent, hcmaPrevious] = await Promise.all([
+    // 3. Ambil 3 set data sekaligus
+    const [
+      hcmaForChartCurrent, // Data 2025 untuk chart
+      hcmaForChartPrevious, // Data 2024 untuk chart
+      hcmaForCard, // Data dinamis (berdasarkan filter) untuk kartu
+    ] = await Promise.all([
       prisma.hcmaScore.findUnique({
-        where: { year_companyId: { year: currentYear, companyId } },
+        where: { year_companyId: { year: showcaseCurrentYear, companyId } },
       }),
       prisma.hcmaScore.findUnique({
-        where: { year_companyId: { year: previousYear, companyId } },
+        where: { year_companyId: { year: showcasePreviousYear, companyId } },
+      }),
+      prisma.hcmaScore.findUnique({
+        where: { year_companyId: { year: filteredYear, companyId } },
       }),
     ]);
 
-    if (!hcmaCurrent) {
+    if (!hcmaForChartCurrent || !hcmaForCard) {
       return NextResponse.json(
-        { error: "Data not found for this year" },
+        { error: "Data HCMA tidak ditemukan untuk tahun ini." },
         { status: 404 }
       );
     }
 
-    // Hitung skor rata-rata
-    const totalScoreCurrent = hcmaIndicators.reduce(
+    // --- Kalkulasi untuk KARTU (menggunakan data dinamis) ---
+    const totalScoreForCard = hcmaIndicators.reduce(
       (sum, indicator) =>
-        sum + (hcmaCurrent[indicator as keyof typeof hcmaCurrent] as number),
+        sum + (hcmaForCard[indicator as keyof typeof hcmaForCard] as number),
       0
     );
-    const averageScoreCurrent = totalScoreCurrent / hcmaIndicators.length;
+    const averageScoreForCard = totalScoreForCard / hcmaIndicators.length;
+    const ifgAverageScoreForCard = hcmaForCard.ifgAverageScore;
 
-    // Siapkan data untuk grouped bar chart
+    // --- Siapkan data untuk CHART (menggunakan data statis) ---
     const chartData = {
       categories: hcmaIndicators.map(toTitleCase),
-      seriesPrevYear: hcmaPrevious
+      seriesPrevYear: hcmaForChartPrevious
         ? hcmaIndicators.map(
-            (ind) => hcmaPrevious[ind as keyof typeof hcmaPrevious] as number
+            (ind) =>
+              hcmaForChartPrevious[
+                ind as keyof typeof hcmaForChartPrevious
+              ] as number
           )
         : [],
       seriesCurrYear: hcmaIndicators.map(
-        (ind) => hcmaCurrent[ind as keyof typeof hcmaCurrent] as number
+        (ind) =>
+          hcmaForChartCurrent[ind as keyof typeof hcmaForChartCurrent] as number
       ),
     };
 
-    // Susun respons agar sesuai dengan yang dibutuhkan komponen GroupedBarChart
+    // Susun respons: gabungkan data dinamis dan statis
     const response = {
       title: "HC Maturity Assessment",
-      mainScore: parseFloat(averageScoreCurrent.toFixed(2)),
+      mainScore: parseFloat(averageScoreForCard.toFixed(2)),
       scoreLabel: "Average Score",
-      trend: "", // Trend bisa ditambahkan nanti jika perlu
-      ifgAverageScore: hcmaCurrent.ifgAverageScore,
+      trend: "",
+      ifgAverageScore: ifgAverageScoreForCard,
       chartData: chartData,
-      prevYear: hcmaPrevious ? previousYear : null,
-      currYear: currentYear,
+      prevYear: hcmaForChartPrevious ? showcasePreviousYear : null,
+      currYear: showcaseCurrentYear,
     };
 
     return NextResponse.json(response);
