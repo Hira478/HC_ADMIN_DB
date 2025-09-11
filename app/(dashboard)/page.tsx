@@ -50,11 +50,17 @@ export default function DashboardPage() {
 
   // useEffect untuk data KPI Chart
   useEffect(() => {
-    if (isContextLoading || selectedCompany === null) return;
+    // Gunakan period.value untuk bulan
+    if (isContextLoading || selectedCompany === null || !period.value) return;
+
     const fetchKpi = async () => {
       setIsLoadingKpi(true);
       try {
-        const params = new URLSearchParams({ year: String(period.year) });
+        // Tambahkan 'month' ke dalam parameter
+        const params = new URLSearchParams({
+          year: String(period.year),
+          month: String(period.value), // <-- KIRIM BULAN
+        });
         const response = await fetch(
           `/api/charts/kpi-performance?${params.toString()}`
         );
@@ -68,7 +74,7 @@ export default function DashboardPage() {
       }
     };
     fetchKpi();
-  }, [selectedCompany, period.year, isContextLoading]);
+  }, [selectedCompany, period, isContextLoading]); // <-- Ubah dependensi menjadi 'period' utuh
 
   // --- 2. TAMBAHKAN useEffect BARU UNTUK MENGAMBIL DATA RKAP ---
   useEffect(() => {

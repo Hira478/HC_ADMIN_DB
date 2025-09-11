@@ -3,65 +3,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCompanyFilter } from "@/lib/prisma-filter";
-import { KpiStat } from "@prisma/client";
-
-// Helper untuk menghitung rata-rata dari data bulanan
-const calculateAverages = (records: KpiStat[]) => {
-  if (records.length === 0) {
-    return {
-      finansial: 0,
-      operasional: 0,
-      sosial: 0,
-      inovasiBisnis: 0,
-      kepemimpinanTeknologi: 0,
-      peningkatanInvestasi: 0,
-      pengembanganTalenta: 0,
-      totalScore: 0,
-    };
-  }
-  const sum = records.reduce(
-    (acc, rec) => {
-      acc.finansial += rec.kpiFinansial;
-      acc.operasional += rec.kpiOperasional;
-      acc.sosial += rec.kpiSosial;
-      acc.inovasiBisnis += rec.kpiInovasiBisnis;
-      acc.kepemimpinanTeknologi += rec.kpiKepemimpinanTeknologi;
-      acc.peningkatanInvestasi += rec.kpiPeningkatanInvestasi;
-      acc.pengembanganTalenta += rec.kpiPengembanganTalenta;
-      acc.totalScore += rec.totalScore;
-      return acc;
-    },
-    {
-      finansial: 0,
-      operasional: 0,
-      sosial: 0,
-      inovasiBisnis: 0,
-      kepemimpinanTeknologi: 0,
-      peningkatanInvestasi: 0,
-      pengembanganTalenta: 0,
-      totalScore: 0,
-    }
-  );
-
-  const count = records.length;
-  return {
-    finansial: sum.finansial / count,
-    operasional: sum.operasional / count,
-    sosial: sum.sosial / count,
-    inovasiBisnis: sum.inovasiBisnis / count,
-    kepemimpinanTeknologi: sum.kepemimpinanTeknologi / count,
-    peningkatanInvestasi: sum.peningkatanInvestasi / count,
-    pengembanganTalenta: sum.pengembanganTalenta / count,
-    totalScore: sum.totalScore / count,
-  };
-};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  // 1. SEKARANG KITA BUTUH PARAMETER 'month' DARI FRONTEND
   const year = parseInt(searchParams.get("year") || "0");
+  const month = parseInt(searchParams.get("month") || "0");
 
-  if (!year) {
-    return NextResponse.json({ error: "Year is required" }, { status: 400 });
+  if (!year || !month) {
+    return NextResponse.json(
+      { error: "Parameter 'year' dan 'month' diperlukan." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -69,17 +22,15 @@ export async function GET(request: Request) {
     const currentYear = year;
     const previousYear = year - 1;
 
-    const [currentYearRecords, previousYearRecords] = await Promise.all([
-      prisma.kpiStat.findMany({
-        where: { year: currentYear, ...companyFilter },
+    // 2. QUERY DIUBAH DARI findMany MENJADI findFirst UNTUK SATU BULAN
+    const [currentMonthRecord, previousYearMonthRecord] = await Promise.all([
+      prisma.kpiStat.findFirst({
+        where: { year: currentYear, month: month, ...companyFilter },
       }),
-      prisma.kpiStat.findMany({
-        where: { year: previousYear, ...companyFilter },
+      prisma.kpiStat.findFirst({
+        where: { year: previousYear, month: month, ...companyFilter },
       }),
     ]);
-
-    const currentYearAverages = calculateAverages(currentYearRecords);
-    const previousYearAverages = calculateAverages(previousYearRecords);
 
     const categories = [
       "Finansial",
@@ -91,30 +42,32 @@ export async function GET(request: Request) {
       "Pengembangan Talenta",
     ];
 
+    // 3. DATA LANGSUNG DIAMBIL DARI RECORD, TANPA RATA-RATA
+    // Gunakan 'nullish coalescing' (?? 0) untuk default jika data tidak ada
     const responseData = {
       title: "KPI Performance Score",
-      mainScore: currentYearAverages.totalScore,
-      scoreLabel: "Average Score",
-      trend: "-", // Anda bisa menambahkan logika tren di sini nanti
+      mainScore: currentMonthRecord?.totalScore ?? 0,
+      scoreLabel: "Total Score",
+      trend: "-",
       chartData: {
         categories,
         seriesPrevYear: [
-          previousYearAverages.finansial,
-          previousYearAverages.operasional,
-          previousYearAverages.sosial,
-          previousYearAverages.inovasiBisnis,
-          previousYearAverages.kepemimpinanTeknologi,
-          previousYearAverages.peningkatanInvestasi,
-          previousYearAverages.pengembanganTalenta,
+          previousYearMonthRecord?.kpiFinansial ?? 0,
+          previousYearMonthRecord?.kpiOperasional ?? 0,
+          previousYearMonthRecord?.kpiSosial ?? 0,
+          previousYearMonthRecord?.kpiInovasiBisnis ?? 0,
+          previousYearMonthRecord?.kpiKepemimpinanTeknologi ?? 0,
+          previousYearMonthRecord?.kpiPeningkatanInvestasi ?? 0,
+          previousYearMonthRecord?.kpiPengembanganTalenta ?? 0,
         ],
         seriesCurrYear: [
-          currentYearAverages.finansial,
-          currentYearAverages.operasional,
-          currentYearAverages.sosial,
-          currentYearAverages.inovasiBisnis,
-          currentYearAverages.kepemimpinanTeknologi,
-          currentYearAverages.peningkatanInvestasi,
-          currentYearAverages.pengembanganTalenta,
+          currentMonthRecord?.kpiFinansial ?? 0,
+          currentMonthRecord?.kpiOperasional ?? 0,
+          currentMonthRecord?.kpiSosial ?? 0,
+          currentMonthRecord?.kpiInovasiBisnis ?? 0,
+          currentMonthRecord?.kpiKepemimpinanTeknologi ?? 0,
+          currentMonthRecord?.kpiPeningkatanInvestasi ?? 0,
+          currentMonthRecord?.kpiPengembanganTalenta ?? 0,
         ],
       },
       prevYear: previousYear,
@@ -122,7 +75,10 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json(responseData);
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("API Error in /kpi-performance:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data KPI." },
