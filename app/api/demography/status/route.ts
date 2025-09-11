@@ -1,26 +1,31 @@
-// Asumsi path file: app/api/charts/employee-status/route.ts
+// File: app/api/charts/employee-status/route.ts
 
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. IMPORT HELPER
+import { getCompanyFilter } from "@/lib/prisma-filter";
 
-// Fungsi helper (tidak berubah)
+// --- PERBAIKAN DI FUNGSI INI ---
 const calculateYoY = (current: number, previous: number): number => {
-  if (previous === 0) return 0;
+  // Jika data tahun lalu TIDAK ADA, ATAU data tahun ini KOSONG,
+  // maka anggap tidak ada perubahan (YoY = 0%).
+  if (previous === 0 || current === 0) {
+    return 0;
+  }
   const denominator = Math.abs(previous);
   return ((current - previous) / denominator) * 100;
 };
 
 const formatYoYString = (percentage: number): string => {
-  const sign = percentage >= 0 ? "+" : "";
+  // Tambahkan pengecekan agar 0% tidak menjadi "+0.0%"
+  if (percentage === 0) {
+    return "0.0% | Year on Year";
+  }
+  const sign = percentage > 0 ? "+" : "";
   return `${sign}${percentage.toFixed(1)}% | Year on Year`;
 };
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  // --- 2. HAPUS baris ini ---
-  // const companyId = parseInt(searchParams.get("companyId") || "0");
-
   const type = searchParams.get("type") || "monthly";
   const currentYear = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
@@ -30,37 +35,19 @@ export async function GET(request: NextRequest) {
   );
   const previousYear = currentYear - 1;
 
-  // Cek companyId tidak perlu lagi di sini, karena akan ditangani oleh getCompanyFilter
-  // if (!companyId) { ... }
-
   let monthsToFetch: number[] = [];
   if (type === "monthly") {
     monthsToFetch = [value];
-  } else if (type === "quarterly") {
-    const quarterMonths = [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9],
-      [10, 11, 12],
-    ];
-    monthsToFetch = quarterMonths[value - 1] || [];
-  } else if (type === "semesterly") {
-    const semesterMonths = [
-      [1, 2, 3, 4, 5, 6],
-      [7, 8, 9, 10, 11, 12],
-    ];
-    monthsToFetch = semesterMonths[value - 1] || [];
   } else if (type === "yearly") {
     monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
   }
+  // Anda bisa tambahkan logika lain untuk quarterly/semesterly jika perlu
 
   try {
-    // --- 3. PANGGIL HELPER KEAMANAN ---
     const companyFilter = await getCompanyFilter();
 
     const [statusCurrentYear, statusPreviousYear] = await Promise.all([
       prisma.employeeStatusStat.findMany({
-        // --- 4. GUNAKAN companyFilter ---
         where: {
           year: currentYear,
           month: { in: monthsToFetch },
@@ -69,7 +56,6 @@ export async function GET(request: NextRequest) {
         orderBy: { month: "asc" },
       }),
       prisma.employeeStatusStat.findMany({
-        // --- 4. GUNAKAN companyFilter ---
         where: {
           year: previousYear,
           month: { in: monthsToFetch },
@@ -106,7 +92,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error: unknown) {
-    // <-- 5. Perbarui blok catch
     if (error instanceof Error && error.message === "Tidak terautentikasi.") {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
