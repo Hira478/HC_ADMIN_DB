@@ -42,7 +42,7 @@ const ProductivityChartCard = () => {
         if (!response.ok) throw new Error("Data not found");
         const data: ProductivityChartData = await response.json();
         setChartData(data);
-      } catch (_error) {
+      } catch {
         setChartData(null);
       } finally {
         setLoading(false);
@@ -134,7 +134,7 @@ const ProductivityChartCard = () => {
   if (!chartData)
     return (
       <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center text-gray-500">
-        Data tidak tersedia.
+        No Data.
       </div>
     );
   return (

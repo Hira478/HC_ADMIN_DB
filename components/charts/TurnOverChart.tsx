@@ -11,6 +11,15 @@ interface TurnOverChartProps {
 
 const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
   const option = {
+    tooltip: {
+      trigger: "axis", // Tampilkan tooltip saat hover di sepanjang sumbu
+      axisPointer: {
+        type: "cross", // Tampilkan garis silang untuk mempermudah pembacaan
+        label: {
+          backgroundColor: "#6a7985",
+        },
+      },
+    },
     grid: {
       left: "3%",
       right: "4%",
@@ -40,7 +49,7 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
         smooth: false,
         showSymbol: true,
         symbol: "circle",
-        symbolSize: 6,
+        symbolSize: 8,
         data: data?.chartData.data || [],
         areaStyle: {
           color: "rgba(220, 38, 38, 0.1)",
@@ -73,7 +82,7 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
   if (!data) {
     return (
       <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
-        Data tidak tersedia.
+        No Data.
       </div>
     );
   }

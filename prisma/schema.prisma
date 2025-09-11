@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN_HOLDING
+  USER_ANPER
+}
+
 // TABEL DIMENSI: Menyimpan daftar perusahaan
 model Company {
   id    Int    @id @default(autoincrement()) // <-- Diubah ke Int & autoincrement
@@ -14,6 +19,7 @@ model Company {
   type  String // "Holding" atau "Anper"
 
   headcounts           Headcount[]
+  users  User[] // Satu perusahaan bisa memiliki banyak user
   employeeStatusStats  EmployeeStatusStat[]
   educationStats       EducationStat[]
   levelStats           LevelStat[]
@@ -33,6 +39,7 @@ model Company {
   talentAcquisitionStats   TalentAcquisitionStat[]
   turnoverStats            TurnoverStat[]
   formationRasioGroupedStats FormationRasioGroupedStat[]
+  rkapTargets RkapTarget[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -161,16 +168,24 @@ model EmployeeCostStat {
 }
 
 model KpiStat {
-  id                  Int @id @default(autoincrement())
-  month               Int
-  year                Int
-  
-  kpiKorporasi        Float
-  kpiHcTransformation Float @map("kpi_hc_transformation")
+  id                       Int   @id @default(autoincrement())
+  month                    Int
+  year                     Int
+  companyId                Int
 
-  companyId Int
-  company   Company @relation(fields: [companyId], references: [id])
+  // 7 KPI Fields Baru (Float untuk menerima angka desimal/skor)
+  kpiFinansial             Float @default(0)
+  kpiOperasional           Float @default(0)
+  kpiSosial                Float @default(0)
+  kpiInovasiBisnis         Float @default(0) @map("kpi_inovasi_bisnis")
+  kpiKepemimpinanTeknologi Float @default(0) @map("kpi_kepemimpinan_teknologi")
+  kpiPeningkatanInvestasi  Float @default(0) @map("kpi_peningkatan_investasi")
+  kpiPengembanganTalenta   Float @default(0) @map("kpi_pengembangan_talenta")
 
+  // Skor total (jika ada, untuk kalkulasi ringkasan)
+  totalScore               Float @default(0)
+
+  company                  Company @relation(fields: [companyId], references: [id])
   @@unique([year, month, companyId])
 }
 
@@ -378,4 +393,34 @@ model FormationRasioGroupedStat {
   company    Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String   // Ini akan menyimpan password yang SUDAH DI-HASH
+  role      UserRole @default(USER_ANPER)
+
+  // Relasi: Setiap User dimiliki oleh satu Company
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id])
+}
+
+model RkapTarget {
+  id        Int   @id @default(autoincrement())
+  year      Int
+  companyId Int
+
+  // Target untuk metrik produktivitas
+  revenue   Float @default(0)
+  netProfit Float @default(0)
+
+  // Target untuk metrik biaya karyawan
+  totalEmployeeCost Float @default(0) @map("total_employee_cost")
+
+  // Relasi ke Company
+  company   Company @relation(fields: [companyId], references: [id])
+
+  @@unique([year, companyId]) // Setiap perusahaan hanya punya 1 set target RKAP per tahun
 }

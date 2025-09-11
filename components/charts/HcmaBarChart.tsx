@@ -106,7 +106,7 @@ const HcmaBarChart: React.FC<BarChartProps> = ({
         </div>
       ) : !data ? (
         <div className="flex items-center justify-center h-[400px]">
-          <p>Data tidak tersedia.</p>
+          <p>No Data.</p>
         </div>
       ) : (
         // Layout Baru: Skor di Atas, Chart di Bawah

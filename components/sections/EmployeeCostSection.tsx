@@ -2,19 +2,29 @@
 
 import StatCard from "@/components/widgets/StatCard";
 import EmployeeCostChartCard from "@/components/widgets/EmployeeCostChartCard";
-import type { EmployeeCostCardData } from "@/types";
+import type { EmployeeCostCardData, RkapTargetData } from "@/types";
+
+const calculateRkapAchieved = (actual: number, target: number): string => {
+  if (target === 0) return "-";
+  // Untuk biaya, pencapaian yang lebih rendah itu lebih baik.
+  // Jadi jika aktual > target, persentasenya > 100% (kurang baik).
+  const achievement = (actual / target) * 100;
+  return `${achievement.toFixed(1)}%`;
+};
 
 const EmployeeCostSection = ({
   data,
   loading,
+  rkapData,
 }: {
   data: EmployeeCostCardData | undefined;
   loading: boolean;
+  rkapData: RkapTargetData | null; // <-- TIPE PROP BARU
 }) => {
   const totalEmployeCostDetails =
     "Total employee cost adalah beban biaya karyawan termasuk gaji dan tujangan (salary), kompensasi kinerja (incentive), tunjangan Pph 21 dan dana pensiun (pension), beban training & rekrutmen  (training  & recruitment), dan beban karyawan lainnya (others).";
   const constPerEmployeeDetails =
-    "Cost Per Employee adalah ukuran yang menunjukkan berapa besar biaya rata-rata yang dikeluarkan perusahaan untuk setiap karyawan dalam periode tertentu (biasanya 1 tahun).";
+    "Cost Per Employee adalah ukuran yang menunjukkan berapa besar biaya rata-rata yang dikeluarkan perusahaan untuk setiap karyawan dalam periode tertentu.";
   const employeeCostRasioDetails =
     "Employee Cost Ratio (ECR) adalah ukuran yang menunjukkan porsi biaya karyawan (employee cost) dibandingkan dengan biaya operasional perusahaan.";
   if (loading) {
@@ -39,11 +49,15 @@ const EmployeeCostSection = ({
       <section>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Employee Cost</h2>
         <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
-          Data biaya untuk periode ini tidak tersedia.
+          No Data.
         </div>
       </section>
     );
   }
+
+  const actualTotalEmployeeCost = data
+    ? parseFloat(data.total.value.replace(/[^0-9-]/g, ""))
+    : 0;
 
   return (
     <section>
@@ -56,8 +70,11 @@ const EmployeeCostSection = ({
             title="Total Employee Cost"
             value={data.total.value}
             change={data.total.change || ""}
-            valueUnit="Unit: Million Rupiah"
-            rkdapInfo="Total Employee Cost Key Data"
+            valueUnit="Unit: Million"
+            rkdapInfo={calculateRkapAchieved(
+              actualTotalEmployeeCost,
+              rkapData?.totalEmployeeCost ?? 0
+            )}
             details={totalEmployeCostDetails}
             variant="dark"
             className="flex-1"
@@ -66,9 +83,8 @@ const EmployeeCostSection = ({
           <StatCard
             title="Cost per Employee"
             value={data.costPerEmployee.value}
-            valueUnit="Unit: Million Rupiah"
+            valueUnit="Unit: Million"
             change={data.costPerEmployee.change || ""}
-            rkdapInfo="Cost per Employee Key Data"
             details={constPerEmployeeDetails}
             variant="dark"
             className="flex-1"
@@ -78,7 +94,6 @@ const EmployeeCostSection = ({
             title="Employee Cost Rasio"
             value={data.ratio.value}
             change={data.ratio.change || ""}
-            rkdapInfo="Employee Cost Rasio Key Data"
             details={employeeCostRasioDetails}
             variant="dark"
             className="flex-1"

@@ -1,15 +1,16 @@
+// Asumsi path file: app/api/charts/employee-status/route.ts
+
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
+import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. IMPORT HELPER
 
-// Fungsi helper untuk menghitung YoY
+// Fungsi helper (tidak berubah)
 const calculateYoY = (current: number, previous: number): number => {
   if (previous === 0) return 0;
   const denominator = Math.abs(previous);
   return ((current - previous) / denominator) * 100;
 };
 
-// Fungsi helper untuk memformat string YoY
 const formatYoYString = (percentage: number): string => {
   const sign = percentage >= 0 ? "+" : "";
   return `${sign}${percentage.toFixed(1)}% | Year on Year`;
@@ -17,7 +18,9 @@ const formatYoYString = (percentage: number): string => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyId = parseInt(searchParams.get("companyId") || "0");
+  // --- 2. HAPUS baris ini ---
+  // const companyId = parseInt(searchParams.get("companyId") || "0");
+
   const type = searchParams.get("type") || "monthly";
   const currentYear = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
@@ -27,12 +30,8 @@ export async function GET(request: NextRequest) {
   );
   const previousYear = currentYear - 1;
 
-  if (!companyId) {
-    return NextResponse.json(
-      { error: "Company ID diperlukan." },
-      { status: 400 }
-    );
-  }
+  // Cek companyId tidak perlu lagi di sini, karena akan ditangani oleh getCompanyFilter
+  // if (!companyId) { ... }
 
   let monthsToFetch: number[] = [];
   if (type === "monthly") {
@@ -56,13 +55,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // --- 3. PANGGIL HELPER KEAMANAN ---
+    const companyFilter = await getCompanyFilter();
+
     const [statusCurrentYear, statusPreviousYear] = await Promise.all([
       prisma.employeeStatusStat.findMany({
-        where: { companyId, year: currentYear, month: { in: monthsToFetch } },
+        // --- 4. GUNAKAN companyFilter ---
+        where: {
+          year: currentYear,
+          month: { in: monthsToFetch },
+          ...companyFilter,
+        },
         orderBy: { month: "asc" },
       }),
       prisma.employeeStatusStat.findMany({
-        where: { companyId, year: previousYear, month: { in: monthsToFetch } },
+        // --- 4. GUNAKAN companyFilter ---
+        where: {
+          year: previousYear,
+          month: { in: monthsToFetch },
+          ...companyFilter,
+        },
         orderBy: { month: "asc" },
       }),
     ]);
@@ -93,7 +105,11 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
+  } catch (error: unknown) {
+    // <-- 5. Perbarui blok catch
+    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("API Error in /status:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data status." },

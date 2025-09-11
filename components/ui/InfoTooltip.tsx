@@ -1,5 +1,4 @@
 // File: /components/ui/InfoTooltip.tsx
-
 "use client";
 
 import { Popover, Transition } from "@headlessui/react";
@@ -9,17 +8,27 @@ import { Fragment } from "react";
 interface InfoTooltipProps {
   content: string | React.ReactNode;
   position?: "top" | "bottom" | "left" | "right";
+  align?: "center" | "left" | "right"; // <-- 1. PROPERTI BARU
 }
 
 const InfoTooltip: React.FC<InfoTooltipProps> = ({
   content,
   position = "bottom",
+  align = "center", // <-- 2. SET DEFAULT KE 'CENTER'
 }) => {
+  // Kelas untuk posisi vertikal
   const positionClasses = {
     top: "bottom-full mb-2",
     bottom: "top-full mt-2",
-    left: "right-full mr-2",
-    right: "left-full ml-2",
+    left: "right-full mr-2 top-1/2 -translate-y-1/2",
+    right: "left-full ml-2 top-1/2 -translate-y-1/2",
+  };
+
+  // Kelas untuk perataan horizontal
+  const alignClasses = {
+    center: "left-1/2 -translate-x-1/2",
+    left: "left-0",
+    right: "right-0",
   };
 
   return (
@@ -42,7 +51,21 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
             leaveTo="opacity-0 translate-y-1"
           >
             <Popover.Panel
-              className={`absolute z-10 w-64 p-3 mt-2 text-sm text-white bg-gray-800 rounded-lg shadow-lg ${positionClasses[position]}`}
+              // --- 3. GABUNGKAN KELAS POSISI & PERATAAN ---
+              className={`absolute z-10 w-64 p-3 text-sm text-white bg-gray-800 rounded-lg shadow-lg 
+                         ${positionClasses[position]} 
+                         ${
+                           align === "center" &&
+                           (position === "top" || position === "bottom")
+                             ? alignClasses.center
+                             : ""
+                         }
+                         ${
+                           align === "left" || align === "right"
+                             ? alignClasses[align]
+                             : ""
+                         }
+                        `}
             >
               <div className="relative">
                 {typeof content === "string" ? <p>{content}</p> : content}

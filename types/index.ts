@@ -106,3 +106,49 @@ export interface GroupedChartData {
   prevYear: number | null;
   currYear: number;
 }
+
+// Tipe untuk setiap baris di tabel Formation Rasio vs Market
+export interface FormationRasioTableRow {
+  jobFamily: string;
+  rasio: string;
+  market: string;
+  statusRatio: number;
+}
+
+// Tipe untuk keseluruhan data tabel Formation Rasio, termasuk paginasi
+export interface FormationRasioTableData {
+  data: FormationRasioTableRow[];
+  meta: {
+    currentPage: number;
+    totalPages: number;
+  };
+}
+
+export interface OrgStructureData {
+  formationRatioCard: {
+    enabler: number;
+    revenueGenerator: number;
+  };
+  designOrgCard: {
+    division: number;
+    department: number;
+  };
+}
+
+// TAMBAHKAN INI KE types/index.ts
+export interface OrganizationHealthData {
+  categories: string[];
+  currentYear: number;
+  previousYear: number | null;
+  currentYearData: number[];
+  previousYearData: number[];
+  currentYearScore: number;
+  previousYearScore: number | null;
+}
+
+// --- TIPE BARU UNTUK DATA TARGET RKAP ---
+export interface RkapTargetData {
+  revenue: number;
+  netProfit: number;
+  totalEmployeeCost: number;
+}

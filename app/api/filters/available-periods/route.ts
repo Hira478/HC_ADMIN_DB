@@ -39,9 +39,6 @@ export async function GET() {
     return NextResponse.json(availablePeriods);
   } catch (error) {
     console.error("API Error in /available-periods:", error);
-    return NextResponse.json(
-      { error: "Gagal mengambil data periode tersedia." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Fail to fecth data." }, { status: 500 });
   }
 }

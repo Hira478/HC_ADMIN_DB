@@ -103,7 +103,7 @@ const TalentAcquisitionChart: React.FC<TalentAcquisitionChartProps> = ({
       <div
         className={`${containerClassName} p-6 rounded-lg shadow-md h-full flex flex-col items-center justify-center`}
       >
-        <p>Data tidak tersedia.</p>
+        <p>No Data.</p>
       </div>
     );
   }
