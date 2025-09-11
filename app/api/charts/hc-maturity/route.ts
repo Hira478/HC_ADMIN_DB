@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (!hcmaData) {
       return NextResponse.json(
-        { error: `Data HCMA tidak ditemukan untuk tahun ${staticYear}.` },
+        { error: `No data ${staticYear}.` },
         { status: 404 }
       );
     }

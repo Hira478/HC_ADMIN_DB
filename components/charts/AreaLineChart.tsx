@@ -110,7 +110,7 @@ const AreaLineChart: React.FC<AreaLineChartProps> = ({
           </div>
         ) : !chartData || chartData.data.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p>Data tidak tersedia.</p>
+            <p>No Data.</p>
           </div>
         ) : (
           <ReactECharts

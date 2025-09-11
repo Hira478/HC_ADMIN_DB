@@ -3,6 +3,7 @@
 import React from "react";
 import ReactECharts from "echarts-for-react";
 import { OrganizationHealthData } from "@/app/api/charts/organization-health/route";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 
 interface ChartProps {
   data: OrganizationHealthData | null;
@@ -73,7 +74,12 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
   // --- 1. Struktur utama kartu sekarang ada di luar kondisi ---
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-full h-full flex flex-col">
-      <h2 className="text-xl font-semibold">Organization Health Index</h2>
+      <div className="flex items-center justify-between">
+        {/* Judul akan otomatis di kiri */}
+        <h2 className="text-xl font-semibold">Organization Health Index</h2>
+        {/* Tooltip akan otomatis di kanan */}
+        <InfoTooltip content="Organization Health Index (OHI) mengukur kesehatan organisasi melalui 9 dimensi kunci untuk menilai efektivitas dan keberlanjutan." />
+      </div>
 
       {/* Tampilkan skor hanya jika tidak loading dan data ada */}
       {!isLoading && data && data.currentYearData.length > 0 && (

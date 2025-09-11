@@ -1,26 +1,26 @@
+// Asumsi path file: app/api/charts/level/route.ts
+
 import { LevelStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
-
-// Fungsi ini tidak lagi digunakan, bisa dihapus
-// const sumLevelStats = (stats: LevelStat[]) => { ... };
+import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. IMPORT HELPER
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyIdStr = searchParams.get("companyId");
-  const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
+  // --- 2. HAPUS semua logika companyId dari URL ---
+  // const companyIdStr = searchParams.get("companyId");
+  // const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
 
   const type = searchParams.get("type") || "monthly";
-  const year = parseInt(searchParams.get("year") || "2025");
-  const value = parseInt(searchParams.get("value") || "8");
+  const year = parseInt(
+    searchParams.get("year") || new Date().getFullYear().toString()
+  );
+  const value = parseInt(
+    searchParams.get("value") || (new Date().getMonth() + 1).toString()
+  );
 
-  if (!companyId || isNaN(companyId)) {
-    return NextResponse.json(
-      { error: "Company ID diperlukan dan harus berupa angka." },
-      { status: 400 }
-    );
-  }
+  // Hapus pengecekan companyId lama
+  // if (!companyId || isNaN(companyId)) { ... }
 
   let monthsToFetch: number[] = [];
   if (type === "monthly") {
@@ -44,8 +44,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // --- 3. PANGGIL HELPER KEAMANAN ---
+    const companyFilter = await getCompanyFilter();
+
     const levelDataFromDb = await prisma.levelStat.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
+      // --- 4. GUNAKAN companyFilter ---
+      where: { year, month: { in: monthsToFetch }, ...companyFilter },
       orderBy: {
         month: "asc",
       },
@@ -58,9 +62,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // <<< MULAI LOGIKA BARU UNTUK MEMILIH DATA >>>
+    // Sisa logika tidak berubah, sudah benar
     let dataForPeriod: LevelStat | undefined;
-
     if (type === "monthly") {
       dataForPeriod = levelDataFromDb[0];
     } else {
@@ -79,10 +82,8 @@ export async function GET(request: NextRequest) {
         )}) tidak ditemukan.`,
       });
     }
-    // <<< AKHIR LOGIKA BARU >>>
 
     const labels = ["BOD-1", "BOD-2", "BOD-3", "BOD-4"];
-    // <<< GUNAKAN 'dataForPeriod' UNTUK MENGISI VALUES >>>
     const values = [
       dataForPeriod.bod1Count,
       dataForPeriod.bod2Count,
@@ -91,7 +92,11 @@ export async function GET(request: NextRequest) {
     ];
 
     return NextResponse.json({ labels, values });
-  } catch (error) {
+  } catch (error: unknown) {
+    // <-- 5. Perbarui blok catch
+    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("API Error in /level:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data level jabatan." },

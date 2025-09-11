@@ -53,7 +53,7 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   if (!data || data.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md w-full h-[484px] flex justify-center items-center">
-        <p>Data tidak tersedia untuk filter yang dipilih.</p>
+        <p>No Data.</p>
       </div>
     );
   }
@@ -62,13 +62,13 @@ const FormationRasioChart: React.FC<ChartProps> = ({
   const months = data.map((d) => d.month);
 
   const gradientPalette = [
-    "#DBEAFE", // blue-100
-    "#BFDBFE", // blue-200
-    "#93C5FD", // blue-300
-    "#60A5FA", // blue-400
-    "#3B82F6", // blue-500
-    "#2563EB", // blue-600
-    "#1D4ED8", // blue-700
+    "#FEE2E2", // merah very light
+    "#FCA5A5",
+    "#F87171",
+    "#E87979",
+    "#C6C6C6", // abu-abu terang
+    "#8F8F8F",
+    "#525252", // abu-abu gelap
   ];
 
   const seriesData = seriesNames.map((name, index) => ({
@@ -119,7 +119,7 @@ const FormationRasioChart: React.FC<ChartProps> = ({
     xAxis: {
       type: "category",
       data: months,
-      axisLabel: { interval: 0, rotate: 45 },
+      axisLabel: { interval: 0, rotate: 0 },
     },
     yAxis: {
       type: "value",
@@ -145,7 +145,7 @@ const FormationRasioChart: React.FC<ChartProps> = ({
       </div>
       <ReactECharts
         option={options}
-        style={{ height: "400px", width: "100%" }}
+        style={{ height: "280px", width: "100%" }}
       />
       <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 pt-4">
         {seriesNames.map((name, index) => (

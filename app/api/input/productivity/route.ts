@@ -18,16 +18,8 @@ export async function POST(request: NextRequest) {
   try {
     const body: CombinedInput = await request.json();
 
-    const {
-      year,
-      month,
-      companyId,
-      revenue,
-      netProfit,
-      totalEmployeeCost,
-      kpiKorporasi,
-      kpiHcTransformation,
-    } = body;
+    const { year, month, companyId, revenue, netProfit, totalEmployeeCost } =
+      body;
 
     if (!companyId || !year || !month || isNaN(companyId)) {
       return NextResponse.json(
@@ -57,11 +49,6 @@ export async function POST(request: NextRequest) {
         },
       }),
       // Operasi 2: Upsert ke tabel KpiStat
-      prisma.kpiStat.upsert({
-        where: commonWhere,
-        update: { kpiKorporasi, kpiHcTransformation },
-        create: { year, month, companyId, kpiKorporasi, kpiHcTransformation },
-      }),
     ]);
 
     return NextResponse.json({

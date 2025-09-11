@@ -5,6 +5,7 @@ import React from "react";
 import ReactECharts from "echarts-for-react";
 // Sesuaikan path jika berbeda
 import type { GroupedChartData } from "@/types";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 
 // PERUBAHAN 1: Interface disederhanakan, hanya terima data dan isLoading
 interface GroupedBarChartProps {
@@ -13,6 +14,7 @@ interface GroupedBarChartProps {
   cardClassName?: string;
   showSummary?: boolean;
   yAxisMax?: number;
+  tooltipText?: string;
 }
 
 const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
@@ -21,14 +23,19 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   cardClassName = "bg-white text-gray-800",
   showSummary = true,
   yAxisMax,
+  tooltipText,
 }) => {
-  if (isLoading || !data) {
-    const message = isLoading ? "Loading data..." : "Data tidak tersedia.";
-    const height = cardClassName.includes("bg-[#343A40]") ? "410px" : "auto"; // Atur tinggi agar konsisten
+  // Periksa juga apakah 'chartData' ada di dalam objek data
+  // Periksa juga apakah 'chartData' ada di dalam objek data
+  if (isLoading || !data || !data.chartData) {
+    const message = isLoading ? "Loading data..." : "No Data.";
+    // Hapus baris 'const height = ...' karena kita tidak lagi membutuhkan tinggi hardcoded
+
     return (
       <div
-        className={`p-6 rounded-lg shadow-md w-full flex justify-center items-center ${cardClassName}`}
-        style={{ height }}
+        // 1. TAMBAHKAN h-full agar card ini mengisi tinggi sel grid
+        // 2. HAPUS 'style' prop seluruhnya (kita tidak perlu lagi minHeight 250px)
+        className={`p-6 rounded-lg shadow-md w-full flex justify-center items-center ${cardClassName} h-full`}
       >
         <p>{message}</p>
       </div>
@@ -94,7 +101,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
           position: "top",
           color: cardClassName.includes("bg-[#343A40]") ? "#fff" : "#333",
         },
-        itemStyle: { color: "#f87171" },
+        itemStyle: { color: "rgba(248, 113, 113, 0.7)" },
       },
       {
         name: currYear.toString(),
@@ -106,21 +113,24 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
           position: "top",
           color: cardClassName.includes("bg-[#343A40]") ? "#fff" : "#333",
         },
-        itemStyle: { color: "#facc15" },
+        itemStyle: { color: "rgba(250, 204, 21, 0.7)" },
       },
     ].filter((s) => s.data && s.data.length > 0),
   };
 
   return (
+    // --- PERUBAHAN 1: Tambahkan 'relative' untuk positioning tooltip ---
     <div
-      className={`p-6 rounded-lg shadow-md w-full h-full flex flex-col ${cardClassName}`}
+      className={`relative p-6 rounded-lg shadow-md w-full h-full flex flex-col ${cardClassName}`}
     >
-      {/* 3. Gunakan conditional rendering di sini */}
       {showSummary ? (
-        // Tampilan LAMA: dengan teks ringkasan di kiri
+        // --- BLOK UNTUK TAMPILAN DENGAN SUMMARY ---
         <div className="flex flex-col md:flex-row gap-6 items-center">
           <div className="md:w-1/4 text-center md:text-left md:pl-4">
-            <h2 className="text-xl font-semibold">{title}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">{title}</h2>
+              {/* Tooltip tetap di sini untuk mode summary */}
+            </div>
             <div className="my-2">
               <span className="text-3xl font-bold">{mainScore}</span>
               <p className="text-base">{scoreLabel}</p>
@@ -128,6 +138,15 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
             </div>
           </div>
           <div className="flex-1 w-full">
+            {tooltipText && (
+              <div className="absolute top-4 right-4 z-10">
+                <InfoTooltip
+                  content={tooltipText}
+                  position="bottom"
+                  align="right"
+                />
+              </div>
+            )}
             <ReactECharts
               option={options}
               style={{ height: "100%", minHeight: "250px" }}
@@ -135,11 +154,23 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
           </div>
         </div>
       ) : (
-        // Tampilan BARU: hanya chart saja
-        <ReactECharts
-          option={options}
-          style={{ height: "100%", minHeight: "250px" }}
-        />
+        // --- BLOK UNTUK TAMPILAN HANYA CHART ---
+        <>
+          {/* --- PERUBAHAN 2: Tambahkan Tooltip di pojok kanan atas HANYA untuk mode ini --- */}
+          {tooltipText && (
+            <div className="absolute top-4 right-4 z-10">
+              <InfoTooltip
+                content={tooltipText}
+                position="bottom"
+                align="right"
+              />
+            </div>
+          )}
+          <ReactECharts
+            option={options}
+            style={{ height: "100%", minHeight: "250px" }}
+          />
+        </>
       )}
     </div>
   );

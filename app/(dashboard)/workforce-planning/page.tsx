@@ -147,9 +147,7 @@ export default function WorkforcePlanningPage() {
           Loading data Manpower Planning...
         </div>
       ) : !workforceData ? (
-        <div className="text-center p-10">
-          Data Manpower Planning tidak tersedia.
-        </div>
+        <div className="text-center p-10">No Data.</div>
       ) : (
         <>
           <div className="flex flex-col md:flex-row gap-6 mb-6">
@@ -190,7 +188,7 @@ export default function WorkforcePlanningPage() {
         {loadingTalent ? (
           <div className="text-center p-10">Loading data...</div>
         ) : !talentData ? (
-          <div className="text-center p-10">Data tidak tersedia.</div>
+          <div className="text-center p-10">No Data.</div>
         ) : (
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -208,7 +206,7 @@ export default function WorkforcePlanningPage() {
                 value={Math.trunc(
                   talentData.cards.totalCostHire
                 ).toLocaleString("id-ID")}
-                unit="Million Rupiah"
+                unit="Million"
                 trend=""
               />
               <SummaryCard
@@ -230,7 +228,7 @@ export default function WorkforcePlanningPage() {
                 subtitle={String(period.year)}
                 chartData={talentData.charts?.costOfHire}
                 isLoading={loadingTalent}
-                yAxisUnitLabel="Million Rupiah"
+                yAxisUnitLabel="Million"
               />
             </div>
           </div>

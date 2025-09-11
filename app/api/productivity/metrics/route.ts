@@ -2,9 +2,10 @@
 
 import { ProductivityStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
+import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. IMPORT HELPER KEAMANAN
 
+// Fungsi-fungsi helper (sumProductivity, formatCurrency, dll) tidak perlu diubah
 const sumProductivity = (stats: ProductivityStat[]) =>
   stats.reduce(
     (acc, current) => {
@@ -20,21 +21,15 @@ const sumProductivity = (stats: ProductivityStat[]) =>
 const formatCurrency = (value: number) => {
   const absValue = Math.abs(value);
   const sign = value < 0 ? "-" : "";
-
   const integerValue = Math.trunc(absValue);
   const formattedNumber = integerValue.toLocaleString("id-ID");
-
-  // Kembalikan format dengan "Rp " di depannya
   return `${sign}Rp ${formattedNumber}`;
 };
 
 const calculateYoY = (current: number, previous: number): number => {
-  if (previous === 0) {
-    return 0;
-  }
+  if (previous === 0) return 0;
   const denominator = Math.abs(previous);
-  const percentageChange = ((current - previous) / denominator) * 100;
-  return percentageChange;
+  return ((current - previous) / denominator) * 100;
 };
 
 const formatYoYString = (percentage: number): string => {
@@ -44,14 +39,20 @@ const formatYoYString = (percentage: number): string => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyId = parseInt(searchParams.get("companyId") || "0");
-  const currentYear = parseInt(searchParams.get("year") || "2025");
-  const monthValue = parseInt(searchParams.get("value") || "1");
+  // --- 2. HAPUS baris ini, kita tidak akan mengambil companyId dari klien lagi ---
+  // const companyId = parseInt(searchParams.get("companyId") || "0");
+
+  const currentYear = parseInt(
+    searchParams.get("year") || new Date().getFullYear().toString()
+  );
+  const monthValue = parseInt(
+    searchParams.get("month") || (new Date().getMonth() + 1).toString()
+  );
   const previousYear = currentYear - 1;
 
-  if (!companyId) {
+  if (!currentYear || !monthValue) {
     return NextResponse.json(
-      { error: "Company ID diperlukan." },
+      { error: "Parameter 'year' dan 'month' diperlukan." },
       { status: 400 }
     );
   }
@@ -62,6 +63,9 @@ export async function GET(request: NextRequest) {
   );
 
   try {
+    // --- 3. PANGGIL HELPER KEAMANAN UNTUK MENDAPATKAN FILTER PERUSAHAAN ---
+    const companyFilter = await getCompanyFilter();
+
     const [
       currentYearProductivity,
       previousYearProductivity,
@@ -69,30 +73,35 @@ export async function GET(request: NextRequest) {
       previousYearHeadcount,
     ] = await Promise.all([
       prisma.productivityStat.findMany({
-        where: { companyId, year: currentYear, month: { in: monthsToFetch } },
+        // --- 4. GUNAKAN companyFilter DI SEMUA QUERY ---
+        where: {
+          year: currentYear,
+          month: { in: monthsToFetch },
+          ...companyFilter,
+        },
       }),
       prisma.productivityStat.findMany({
-        where: { companyId, year: previousYear, month: { in: monthsToFetch } },
+        where: {
+          year: previousYear,
+          month: { in: monthsToFetch },
+          ...companyFilter,
+        },
       }),
       prisma.headcount.findFirst({
-        where: { companyId, year: currentYear, month: monthValue },
+        where: { year: currentYear, month: monthValue, ...companyFilter },
       }),
       prisma.headcount.findFirst({
-        where: { companyId, year: previousYear, month: monthValue },
+        where: { year: previousYear, month: monthValue, ...companyFilter },
       }),
     ]);
 
-    // --- Kalkulasi untuk TAHUN INI ---
+    // --- Sisa dari logika Anda tidak perlu diubah, sudah benar ---
     const totalProductivityCurrent = sumProductivity(currentYearProductivity);
     const headcountCurrent = currentYearHeadcount?.totalCount || 0;
-
-    // 1. Ubah nama variabel untuk "Cost per Employee"
     const costPerEmployeeCurrent =
       headcountCurrent > 0
         ? totalProductivityCurrent.totalEmployeeCost / headcountCurrent
         : 0;
-
-    // 2. Tambahkan perhitungan untuk "Employee Cost Rasio" yang baru
     const employeeCostRatioCurrent =
       totalProductivityCurrent.totalCost > 0
         ? (totalProductivityCurrent.totalEmployeeCost /
@@ -100,7 +109,6 @@ export async function GET(request: NextRequest) {
           100
         : 0;
 
-    // --- Kalkulasi untuk TAHUN SEBELUMNYA ---
     const totalProductivityPrevious = sumProductivity(previousYearProductivity);
     const headcountPrevious = previousYearHeadcount?.totalCount || 0;
     const costPerEmployeePrevious =
@@ -114,7 +122,6 @@ export async function GET(request: NextRequest) {
           100
         : 0;
 
-    // --- Hitung YoY untuk semua metrik ---
     const yoyTotalEmployeeCost = calculateYoY(
       totalProductivityCurrent.totalEmployeeCost,
       totalProductivityPrevious.totalEmployeeCost
@@ -127,8 +134,6 @@ export async function GET(request: NextRequest) {
       employeeCostRatioCurrent,
       employeeCostRatioPrevious
     );
-
-    // (Perhitungan YoY untuk productivity tidak perlu diubah)
     const yoyRevenue = calculateYoY(
       totalProductivityCurrent.revenue,
       totalProductivityPrevious.revenue
@@ -198,7 +203,10 @@ export async function GET(request: NextRequest) {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("API Error in /productivity/metrics:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data produktivitas." },

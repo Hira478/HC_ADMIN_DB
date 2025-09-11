@@ -1,10 +1,8 @@
 // File: app/api/charts/productivity/route.ts
-
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
+import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- IMPORT
 
-// Fungsi untuk memetakan bulan (angka) ke nama bulan (string)
 const getMonthName = (monthNumber: number) => {
   const date = new Date();
   date.setMonth(monthNumber - 1);
@@ -13,42 +11,35 @@ const getMonthName = (monthNumber: number) => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyIdStr = searchParams.get("companyId");
   const yearStr = searchParams.get("year");
-
-  const companyId = companyIdStr ? parseInt(companyIdStr) : null;
   const year = yearStr ? parseInt(yearStr) : new Date().getFullYear();
 
-  if (!companyId) {
-    return NextResponse.json(
-      { error: "Company ID diperlukan" },
-      { status: 400 }
-    );
-  }
-
   try {
-    // 1. Ambil data produktivitas dan headcount untuk semua bulan di tahun yang dipilih
+    const companyFilter = await getCompanyFilter(); // <-- GUNAKAN FILTER
+
     const productivityStats = await prisma.productivityStat.findMany({
-      where: { companyId, year },
+      where: { year, ...companyFilter }, // <-- TERAPKAN FILTER
       orderBy: { month: "asc" },
     });
 
     const headcountStats = await prisma.headcount.findMany({
-      where: { companyId, year },
+      where: { year, ...companyFilter }, // <-- TERAPKAN FILTER
       orderBy: { month: "asc" },
     });
 
     if (productivityStats.length === 0) {
-      return NextResponse.json({ error: "Data not found" }, { status: 404 });
+      return NextResponse.json({
+        months: [],
+        revenue: [],
+        netProfit: [],
+        revenuePerEmployee: [],
+        netProfitPerEmployee: [],
+      });
     }
 
-    // 2. Buat map untuk headcount agar mudah diakses berdasarkan bulan
     const headcountMap = new Map<number, number>();
-    headcountStats.forEach((hc) => {
-      headcountMap.set(hc.month, hc.totalCount);
-    });
+    headcountStats.forEach((hc) => headcountMap.set(hc.month, hc.totalCount));
 
-    // 3. Siapkan array untuk menampung hasil
     const result = {
       months: [] as string[],
       revenue: [] as number[],
@@ -57,22 +48,19 @@ export async function GET(request: NextRequest) {
       netProfitPerEmployee: [] as number[],
     };
 
-    // 4. Iterasi melalui data produktivitas bulanan untuk menghitung semua metrik
     for (const stat of productivityStats) {
       const month = stat.month;
-      const currentHeadcount = headcountMap.get(month) || 0; // Ambil headcount untuk bulan ini
+      const currentHeadcount = headcountMap.get(month) || 0;
 
       result.months.push(getMonthName(month));
       result.revenue.push(stat.revenue);
       result.netProfit.push(stat.netProfit);
 
-      // Hitung metrik per karyawan, hindari pembagian dengan nol
       const revPerEmployee =
         currentHeadcount > 0 ? stat.revenue / currentHeadcount : 0;
       const profitPerEmployee =
         currentHeadcount > 0 ? stat.netProfit / currentHeadcount : 0;
 
-      // Kita bulatkan ke 2 angka desimal untuk kebersihan data
       result.revenuePerEmployee.push(parseFloat(revPerEmployee.toFixed(2)));
       result.netProfitPerEmployee.push(
         parseFloat(profitPerEmployee.toFixed(2))
@@ -80,10 +68,13 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     console.error("API Error in /api/charts/productivity:", error);
     return NextResponse.json(
-      { error: "Gagal mengambil data chart produktivitas." },
+      { error: "Gagal mengambil data." },
       { status: 500 }
     );
   }

@@ -21,6 +21,7 @@ const StatCard: React.FC<StatCardProps> = ({
   change,
   variant = "light",
   className,
+  rkdapInfo,
   details,
 }) => {
   const isDark = variant === "dark";
@@ -64,6 +65,12 @@ const StatCard: React.FC<StatCardProps> = ({
             {change}
           </span>
         </div>
+      )}
+
+      {/* --- TAMBAHAN BARU DI SINI --- */}
+      {/* Tampilkan info RKAP jika ada */}
+      {rkdapInfo && (
+        <div className="text-xs text-gray-400">{rkdapInfo} | RKAP 2025</div>
       )}
     </div>
   );

@@ -6,12 +6,12 @@ import {
   Building,
   Globe,
   Briefcase,
-  ClipboardEdit,
-  DollarSign,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation"; // <-- Import hook untuk mendeteksi path
 import React from "react";
+import { useFilters } from "@/contexts/FilterContext";
 
 // Definisikan tipe untuk properti item sidebar agar lebih rapi
 interface SidebarItemProps {
@@ -45,6 +45,13 @@ const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
 };
 
 const Sidebar = () => {
+  // 3. Ambil fungsi logout dari context
+  const { logout } = useFilters();
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    logout(); // Panggil fungsi logout dari context
+  };
   return (
     <aside className="hidden md:flex h-screen w-20 flex-col items-center border-r border-gray-200 bg-white">
       {/* Logo Placeholder */}
@@ -105,6 +112,16 @@ const Sidebar = () => {
         /> 
         */}
       </nav>
+      <div className="flex flex-col items-center py-4 space-y-2">
+        {/* --- TOMBOL LOGOUT BARU --- */}
+        <button
+          onClick={handleLogout}
+          className="rounded-lg p-3 text-red-500 hover:bg-red-100 hover:text-red-600"
+          title="Logout"
+        >
+          <LogOut className="h-6 w-6" />
+        </button>
+      </div>
 
       {/* Ikon Pengaturan di bagian bawah */}
       <div className="py-4">
