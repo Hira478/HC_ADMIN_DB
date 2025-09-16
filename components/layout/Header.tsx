@@ -5,7 +5,6 @@ import { useFilters } from "@/contexts/FilterContext";
 import { Filter, X, User as UserIcon } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 
-// Hook useOnClickOutside (Tidak Berubah)
 const useOnClickOutside = (
   ref: React.RefObject<HTMLDivElement | null>,
   handler: () => void
@@ -29,6 +28,7 @@ const Header = () => {
     companies,
     availablePeriods,
     selectedCompany,
+    setSelectedCompany, // <-- Ambil fungsi ini
     period,
     setPeriod,
     user,
@@ -36,24 +36,24 @@ const Header = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
-
-  // --- 1. TAMBAHKAN STATE BARU UNTUK MENGECEK SISI KLIEN ---
   const [isClient, setIsClient] = useState(false);
 
-  // 2. useEffect ini hanya akan berjalan di sisi klien
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   useOnClickOutside(filterRef, () => setIsFilterOpen(false));
 
-  // Fungsi-fungsi handler (Tidak Berubah)
+  const handleCompanyChange = (companyId: number) => {
+    setSelectedCompany(companyId);
+  };
   const handleYearChange = (year: number) => {
     setPeriod({ ...period, year });
   };
   const handleValueChange = (newValue: number) => {
     setPeriod({ ...period, value: newValue });
   };
+
   const uniqueYears = Array.from(new Set(availablePeriods.map((p) => p.year)));
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
@@ -71,11 +71,8 @@ const Header = () => {
       <h1 className="text-xl font-bold text-gray-800">HC Dashboard IFG</h1>
 
       <div className="flex items-center gap-6">
-        {/* --- 3. BUNGKUS BLOK DINAMIS DENGAN KONDISI isClient --- */}
-        {/* Ini memastikan blok ini tidak di-render di server */}
         {isClient && (
           <>
-            {/* --- TOMBOL FILTER --- */}
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -88,7 +85,6 @@ const Header = () => {
               </button>
 
               {isFilterOpen && (
-                // (Logika Dropdown Filter tidak berubah)
                 <div className="absolute right-0 top-full z-20 mt-2 w-80 rounded-lg border bg-white p-4 shadow-xl">
                   <div className="mb-4 flex items-center justify-between">
                     <h4 className="font-bold text-gray-800">Filter</h4>
@@ -100,9 +96,31 @@ const Header = () => {
                     </button>
                   </div>
                   <div className="space-y-4">
+                    {/* --- KONDISIONAL DROPDOWN PERUSAHAAN --- */}
+                    {user?.role === "ADMIN_HOLDING" && (
+                      <div>
+                        <label className="text-xs font-semibold text-gray-600">
+                          Perusahaan
+                        </label>
+                        <select
+                          value={selectedCompany ?? ""}
+                          onChange={(e) =>
+                            handleCompanyChange(Number(e.target.value))
+                          }
+                          className="w-full mt-1 rounded-md border bg-white p-2 text-sm"
+                        >
+                          {companies.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Year
+                        Tahun
                       </label>
                       <select
                         value={period.year}
@@ -120,7 +138,7 @@ const Header = () => {
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Month
+                        Bulan
                       </label>
                       <div className="mt-1">
                         <select
@@ -153,7 +171,6 @@ const Header = () => {
                 </div>
               )}
             </div>
-            {/* --- BLOK INFO USER --- */}
             <div className="flex items-center gap-3 text-right">
               <div>
                 <p className="text-sm font-semibold text-gray-900">

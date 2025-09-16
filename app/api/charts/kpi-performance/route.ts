@@ -1,12 +1,14 @@
 // File: app/api/charts/kpi-performance/route.ts
 
-import { NextResponse } from "next/server";
+// 1. Tambahkan 'NextRequest' ke dalam impor
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCompanyFilter } from "@/lib/prisma-filter";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  // 1. SEKARANG KITA BUTUH PARAMETER 'month' DARI FRONTEND
+// 2. Ubah tipe parameter dari 'Request' menjadi 'NextRequest'
+export async function GET(request: NextRequest) {
+  // 3. (Penyederhanaan) Ambil searchParams langsung dari request.nextUrl
+  const { searchParams } = request.nextUrl;
   const year = parseInt(searchParams.get("year") || "0");
   const month = parseInt(searchParams.get("month") || "0");
 
@@ -18,11 +20,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const companyFilter = await getCompanyFilter();
+    // Sekarang 'request' memiliki tipe yang benar untuk dikirim ke getCompanyFilter
+    const companyFilter = await getCompanyFilter(request);
     const currentYear = year;
     const previousYear = year - 1;
 
-    // 2. QUERY DIUBAH DARI findMany MENJADI findFirst UNTUK SATU BULAN
     const [currentMonthRecord, previousYearMonthRecord] = await Promise.all([
       prisma.kpiStat.findFirst({
         where: { year: currentYear, month: month, ...companyFilter },
@@ -42,10 +44,8 @@ export async function GET(request: Request) {
       "Pengembangan Talenta",
     ];
 
-    // 3. DATA LANGSUNG DIAMBIL DARI RECORD, TANPA RATA-RATA
-    // Gunakan 'nullish coalescing' (?? 0) untuk default jika data tidak ada
     const responseData = {
-      title: "KPI Performance Score",
+      title: "Key Performance Indicators",
       mainScore: currentMonthRecord?.totalScore ?? 0,
       scoreLabel: "Total Score",
       trend: "-",

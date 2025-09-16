@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const year = yearStr ? parseInt(yearStr) : new Date().getFullYear();
 
   try {
-    const companyFilter = await getCompanyFilter();
+    const companyFilter = await getCompanyFilter(request);
 
     // Ambil target RKAP untuk tahun yang dipilih
     // findFirst karena kita mengharapkan hanya ada 1 target per tahun per perusahaan
