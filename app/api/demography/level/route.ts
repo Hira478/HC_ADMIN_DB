@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // --- 3. PANGGIL HELPER KEAMANAN ---
-    const companyFilter = await getCompanyFilter();
+    const companyFilter = await getCompanyFilter(request);
 
     const levelDataFromDb = await prisma.levelStat.findMany({
       // --- 4. GUNAKAN companyFilter ---

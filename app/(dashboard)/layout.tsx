@@ -19,6 +19,12 @@ export default function DashboardLayout({
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
             {children}
           </main>
+          <footer className="text-right text-xs text-gray-500 p-4 border-t border-gray-200 bg-white">
+            <p>
+              Seluruh Data telah Diverifikasi oleh Pejabat Berwenang dari
+              Masing-Masing Entitas Perusahaan.
+            </p>
+          </footer>
         </div>
       </div>
     </FilterProvider>

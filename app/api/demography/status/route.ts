@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   // Anda bisa tambahkan logika lain untuk quarterly/semesterly jika perlu
 
   try {
-    const companyFilter = await getCompanyFilter();
+    const companyFilter = await getCompanyFilter(request);
 
     const [statusCurrentYear, statusPreviousYear] = await Promise.all([
       prisma.employeeStatusStat.findMany({

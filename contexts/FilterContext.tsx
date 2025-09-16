@@ -1,3 +1,4 @@
+// contexts/FilterContext.tsx
 "use client";
 
 import React, {
@@ -7,14 +8,14 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useRouter } from "next/navigation"; // <-- 1. Import useRouter
+import { useRouter } from "next/navigation";
 
-// --- Tipe Data Baru untuk Sesi User ---
+// Tipe Data untuk Sesi User
 interface UserSession {
   id: number;
   name: string;
   email: string;
-  role: string; // Misal: "ADMIN_HOLDING" atau "USER_ANPER"
+  role: "ADMIN_HOLDING" | "USER_ANPER"; // Dibuat lebih spesifik
   companyId: number;
   companyName: string;
 }
@@ -25,6 +26,11 @@ export interface Period {
   value: number;
 }
 
+type AvailablePeriod = {
+  year: number;
+  month: number;
+};
+
 interface Company {
   id: number;
   name: string;
@@ -32,74 +38,62 @@ interface Company {
 
 interface FilterContextType {
   companies: Company[];
-  availablePeriods: { year: number; month: number }[];
+  availablePeriods: AvailablePeriod[];
   selectedCompany: number | null;
-  setSelectedCompany: (companyId: number) => void; // Kita biarkan tipenya, tapi fungsinya tetap dikunci
+  setSelectedCompany: (companyId: number) => void;
   period: Period;
   setPeriod: (period: Period) => void;
   loading: boolean;
-  user: UserSession | null; // <-- 2. Tambahkan User ke Tipe Konteks
-  logout: () => void; // <-- 3. Tambahkan fungsi Logout ke Tipe Konteks
+  user: UserSession | null;
+  logout: () => void;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 export const FilterProvider = ({ children }: { children: ReactNode }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [availablePeriods, setAvailablePeriods] = useState<
-    { year: number; month: number }[]
-  >([]);
+  const [availablePeriods, setAvailablePeriods] = useState<AvailablePeriod[]>(
+    []
+  );
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>({
     type: "monthly",
-    year: new Date().getFullYear(), // Gunakan tahun saat ini sebagai default awal
-    value: new Date().getMonth() + 1, // Gunakan bulan saat ini sebagai default awal
+    year: new Date().getFullYear(),
+    value: new Date().getMonth() + 1,
   });
 
-  // --- State Baru untuk Auth ---
   const [user, setUser] = useState<UserSession | null>(null);
-  const router = useRouter(); // Hook untuk redirect
+  const router = useRouter();
 
-  // --- 4. Modifikasi Total useEffect Utama ---
-  // Kita ubah logikanya: Fetch User DULU, baru fetch data filter.
   useEffect(() => {
     setLoading(true);
-
     const initializeDashboard = async () => {
       try {
-        // 1. Ambil data user dari endpoint /me yang baru Anda buat
         const userRes = await fetch("/api/auth/me");
-        if (!userRes.ok) {
-          // Jika gagal (token tidak ada/invalid), lempar error untuk pindah ke catch
+        if (!userRes.ok)
           throw new Error("Not authenticated. Redirecting to login.");
-        }
-
         const userData: UserSession = await userRes.json();
         setUser(userData);
-
-        // 2. GUNAKAN companyId dari USER untuk menggantikan hardcode '7'
         setSelectedCompany(userData.companyId);
 
-        // 3. Setelah user divalidasi, ambil data filter (Companies & Periods)
         const [companyData, periodData] = await Promise.all([
           fetch("/api/companies").then((res) => res.json()),
-          fetch("/api/filters/available-periods").then((res) => res.json()),
+          // Beri tahu TypeScript bahwa hasil json() adalah Promise<AvailablePeriod[]>
+          fetch("/api/filters/available-periods").then(
+            (res) => res.json() as Promise<AvailablePeriod[]>
+          ),
         ]);
-
         setCompanies(companyData);
         setAvailablePeriods(periodData);
 
-        // 4. Logic cerdas Anda untuk set periode default (ini sudah benar)
         if (periodData && periodData.length > 0) {
-          const latestYear = Math.max(
-            ...periodData.map((p: { year: number }) => p.year)
-          );
+          const latestYear = Math.max(...periodData.map((p) => p.year));
           const periodsInLatestYear = periodData.filter(
-            (p: { year: number }) => p.year === latestYear
+            (p) => p.year === latestYear
           );
           const latestMonth = Math.max(
-            ...periodsInLatestYear.map((p: { month: number }) => p.month)
+            ...periodsInLatestYear.map((p) => p.month)
           );
           setPeriod((prev) => ({
             ...prev,
@@ -108,47 +102,48 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
           }));
         }
       } catch (error) {
-        // 5. Jika ada error APAPUN (termasuk user tidak login), redirect ke login
         console.error("Initialization Error:", error);
         setUser(null);
-        router.push("/login"); // Paksa kembali ke login
+        router.push("/login");
       } finally {
         setLoading(false);
       }
     };
-
     initializeDashboard();
-  }, [router]); // Tambahkan router sebagai dependensi
+  }, [router]);
 
-  // --- 5. Buat Fungsi Logout ---
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch (e) {
       console.error("Logout request failed", e);
     } finally {
-      // Bersihkan semua state dan paksa redirect ke login
       setUser(null);
       setSelectedCompany(null);
       setCompanies([]);
       setAvailablePeriods([]);
-
-      // Ganti router.push dengan hard refresh ke halaman login
       window.location.href = "/login";
     }
   };
 
-  // --- 6. Update Value Provider ---
+  // --- PERUBAHAN UTAMA ---
+  const handleSetSelectedCompany = (companyId: number) => {
+    // Hanya izinkan perubahan jika user adalah ADMIN_HOLDING
+    if (user?.role === "ADMIN_HOLDING") {
+      setSelectedCompany(companyId);
+    }
+  };
+
   const value = {
     companies,
     availablePeriods,
     selectedCompany,
-    setSelectedCompany: () => {}, // Tetap kunci fungsi ini (karena companyId dari token)
+    setSelectedCompany: handleSetSelectedCompany, // <-- Gunakan fungsi handler yang baru
     period,
     setPeriod,
     loading,
-    user, // <-- Tambahkan user
-    logout, // <-- Tambahkan logout
+    user,
+    logout,
   };
 
   return (

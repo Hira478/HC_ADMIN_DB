@@ -126,9 +126,11 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
       {showSummary ? (
         // --- BLOK UNTUK TAMPILAN DENGAN SUMMARY ---
         <div className="flex flex-col md:flex-row gap-6 items-center">
-          <div className="md:w-1/4 text-center md:text-left md:pl-4">
+          <div className="flex-shrink-0 text-center md:text-left md:pl-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold">{title}</h2>
+              <h2 className="text-xl font-semibold whitespace-pre-line">
+                {title}
+              </h2>
               {/* Tooltip tetap di sini untuk mode summary */}
             </div>
             <div className="my-2">

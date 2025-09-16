@@ -30,6 +30,8 @@ export default function DashboardPage() {
       setIsLoadingMetrics(true);
       try {
         const params = new URLSearchParams({
+          // --- PERBAIKAN DI SINI ---
+          companyId: String(selectedCompany), // <-- SELALU KIRIM companyId
           year: String(period.year),
           month: String(period.value),
         });
@@ -58,8 +60,10 @@ export default function DashboardPage() {
       try {
         // Tambahkan 'month' ke dalam parameter
         const params = new URLSearchParams({
+          // --- PERBAIKAN DI SINI ---
+          companyId: String(selectedCompany), // <-- SELALU KIRIM companyId
           year: String(period.year),
-          month: String(period.value), // <-- KIRIM BULAN
+          month: String(period.value),
         });
         const response = await fetch(
           `/api/charts/kpi-performance?${params.toString()}`
@@ -83,7 +87,12 @@ export default function DashboardPage() {
     const fetchRkap = async () => {
       setIsLoadingRkap(true);
       try {
-        const params = new URLSearchParams({ year: String(period.year) });
+        const params = new URLSearchParams({
+          // --- PERBAIKAN DI SINI ---
+          companyId: String(selectedCompany), // <-- SELALU KIRIM companyId
+          year: String(period.year),
+          month: String(period.value),
+        });
         const response = await fetch(`/api/rkap/targets?${params.toString()}`);
         if (!response.ok) throw new Error("RKAP data not found");
         setRkapData(await response.json());
@@ -95,7 +104,7 @@ export default function DashboardPage() {
       }
     };
     fetchRkap();
-  }, [selectedCompany, period.year, isContextLoading]);
+  }, [selectedCompany, period, isContextLoading]);
 
   const overallLoading = isContextLoading || isLoadingMetrics;
 

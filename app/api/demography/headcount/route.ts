@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const companyFilter = await getCompanyFilter(); // <-- GUNAKAN FILTER
+    const companyFilter = await getCompanyFilter(request); // <-- GUNAKAN FILTER
 
     const [headcountCurrentYear, headcountPreviousYear] = await Promise.all([
       prisma.headcount.findMany({

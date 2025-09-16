@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { UserRole } from "@prisma/client"; // <-- 1. Import Enum UserRole
 
 export async function POST(request: Request) {
   try {
@@ -15,18 +16,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Cek apakah companyId valid (ada di DB)
-    const companyExists = await prisma.company.findUnique({
+    // --- LOGIKA BARU DIMULAI DI SINI ---
+
+    // 2. Ambil detail perusahaan yang dipilih untuk mengecek tipenya
+    const company = await prisma.company.findUnique({
       where: { id: Number(companyId) },
     });
-    if (!companyExists) {
+
+    if (!company) {
       return NextResponse.json(
         { error: "Perusahaan tidak valid." },
         { status: 400 }
       );
     }
 
-    // Cek apakah email sudah terdaftar
+    // 3. Tentukan role user berdasarkan tipe perusahaan
+    const userRole: UserRole =
+      company.type === "Holding" ? UserRole.ADMIN_HOLDING : UserRole.USER_ANPER;
+
+    // --- AKHIR LOGIKA BARU ---
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
@@ -35,21 +44,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 adalah salt rounds
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Buat user baru
+    // 4. Buat user baru dengan role yang sudah ditentukan secara dinamis
     const user = await prisma.user.create({
       data: {
         email,
         name,
         password: hashedPassword,
         companyId: Number(companyId),
-        // Anda bisa tambahkan logika untuk Role di sini jika perlu
+        role: userRole, // <-- Gunakan role yang dinamis, bukan default
       },
     });
 
-    // Jangan kirim balik password hash di response
     const { password: _, ...userWithoutPassword } = user;
     return NextResponse.json(userWithoutPassword, { status: 201 });
   } catch (error) {

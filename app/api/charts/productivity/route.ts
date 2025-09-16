@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const year = yearStr ? parseInt(yearStr) : new Date().getFullYear();
 
   try {
-    const companyFilter = await getCompanyFilter(); // <-- GUNAKAN FILTER
+    const companyFilter = await getCompanyFilter(request); // <-- GUNAKAN FILTER
 
     const productivityStats = await prisma.productivityStat.findMany({
       where: { year, ...companyFilter }, // <-- TERAPKAN FILTER
