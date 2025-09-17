@@ -12,8 +12,14 @@ interface ProductivityFormData {
   netProfit: number;
   totalEmployeeCost: number;
   totalCost: number;
-  kpiKorporasi: number;
-  kpiHcTransformation: number;
+  kpiFinansial: number;
+  kpiOperasional: number;
+  kpiSosial: number;
+  kpiInovasiBisnis: number;
+  kpiKepemimpinanTeknologi: number;
+  kpiPeningkatanInvestasi: number;
+  kpiPengembanganTalenta: number;
+  totalScore: number; // Tambahkan total score
 }
 
 // Gunakan interface untuk initial state
@@ -25,24 +31,34 @@ const initialFormData: ProductivityFormData = {
   netProfit: 0,
   totalEmployeeCost: 0,
   totalCost: 0,
-  kpiKorporasi: 0,
-  kpiHcTransformation: 0,
+  // Tambahkan 7 KPI baru
+  kpiFinansial: 0,
+  kpiOperasional: 0,
+  kpiSosial: 0,
+  kpiInovasiBisnis: 0,
+  kpiKepemimpinanTeknologi: 0,
+  kpiPeningkatanInvestasi: 0,
+  kpiPengembanganTalenta: 0,
+  totalScore: 0,
 };
 
 const InputProductivityPage = () => {
-  const { companies, loading: companiesLoading } = useFilters();
-  // Terapkan tipe pada useState
+  const { user, companies, loading: companiesLoading } = useFilters();
   const [formData, setFormData] =
     useState<ProductivityFormData>(initialFormData);
   const [status, setStatus] = useState({ message: "", type: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Kode ini sekarang valid karena tipe companyId sudah sesuai
-    if (companies.length > 0 && !formData.companyId) {
+    // Kunci companyId jika user adalah Anper
+    if (user?.role === "USER_ANPER") {
+      setFormData((prev) => ({ ...prev, companyId: user.companyId }));
+    }
+    // Set default company jika user adalah admin dan daftar perusahaan sudah ada
+    else if (companies.length > 0 && !formData.companyId) {
       setFormData((prev) => ({ ...prev, companyId: companies[0].id }));
     }
-  }, [companies, formData.companyId]);
+  }, [user, companies, formData.companyId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -103,24 +119,36 @@ const InputProductivityPage = () => {
             >
               Perusahaan
             </label>
-            <select
-              name="companyId"
-              id="companyId"
-              value={formData.companyId}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-            >
-              {companiesLoading ? (
-                <option>Loading...</option>
-              ) : (
-                companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))
-              )}
-            </select>
+            {user?.role === "ADMIN_HOLDING" || user?.role === "SUPER_ADMIN" ? (
+              <select
+                name="companyId"
+                id="companyId"
+                value={formData.companyId}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
+              >
+                {companiesLoading ? (
+                  <option>Loading...</option>
+                ) : (
+                  companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            ) : (
+              <input
+                type="text"
+                readOnly
+                value={
+                  companies.find((c) => c.id === formData.companyId)?.name ||
+                  "Loading..."
+                }
+                className="mt-1 block w-full p-2 border border-gray-200 rounded-md bg-gray-100 cursor-not-allowed"
+              />
+            )}
           </div>
           <div>
             <label
@@ -161,45 +189,102 @@ const InputProductivityPage = () => {
         </fieldset>
         <fieldset className="border-t pt-6">
           <legend className="text-lg font-semibold text-gray-900">
-            KPI (%)
+            Skor KPI (Bulanan)
           </legend>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+            {/* Ganti field lama dengan 7 field baru */}
             <div>
-              <label
-                htmlFor="kpiKorporasi"
-                className="block text-sm font-medium text-gray-700"
-              >
-                KPI Korporasi
-              </label>
+              <label htmlFor="kpiFinansial">Finansial</label>
               <input
                 type="number"
-                name="kpiKorporasi"
-                id="kpiKorporasi"
-                value={formData.kpiKorporasi}
+                name="kpiFinansial"
+                value={formData.kpiFinansial}
                 onChange={handleChange}
-                required
                 step="any"
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Contoh: 58"
+                className="mt-1 block w-full p-2 border rounded-md"
               />
             </div>
             <div>
-              <label
-                htmlFor="kpiHcTransformation"
-                className="block text-sm font-medium text-gray-700"
-              >
-                KPI HC Transformation
+              <label htmlFor="kpiOperasional">Operasional</label>
+              <input
+                type="number"
+                name="kpiOperasional"
+                value={formData.kpiOperasional}
+                onChange={handleChange}
+                step="any"
+                className="mt-1 block w-full p-2 border rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="kpiSosial">Sosial</label>
+              <input
+                type="number"
+                name="kpiSosial"
+                value={formData.kpiSosial}
+                onChange={handleChange}
+                step="any"
+                className="mt-1 block w-full p-2 border rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="kpiInovasiBisnis">Inovasi Bisnis</label>
+              <input
+                type="number"
+                name="kpiInovasiBisnis"
+                value={formData.kpiInovasiBisnis}
+                onChange={handleChange}
+                step="any"
+                className="mt-1 block w-full p-2 border rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="kpiKepemimpinanTeknologi">
+                Kepemimpinan Teknologi
               </label>
               <input
                 type="number"
-                name="kpiHcTransformation"
-                id="kpiHcTransformation"
-                value={formData.kpiHcTransformation}
+                name="kpiKepemimpinanTeknologi"
+                value={formData.kpiKepemimpinanTeknologi}
                 onChange={handleChange}
-                required
                 step="any"
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                placeholder="Contoh: 42"
+                className="mt-1 block w-full p-2 border rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="kpiPeningkatanInvestasi">
+                Peningkatan Investasi
+              </label>
+              <input
+                type="number"
+                name="kpiPeningkatanInvestasi"
+                value={formData.kpiPeningkatanInvestasi}
+                onChange={handleChange}
+                step="any"
+                className="mt-1 block w-full p-2 border rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="kpiPengembanganTalenta">
+                Pengembangan Talenta
+              </label>
+              <input
+                type="number"
+                name="kpiPengembanganTalenta"
+                value={formData.kpiPengembanganTalenta}
+                onChange={handleChange}
+                step="any"
+                className="mt-1 block w-full p-2 border rounded-md"
+              />
+            </div>
+            <div>
+              <label htmlFor="totalScore">Total Score</label>
+              <input
+                type="number"
+                name="totalScore"
+                value={formData.totalScore}
+                onChange={handleChange}
+                step="any"
+                className="mt-1 block w-full p-2 border rounded-md"
               />
             </div>
           </div>

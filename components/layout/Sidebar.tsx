@@ -9,6 +9,10 @@ import {
   LayoutDashboard,
   Network, // <-- Ganti Sitemap ke Network untuk menghindari error
   ClipboardList,
+  DollarSign, // <-- 1. Import Ikon Baru
+  Wallet, // <-- 1. Import Ikon Baru
+  Database, // <-- 1. Import Ikon Baru
+  PencilLine, // <-- Import PencilLine Icon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -111,6 +115,17 @@ const Sidebar = () => {
           </>
         )}
       </nav>
+      {/*
+      <a
+        href="/input"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+      >
+        <PencilLine size={20} />
+        <span>Input Data</span>
+      </a>
+      */}
 
       {/* --- PERUBAHAN DI SINI: BAGIAN USER & LOGOUT --- */}
       <div className="px-4 py-4 border-t border-gray-200">
