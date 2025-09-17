@@ -100,7 +100,13 @@ const Sidebar = () => {
             <SidebarItem
               href="/admin/users"
               icon={<Users size={20} />}
-              title="User Management"
+              title={
+                <>
+                  User
+                  <br />
+                  Management
+                </>
+              }
             />
           </>
         )}
