@@ -22,9 +22,7 @@ function DashboardUI({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Sembunyikan jika ini halaman slideshow */}
-        <div className={isSlideshowPage ? "hidden" : ""}>
-          <Header />
-        </div>
+        <Header />
 
         <main
           id="main-content"
