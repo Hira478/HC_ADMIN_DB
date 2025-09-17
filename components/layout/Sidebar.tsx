@@ -55,16 +55,8 @@ const Sidebar = () => {
     <aside className="hidden md:flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
       <div className="flex h-20 w-full items-center justify-start gap-3 border-b border-gray-200 px-6">
-        <Image
-          src="/logo.png" // Mengarah ke public/logo.png
-          alt="HC Dashboard Logo"
-          width={32} // Sama dengan ukuran h-8
-          height={32} // Sama dengan ukuran w-8
-          priority // Prioritaskan load logo
-          unoptimized
-        />
         <div>
-          <p className="text-lg font-bold text-gray-800">HC Dashboard</p>
+          <p className="text-lg font-bold text-gray-800">IFG HC Dashboard</p>
         </div>
       </div>
 
