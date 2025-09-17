@@ -20,10 +20,10 @@ export default function DashboardLayout({
             {children}
           </main>
           <footer className="text-right text-xs text-gray-500 p-4 border-t border-gray-200 bg-white">
-            <p>
+            <i>
               Seluruh Data telah Diverifikasi oleh Pejabat Berwenang dari
               Masing-Masing Entitas Perusahaan.
-            </p>
+            </i>
           </footer>
         </div>
       </div>

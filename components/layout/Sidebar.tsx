@@ -1,135 +1,126 @@
-"use client"; // <-- Tandai sebagai Client Component untuk menggunakan hook
+// components/layout/Sidebar.tsx
+"use client";
 
 import {
-  Home,
   Settings,
   Building,
-  Globe,
-  Briefcase,
   LogOut,
+  Users,
+  LayoutDashboard,
+  Network, // <-- Ganti Sitemap ke Network untuk menghindari error
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // <-- Import hook untuk mendeteksi path
+import { usePathname } from "next/navigation";
 import React from "react";
 import { useFilters } from "@/contexts/FilterContext";
+import { User as UserIcon } from "lucide-react"; // <-- Import ikon User
 
-// Definisikan tipe untuk properti item sidebar agar lebih rapi
 interface SidebarItemProps {
   icon: React.ReactNode;
   href: string;
   title: string;
 }
 
-// Sub-komponen baru untuk setiap item sidebar agar tidak mengulang kode
 const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
   const pathname = usePathname();
   const isActive = pathname === href;
 
   return (
-    <Link href={href}>
+    <Link href={href} className="w-full">
       <button
-        className={`relative rounded-lg p-3 ${
+        className={`w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
           isActive
-            ? "bg-blue-100 text-blue-600"
-            : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            ? "bg-blue-100 text-blue-700 font-semibold"
+            : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
         }`}
-        title={title}
       >
         {icon}
-        {isActive && (
-          <div className="absolute -right-1 top-1/2 h-4 w-1 -translate-y-1/2 transform rounded-full bg-blue-600"></div>
-        )}
+        <span>{title}</span>
       </button>
     </Link>
   );
 };
 
 const Sidebar = () => {
-  // 3. Ambil fungsi logout dari context
-  const { logout } = useFilters();
+  const { user, logout } = useFilters();
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    logout(); // Panggil fungsi logout dari context
+    logout();
   };
+
   return (
-    <aside className="hidden md:flex h-screen w-20 flex-col items-center border-r border-gray-200 bg-white">
-      {/* Logo Placeholder */}
-      <div className="flex h-20 w-full items-center justify-center border-b border-gray-200">
+    <aside className="hidden md:flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
+      {/* Logo */}
+      <div className="flex h-20 w-full items-center justify-start gap-3 border-b border-gray-200 px-6">
         <Building className="h-8 w-8 text-blue-600" />
+        <div>
+          <p className="text-lg font-bold text-gray-800">HC Dashboard</p>
+        </div>
       </div>
 
-      {/* Daftar Ikon Navigasi */}
-      <nav className="flex flex-1 flex-col items-center space-y-2 py-4">
+      {/* Navigasi Utama */}
+      <nav className="flex-1 px-4 py-4 space-y-1">
         <SidebarItem
           href="/"
-          icon={<Home className="h-6 w-6" />}
-          title="Dashboard"
+          icon={<LayoutDashboard size={20} />}
+          title="Productivity"
         />
-        {/* 2. Tambahkan item baru untuk Organization & Culture */}
-
         <SidebarItem
           href="/organization-culture"
-          icon={<Globe className="h-6 w-6" />}
+          icon={<Network size={20} />}
           title="Organization & Culture"
         />
         <SidebarItem
           href="/workforce-planning"
-          icon={<Briefcase className="h-6 w-6" />}
+          icon={<ClipboardList size={20} />}
           title="Workforce Planning"
         />
-        {/*
-        <SidebarItem
-          href="/input/scores"
-          icon={<ClipboardEdit className="h-6 w-6" />}
-          title="Input Skor"
-        />
-        */}
 
-        {/* 3. Nonaktifkan sementara tautan input dan upload */}
-        {/*
-        <SidebarItem
-          href="/input/productivity"
-          icon={<DollarSign className="h-6 w-6" />}
-          title="Input Productivity Data"
-        />
-        */}
-        {/*
-        <SidebarItem
-          href="/input/employee-cost"
-          icon={<Wallet className="h-6 w-6" />}
-          title="Input Rincian Biaya Karyawan"
-        />
-        <SidebarItem
-          href="/input/demography"
-          icon={<Database className="h-6 w-6" />}
-          title="Input Demography Data"
-        />
-        <SidebarItem
-          href="/upload"
-          icon={<Upload className="h-6 w-6" />}
-          title="Upload Excel File"
-        /> 
-        */}
+        {user?.role === "SUPER_ADMIN" && (
+          <>
+            <div className="pt-4 pb-2 px-4">
+              <span className="text-xs font-semibold text-gray-400 uppercase">
+                Admin
+              </span>
+            </div>
+            <SidebarItem
+              href="/admin/users"
+              icon={<Users size={20} />}
+              title="User Management"
+            />
+          </>
+        )}
       </nav>
-      <div className="flex flex-col items-center py-4 space-y-2">
-        {/* --- TOMBOL LOGOUT BARU --- */}
+
+      {/* --- PERUBAHAN DI SINI: BAGIAN USER & LOGOUT --- */}
+      <div className="px-4 py-4 border-t border-gray-200">
+        {/* --- BLOK INFO USER BARU --- */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+            <UserIcon className="h-6 w-6 text-gray-600" />
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {user ? user.name : "..."}
+            </p>
+            <p
+              className="text-xs text-gray-500 truncate"
+              title={user?.companyName}
+            >
+              {user ? user.companyName : "..."}
+            </p>
+          </div>
+        </div>
+
+        {/* Tombol Logout */}
         <button
           onClick={handleLogout}
-          className="rounded-lg p-3 text-red-500 hover:bg-red-100 hover:text-red-600"
-          title="Logout"
+          className="w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700"
         >
-          <LogOut className="h-6 w-6" />
-        </button>
-      </div>
-
-      {/* Ikon Pengaturan di bagian bawah */}
-      <div className="py-4">
-        <button
-          className="rounded-lg p-3 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          title="Settings"
-        >
-          <Settings className="h-6 w-6" />
+          <LogOut size={20} />
+          <span>Logout</span>
         </button>
       </div>
     </aside>

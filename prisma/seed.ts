@@ -1,50 +1,52 @@
-import { PrismaClient } from "@prisma/client";
+// prisma/seed.ts
+
+import { PrismaClient, UserRole } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Start seeding companies only...");
+  console.log(`Mulai proses seeding...`);
 
-  // 1. Hapus semua data lama dari semua tabel
-  // Urutan penting: hapus data metrik dulu (yang bergantung pada company), baru company.
-  await prisma.lengthOfServiceStat.deleteMany({});
-  await prisma.ageStat.deleteMany({});
-  await prisma.levelStat.deleteMany({});
-  await prisma.educationStat.deleteMany({});
-  await prisma.employeeStatusStat.deleteMany({});
-  await prisma.headcount.deleteMany({});
-  await prisma.productivityStat.deleteMany({});
-  await prisma.company.deleteMany({});
-  console.log("Old data deleted.");
+  // Ganti detail ini dengan data super admin Anda
+  const superAdminEmail = "superadmin@holding.com";
+  const superAdminPassword = "PasswordSuperAdminYangKuat!"; // Ganti dengan password yang aman
+  const superAdminName = "Super Admin Holding";
 
-  // 2. Buat HANYA data perusahaan
-  const companiesToCreate = [
-    { name: "IFG", type: "Holding" },
-    { name: "Anper Jaya Abadi", type: "Anper" },
-    { name: "Anper Bintang Terang", type: "Anper" },
-    { name: "PT Jaminan Kredit Indonesia", type: "Anper" },
-    { name: "PT Asuransi Kredit Indonesia", type: "Anper" },
-    { name: "PT Asuransi Jasa Indonesia", type: "Anper" },
-    { name: "PT Asuransi Jiwa IFG Life", type: "Anper" },
-    { name: "Anper Garda Utama", type: "Anper" },
-    { name: "Anper Harapan Bangsa", type: "Anper" },
-    { name: "Anper Inti Makmur", type: "Anper" },
-    { name: "Anper Jasa Prima", type: "Anper" },
-  ];
+  // 1. Cari perusahaan Holding. Ganti "IFG" dengan nama perusahaan Holding Anda yang ada di DB.
+  const holdingCompany = await prisma.company.findUnique({
+    where: { name: "IFG" }, // PASTIKAN NAMA INI SESUAI DENGAN DI DATABASE ANDA
+  });
 
-  // Gunakan loop dan create untuk memastikan ID autoincrement berfungsi baik
-  console.log("Creating companies...");
-  for (const companyData of companiesToCreate) {
-    await prisma.company.create({
-      data: companyData,
-    });
+  if (!holdingCompany) {
+    console.error(
+      "Perusahaan Holding tidak ditemukan. Pastikan nama perusahaan sudah benar."
+    );
+    return;
   }
 
-  const allCompanies = await prisma.company.findMany();
-  console.log(`${allCompanies.length} companies created.`);
-  console.log(
-    "Seeding finished successfully. Only company data was seeded. 🌱"
-  );
+  // 2. Hash password super admin
+  const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
+
+  // 3. Buat atau update user SUPER_ADMIN menggunakan upsert
+  // Upsert akan membuat user jika belum ada, atau mengupdatenya jika sudah ada (berdasarkan email)
+  const superAdmin = await prisma.user.upsert({
+    where: { email: superAdminEmail },
+    update: {
+      // Jika user sudah ada, Anda bisa update datanya di sini jika perlu
+      password: hashedPassword,
+    },
+    create: {
+      email: superAdminEmail,
+      name: superAdminName,
+      password: hashedPassword,
+      role: UserRole.SUPER_ADMIN, // <-- Menetapkan role sebagai SUPER_ADMIN
+      companyId: holdingCompany.id,
+    },
+  });
+
+  console.log(`User Super Admin telah dibuat/diupdate: ${superAdmin.email}`);
+  console.log(`Seeding selesai.`);
 }
 
 main()

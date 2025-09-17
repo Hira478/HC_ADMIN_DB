@@ -15,7 +15,7 @@ interface UserSession {
   id: number;
   name: string;
   email: string;
-  role: "ADMIN_HOLDING" | "USER_ANPER"; // Dibuat lebih spesifik
+  role: "ADMIN_HOLDING" | "USER_ANPER" | "SUPER_ADMIN"; // Dibuat lebih spesifik
   companyId: number;
   companyName: string;
 }
@@ -129,7 +129,7 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   // --- PERUBAHAN UTAMA ---
   const handleSetSelectedCompany = (companyId: number) => {
     // Hanya izinkan perubahan jika user adalah ADMIN_HOLDING
-    if (user?.role === "ADMIN_HOLDING") {
+    if (user?.role === "ADMIN_HOLDING" || user?.role === "SUPER_ADMIN") {
       setSelectedCompany(companyId);
     }
   };

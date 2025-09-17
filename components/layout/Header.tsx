@@ -4,6 +4,7 @@
 import { useFilters } from "@/contexts/FilterContext";
 import { Filter, X, User as UserIcon } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 
 const useOnClickOutside = (
   ref: React.RefObject<HTMLDivElement | null>,
@@ -68,8 +69,21 @@ const Header = () => {
 
   return (
     <header className="flex h-20 w-full items-center justify-between border-b bg-white px-6">
-      <h1 className="text-xl font-bold text-gray-800">HC Dashboard IFG</h1>
-
+      <div className="flex items-center">
+        {/* Hanya render jika 'selectedCompany' sudah ada nilainya */}
+        {selectedCompany && (
+          <Image
+            key={selectedCompany} // <-- Key untuk re-render saat logo berubah
+            src={`/logos/${selectedCompany}.png`} // <-- Path dinamis berdasarkan ID
+            alt="Company Logo"
+            width={120} // Sesuaikan ukurannya
+            height={40} // Sesuaikan ukurannya
+            priority // Prioritaskan load logo
+            style={{ objectFit: "contain" }} // Pastikan gambar tidak gepeng
+            unoptimized
+          />
+        )}
+      </div>
       <div className="flex items-center gap-6">
         {isClient && (
           <>
@@ -97,7 +111,8 @@ const Header = () => {
                   </div>
                   <div className="space-y-4">
                     {/* --- KONDISIONAL DROPDOWN PERUSAHAAN --- */}
-                    {user?.role === "ADMIN_HOLDING" && (
+                    {(user?.role === "ADMIN_HOLDING" ||
+                      user?.role === "SUPER_ADMIN") && (
                       <div>
                         <label className="text-xs font-semibold text-gray-600">
                           Perusahaan
@@ -170,19 +185,6 @@ const Header = () => {
                   </div>
                 </div>
               )}
-            </div>
-            <div className="flex items-center gap-3 text-right">
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {user ? user.name : "Loading..."}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {user ? `${user.companyName} (${user.role})` : "..."}
-                </p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
-                <UserIcon className="h-6 w-6 text-gray-600" />
-              </div>
             </div>
           </>
         )}
