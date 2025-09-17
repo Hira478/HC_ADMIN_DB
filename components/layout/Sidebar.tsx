@@ -20,7 +20,7 @@ import Image from "next/image";
 interface SidebarItemProps {
   icon: React.ReactNode;
   href: string;
-  title: string;
+  title: React.ReactNode; // <-- Diubah di sini
 }
 
 const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
@@ -52,7 +52,7 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="hidden md:flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
+    <aside className="hidden md:flex h-screen w-56 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
       <div className="flex h-20 w-full items-center justify-start gap-3 border-b border-gray-200 px-6">
         <div>
@@ -70,12 +70,24 @@ const Sidebar = () => {
         <SidebarItem
           href="/organization-culture"
           icon={<Network size={20} />}
-          title="Organization & Culture"
+          title={
+            <>
+              Organization
+              <br />& Culture
+            </>
+          }
         />
+        {/* --- PERUBAHAN 3: GUNAKAN TAG <br /> UNTUK MEMBUAT BARIS BARU --- */}
         <SidebarItem
           href="/workforce-planning"
           icon={<ClipboardList size={20} />}
-          title="Workforce Planning"
+          title={
+            <>
+              Workforce
+              <br />
+              Planning
+            </>
+          }
         />
 
         {user?.role === "SUPER_ADMIN" && (
