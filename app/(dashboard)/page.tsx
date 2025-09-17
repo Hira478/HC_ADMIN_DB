@@ -7,9 +7,12 @@ import ProductivitySection from "@/components/sections/ProductivitySection";
 import EmployeeCostSection from "@/components/sections/EmployeeCostSection";
 import DemographySection from "@/components/sections/DemographySection";
 import type { DashboardData, GroupedChartData, RkapTargetData } from "@/types"; // <-- Pastikan RkapTargetData di-import
+import { useAutoScrollPage } from "@/hooks/useAutoScrollPage";
+import { Play, Pause } from "lucide-react";
 
 export default function DashboardPage() {
   const { selectedCompany, period, loading: isContextLoading } = useFilters();
+  const { isSlideshowMode } = useFilters();
 
   // State untuk data gabungan (Productivity & Employee Cost)
   const [metricsData, setMetricsData] = useState<DashboardData | null>(null);
@@ -22,6 +25,13 @@ export default function DashboardPage() {
   // --- 1. TAMBAHKAN STATE BARU UNTUK DATA RKAP ---
   const [rkapData, setRkapData] = useState<RkapTargetData | null>(null);
   const [isLoadingRkap, setIsLoadingRkap] = useState(true);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+
+  useAutoScrollPage({
+    speed: 0.5,
+    pauseBottom: 3000,
+    enabled: isSlideshowMode && isAutoScrolling,
+  });
 
   // useEffect untuk data metrics (Productivity & Employee Cost cards)
   useEffect(() => {
@@ -109,21 +119,34 @@ export default function DashboardPage() {
   const overallLoading = isContextLoading || isLoadingMetrics;
 
   return (
-    <div className="space-y-8">
-      <ProductivitySection
-        // --- 3. KIRIMKAN rkapData SEBAGAI PROP ---
-        cardData={metricsData?.productivity ?? null}
-        kpiData={kpiData}
-        rkapData={rkapData} // <-- PROPERTI YANG HILANG SEKARANG SUDAH ADA
-        loadingCards={overallLoading}
-        loadingKpi={isLoadingKpi}
-      />
-      <EmployeeCostSection
-        data={metricsData?.employeeCost}
-        loading={overallLoading}
-        rkapData={rkapData}
-      />
-      <DemographySection data={undefined} />
-    </div>
+    <>
+      {" "}
+      {/* Gunakan Fragment agar bisa menampung tombol di luar main div */}
+      <div className="space-y-8">
+        <ProductivitySection
+          cardData={metricsData?.productivity ?? null}
+          kpiData={kpiData}
+          rkapData={rkapData}
+          loadingCards={overallLoading}
+          loadingKpi={isLoadingKpi}
+        />
+        <EmployeeCostSection
+          data={metricsData?.employeeCost}
+          loading={overallLoading}
+          rkapData={rkapData}
+        />
+        <DemographySection data={undefined} />
+      </div>
+      {/* --- 4. TAMBAHKAN TOMBOL ON/OFF DI SINI --- */}
+      {isSlideshowMode && (
+        <button
+          onClick={() => setIsAutoScrolling(!isAutoScrolling)}
+          className="fixed bottom-6 right-6 z-50 ..."
+          title={isAutoScrolling ? "Pause Scroll" : "Resume Scroll"}
+        >
+          {isAutoScrolling ? <Pause size={20} /> : <Play size={20} />}
+        </button>
+      )}
+    </>
   );
 }

@@ -2,7 +2,14 @@
 "use client";
 
 import { useFilters } from "@/contexts/FilterContext";
-import { Filter, X, User as UserIcon } from "lucide-react";
+import Link from "next/link";
+import {
+  Filter,
+  X,
+  User as UserIcon,
+  MonitorPlay,
+  MonitorOff,
+} from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
@@ -33,6 +40,8 @@ const Header = () => {
     period,
     setPeriod,
     user,
+    isSlideshowMode,
+    toggleSlideshowMode,
   } = useFilters();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -87,6 +96,11 @@ const Header = () => {
       <div className="flex items-center gap-6">
         {isClient && (
           <>
+            <Link href="/slideshow" title="Start Slideshow">
+              <div className="p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                <MonitorPlay size={20} />
+              </div>
+            </Link>
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}

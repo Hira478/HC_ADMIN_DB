@@ -99,10 +99,6 @@ export async function GET(request: NextRequest) {
     const totalProductivityCurrent = sumProductivity(currentYearProductivity);
     const headcountCurrent = currentYearHeadcount?.totalCount || 0;
 
-    console.log("Total Kalkulasi:", {
-      totalProductivityCurrent,
-      headcountCurrent,
-    });
     const costPerEmployeeCurrent =
       headcountCurrent > 0
         ? totalProductivityCurrent.totalEmployeeCost / headcountCurrent

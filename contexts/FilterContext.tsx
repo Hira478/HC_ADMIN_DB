@@ -46,6 +46,8 @@ interface FilterContextType {
   loading: boolean;
   user: UserSession | null;
   logout: () => void;
+  isSlideshowMode: boolean; // <-- Tambahkan state baru
+  toggleSlideshowMode: () => void;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -64,7 +66,25 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [user, setUser] = useState<UserSession | null>(null);
+  const [isSlideshowMode, setIsSlideshowMode] = useState(false);
   const router = useRouter();
+
+  // --- FUNGSI BARU UNTUK TOGGLE SLIDESHOW ---
+  const toggleSlideshowMode = () => {
+    setIsSlideshowMode((prev) => !prev);
+  };
+
+  // --- useEffect BARU UNTUK TOMBOL ESCAPE ---
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSlideshowMode(false); // Selalu matikan saat Escape ditekan
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []); // Dijalankan sekali saja
 
   useEffect(() => {
     setLoading(true);
@@ -144,6 +164,8 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     loading,
     user,
     logout,
+    isSlideshowMode, // <-- Tambahkan ke value
+    toggleSlideshowMode, // <-- Tambahkan ke value
   };
 
   return (
