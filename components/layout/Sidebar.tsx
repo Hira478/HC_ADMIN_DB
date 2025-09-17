@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useFilters } from "@/contexts/FilterContext";
 import { User as UserIcon } from "lucide-react"; // <-- Import ikon User
+import Image from "next/image";
 
 interface SidebarItemProps {
   icon: React.ReactNode;
@@ -31,7 +32,7 @@ const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
       <button
         className={`w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
           isActive
-            ? "bg-blue-100 text-blue-700 font-semibold"
+            ? "bg-red-100 text-red-700 font-semibold" // <-- DIUBAH KE MERAH
             : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
         }`}
       >
@@ -54,7 +55,14 @@ const Sidebar = () => {
     <aside className="hidden md:flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
       <div className="flex h-20 w-full items-center justify-start gap-3 border-b border-gray-200 px-6">
-        <Building className="h-8 w-8 text-blue-600" />
+        <Image
+          src="/logo.png" // Mengarah ke public/logo.png
+          alt="HC Dashboard Logo"
+          width={32} // Sama dengan ukuran h-8
+          height={32} // Sama dengan ukuran w-8
+          priority // Prioritaskan load logo
+          unoptimized
+        />
         <div>
           <p className="text-lg font-bold text-gray-800">HC Dashboard</p>
         </div>
