@@ -24,7 +24,7 @@ export async function getCompanyFilter(
     return { companyId: session.companyId };
   }
 
-  if (session.role === "ADMIN_HOLDING") {
+  if (session.role === "ADMIN_HOLDING" || session.role === "SUPER_ADMIN") {
     // 2. Jika user adalah Admin Holding, MEREKA BOLEH MEMFILTER.
     const searchParams = request.nextUrl.searchParams;
     const companyIdFromQuery = searchParams.get("companyId");

@@ -6,7 +6,7 @@ import * as jose from "jose";
 export interface UserPayload {
   userId: number;
   email: string;
-  role: "ADMIN_HOLDING" | "USER_ANPER";
+  role: "ADMIN_HOLDING" | "USER_ANPER" | "SUPER_ADMIN";
   companyId: number;
   iat: number; // Issued At
   exp: number; // Expiration Time
@@ -31,7 +31,7 @@ export async function getSession(): Promise<UserPayload | null> {
     return {
       userId: payload.userId as number,
       email: payload.email as string,
-      role: payload.role as "ADMIN_HOLDING" | "USER_ANPER",
+      role: payload.role as "ADMIN_HOLDING" | "USER_ANPER" | "SUPER_ADMIN",
       companyId: payload.companyId as number,
       iat: payload.iat as number,
       exp: payload.exp as number,

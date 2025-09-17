@@ -66,14 +66,6 @@ export async function GET(request: NextRequest) {
     // --- 3. PANGGIL HELPER KEAMANAN UNTUK MENDAPATKAN FILTER PERUSAHAAN ---
     const companyFilter = await getCompanyFilter(request);
 
-    console.log("===================================");
-    console.log("API METRICS: Mencari data dengan filter:", {
-      year: currentYear,
-      month: monthValue,
-      companyFilter,
-    });
-    console.log("===================================");
-
     const [
       currentYearProductivity,
       previousYearProductivity,
@@ -102,13 +94,6 @@ export async function GET(request: NextRequest) {
         where: { year: previousYear, month: monthValue, ...companyFilter },
       }),
     ]);
-
-    // --- LOGGING 2: LIHAT HASIL MENTAH DARI DATABASE ---
-    console.log(
-      "Hasil Query Productivity (Tahun Ini):",
-      currentYearProductivity
-    );
-    console.log("Hasil Query Headcount (Tahun Ini):", currentYearHeadcount);
 
     // --- Sisa dari logika Anda tidak perlu diubah, sudah benar ---
     const totalProductivityCurrent = sumProductivity(currentYearProductivity);

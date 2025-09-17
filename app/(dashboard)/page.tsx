@@ -30,8 +30,8 @@ export default function DashboardPage() {
       setIsLoadingMetrics(true);
       try {
         const params = new URLSearchParams({
-          // --- PERBAIKAN DI SINI ---
-          companyId: String(selectedCompany), // <-- SELALU KIRIM companyId
+          // --- PASTIKAN companyId DIKIRIM ---
+          companyId: String(selectedCompany),
           year: String(period.year),
           month: String(period.value),
         });
