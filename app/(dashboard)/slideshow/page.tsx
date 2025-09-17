@@ -23,26 +23,29 @@ export default function SlideshowPage() {
 
   return (
     <>
-      {/* Kita susun setiap "halaman" di dalam tag <section> */}
-      <section id="productivity-section">
-        <DashboardPage />
-      </section>
+      {/* --- 1. BUAT WADAH BARU DENGAN PADDING --- */}
+      <div className="px-8 py-6">
+        {/* Kita susun setiap "halaman" di dalam tag <section> */}
+        <section id="productivity-section">
+          <DashboardPage />
+        </section>
 
-      {/* Beri pemisah antar section */}
-      <div className="my-8 border-t-2 border-dashed border-gray-300"></div>
+        {/* Beri pemisah antar section */}
+        <div className="my-8 border-t-2 border-dashed border-gray-300"></div>
 
-      <section id="org-culture-section">
-        <OrganizationCulturePage />
-      </section>
+        <section id="org-culture-section">
+          <OrganizationCulturePage />
+        </section>
 
-      {/* Beri pemisah antar section */}
-      <div className="my-8 border-t-2 border-dashed border-gray-300"></div>
+        {/* Beri pemisah antar section */}
+        <div className="my-8 border-t-2 border-dashed border-gray-300"></div>
 
-      <section id="workforce-planning-section">
-        <WorkforcePlanningPage />
-      </section>
+        <section id="workforce-planning-section">
+          <WorkforcePlanningPage />
+        </section>
+      </div>
 
-      {/* Tombol kontrol On/Off untuk scroll */}
+      {/* Tombol kontrol On/Off untuk scroll (tetap di luar agar posisinya fixed) */}
       <button
         onClick={() => setIsAutoScrolling(!isAutoScrolling)}
         className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg transition-transform hover:scale-110"
