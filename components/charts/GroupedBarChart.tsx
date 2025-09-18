@@ -17,6 +17,7 @@ interface GroupedBarChartProps {
   tooltipText?: string;
   summaryUnit?: string;
   layoutMode?: "default" | "wide";
+  summaryFormat?: "number" | "percentage";
 }
 
 const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
@@ -28,6 +29,7 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   tooltipText,
   summaryUnit,
   layoutMode = "default",
+  summaryFormat = "number",
 }) => {
   if (isLoading || !data || !data.chartData) {
     const message = isLoading ? "Loading data..." : "No Data.";
@@ -156,7 +158,11 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
               </h2>
             </div>
             <div className="my-2">
-              <span className="text-3xl font-bold">{data.mainScore}</span>
+              <span className="text-3xl font-bold">
+                {summaryFormat === "percentage"
+                  ? `${data.mainScore}%`
+                  : data.mainScore}
+              </span>
               <p className="text-base">{data.scoreLabel}</p>
               <p className="text-sm text-green-500">{data.trend}</p>
             </div>

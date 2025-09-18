@@ -118,6 +118,7 @@ const ProductivitySection = ({
               tooltipText="Perbandingan rata-rata skor KPI tahun ini dengan tahun sebelumnya."
               summaryUnit="Unit: Percentage"
               layoutMode="wide"
+              summaryFormat="percentage"
             />
           </div>
         </div>
