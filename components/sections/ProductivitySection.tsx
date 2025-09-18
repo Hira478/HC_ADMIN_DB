@@ -116,6 +116,8 @@ const ProductivitySection = ({
               showSummary={true}
               cardClassName="bg-white text-gray-800"
               tooltipText="Perbandingan rata-rata skor KPI tahun ini dengan tahun sebelumnya."
+              summaryUnit="Unit: Percentage"
+              layoutMode="wide"
             />
           </div>
         </div>

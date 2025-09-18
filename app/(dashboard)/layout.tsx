@@ -35,7 +35,7 @@ function DashboardUI({ children }: { children: React.ReactNode }) {
 
         {/* Sembunyikan jika ini halaman slideshow */}
         <div className={isSlideshowPage ? "hidden" : ""}>
-          <footer className="text-right text-xs text-gray-500 p-4 border-t bg-white">
+          <footer className="text-right text-xs text-gray-500 p-4 bg-white">
             <i>
               Seluruh Data telah Diverifikasi oleh Pejabat Berwenang dari
               Masing-Masing Entitas Perusahaan.

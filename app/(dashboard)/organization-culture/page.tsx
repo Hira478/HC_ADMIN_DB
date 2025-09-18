@@ -18,13 +18,29 @@ import type {
   FormationRasioTableData,
 } from "@/types";
 
+interface EnablerRevenueData {
+  enabler: number;
+  revenueGenerator: number;
+}
+
+interface OrgSummaryData {
+  divisionCount: number;
+  departmentCount: number;
+}
+
 export default function OrganizationCulturePage() {
   const { selectedCompany, period } = useFilters();
 
   // State untuk Section 1
-  const [orgStructureData, setOrgStructureData] =
-    useState<OrgStructureData | null>(null);
-  const [isLoadingOrgStructure, setIsLoadingOrgStructure] = useState(true);
+  const [enablerRevenueData, setEnablerRevenueData] =
+    useState<EnablerRevenueData | null>(null);
+  const [isLoadingEnablerRevenue, setIsLoadingEnablerRevenue] = useState(true);
+
+  const [orgSummaryData, setOrgSummaryData] = useState<OrgSummaryData | null>(
+    null
+  );
+  const [isLoadingOrgSummary, setIsLoadingOrgSummary] = useState(true);
+
   const [formationRasioData, setFormationRasioData] =
     useState<FormationRasioTableData | null>(null);
   const [isLoadingFormation, setIsLoadingFormation] = useState(true);
@@ -83,20 +99,55 @@ export default function OrganizationCulturePage() {
     }
   }, [selectedCompany, period, formationPage]);
 
-  // useEffect untuk Organization Structure Cards
+  // --- HAPUS useEffect UNTUK organization-structure ---
+  // useEffect(() => { ... }, [selectedCompany, period.year]);
+
+  // --- BUAT useEffect BARU UNTUK MENGAMBIL DATA ENABLER VS REVENUE ---
+  useEffect(() => {
+    if (selectedCompany && period.year && period.value) {
+      setIsLoadingEnablerRevenue(true);
+      const params = new URLSearchParams({
+        companyId: String(selectedCompany),
+        year: String(period.year),
+        month: String(period.value),
+      });
+
+      fetch(`/api/charts/enabler-revenue-ratio?${params.toString()}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch enabler-revenue ratio");
+          return res.json();
+        })
+        .then((data) => {
+          setEnablerRevenueData(data);
+        })
+        .catch((err) => {
+          console.error("Error fetching enabler-revenue ratio:", err);
+          setEnablerRevenueData(null);
+        })
+        .finally(() => setIsLoadingEnablerRevenue(false));
+    }
+  }, [selectedCompany, period]);
+
+  // --- 3. useEffect BARU UNTUK MENGAMBIL DATA DIVISI & DEPARTEMEN ---
   useEffect(() => {
     if (selectedCompany && period.year) {
-      setIsLoadingOrgStructure(true);
-      fetch(
-        `/api/charts/organization-structure?companyId=${selectedCompany}&year=${period.year}`
-      )
-        .then((res) => res.json())
-        .then((data) => setOrgStructureData(data))
-        .catch((err) => {
-          console.error("Error fetching org structure:", err);
-          setOrgStructureData(null);
+      setIsLoadingOrgSummary(true);
+      const params = new URLSearchParams({
+        companyId: String(selectedCompany),
+        year: String(period.year),
+      });
+
+      fetch(`/api/charts/org-summary?${params.toString()}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch org summary");
+          return res.json();
         })
-        .finally(() => setIsLoadingOrgStructure(false));
+        .then((data) => setOrgSummaryData(data))
+        .catch((err) => {
+          console.error("Error fetching org summary:", err);
+          setOrgSummaryData(null);
+        })
+        .finally(() => setIsLoadingOrgSummary(false));
     }
   }, [selectedCompany, period.year]);
 
@@ -183,6 +234,17 @@ export default function OrganizationCulturePage() {
     }
   }, [selectedCompany, period.year]);
 
+  const enablerCount = enablerRevenueData?.enabler ?? 0;
+  const revenueGeneratorCount = enablerRevenueData?.revenueGenerator ?? 0;
+  const totalEmployees = enablerCount + revenueGeneratorCount;
+
+  const enablerPercentage =
+    totalEmployees > 0 ? ((enablerCount / totalEmployees) * 100).toFixed(0) : 0;
+  const revenueGeneratorPercentage =
+    totalEmployees > 0
+      ? ((revenueGeneratorCount / totalEmployees) * 100).toFixed(0)
+      : 0;
+
   return (
     <main className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
@@ -204,43 +266,42 @@ export default function OrganizationCulturePage() {
         </div>
         <div className="w-full lg:w-1/4 flex flex-col gap-6">
           <InfoCard
-            title="Employee Formation Rasio"
+            title="Enabler vs Revenue Generator"
             alignMode="start"
-            tooltipText="Perbandingan antara jumlah karyawan Enabler (pendukung) dengan Revenue Generator (penghasil pendapatan)."
+            tooltipText="Perbandingan komposisi enabler dengan revenue generator."
             tooltipAlign="right"
             metrics={[
               {
-                value: isLoadingOrgStructure
+                // --- 2. GUNAKAN HASIL KALKULASI DI SINI ---
+                value: isLoadingEnablerRevenue
                   ? "..."
-                  : `${orgStructureData?.formationRatioCard.enabler || 0}:${
-                      orgStructureData?.formationRatioCard.revenueGenerator || 0
-                    }`,
+                  : `${enablerPercentage}% : ${revenueGeneratorPercentage}%`,
                 label: "Enabler : \nRevenue Generator",
               },
             ]}
           />
           <InfoCard
             title="Total Division"
-            tooltipText="Jumlah total divisi yang aktif di perusahaan pada periode yang dipilih."
+            tooltipText="Total Divisi yang aktif dalam periode tertentu."
             tooltipAlign="right"
             metrics={[
               {
-                value: isLoadingOrgStructure
+                value: isLoadingOrgSummary
                   ? "..."
-                  : orgStructureData?.designOrgCard.division || 0,
+                  : orgSummaryData?.divisionCount ?? 0,
                 label: "Division",
               },
             ]}
           />
           <InfoCard
             title="Total Department"
-            tooltipText="Jumlah total departemen yang aktif di perusahaan pada periode yang dipilih."
+            tooltipText="Total Department yang aktif dalam periode tertentu."
             tooltipAlign="right"
             metrics={[
               {
-                value: isLoadingOrgStructure
+                value: isLoadingOrgSummary
                   ? "..."
-                  : orgStructureData?.designOrgCard.department || 0,
+                  : orgSummaryData?.departmentCount ?? 0,
                 label: "Department",
               },
             ]}
@@ -283,7 +344,7 @@ export default function OrganizationCulturePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           <div className="lg:col-span-1 flex flex-col gap-6">
             <InfoCard
-              title="Average Score"
+              title="HC Maturity"
               tooltipText="Ini Average Score dari 5 dimensi penilaian HC Maturity Assessment."
               metrics={[
                 {
@@ -295,7 +356,7 @@ export default function OrganizationCulturePage() {
               ]}
             />
             <InfoCard
-              title="Average IFG Group Score"
+              title="HC Maturity IFG Group"
               tooltipText="Ini Average Score dari kelompok IFG dalam HC Maturity Assessment."
               metrics={[
                 {

@@ -24,7 +24,7 @@ import Image from "next/image";
 interface SidebarItemProps {
   icon: React.ReactNode;
   href: string;
-  title: React.ReactNode; // <-- Diubah di sini
+  title: string; // <-- Diubah di sini
 }
 
 const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
@@ -34,14 +34,21 @@ const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
   return (
     <Link href={href} className="w-full">
       <button
-        className={`w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+        className={`w-full flex items-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors text-left ${
           isActive
-            ? "bg-red-100 text-red-700 font-semibold" // <-- DIUBAH KE MERAH
+            ? "bg-red-100 text-red-700 font-semibold"
             : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
         }`}
       >
         {icon}
-        <span>{title}</span>
+        <span className="text-left">
+          {title.split("\n").map((line, idx) => (
+            <React.Fragment key={idx}>
+              {line}
+              <br />
+            </React.Fragment>
+          ))}
+        </span>
       </button>
     </Link>
   );
@@ -58,7 +65,7 @@ const Sidebar = () => {
   return (
     <aside className="hidden md:flex h-screen w-56 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
-      <div className="flex h-20 w-full items-center justify-start gap-3 border-b border-gray-200 px-6">
+      <div className="flex h-20 w-full items-start justify-start gap-3 border-b border-gray-200 px-6">
         <div>
           <p className="text-lg font-bold text-gray-800">IFG HC Dashboard</p>
         </div>
@@ -71,27 +78,17 @@ const Sidebar = () => {
           icon={<LayoutDashboard size={20} />}
           title="Productivity"
         />
+
+        {/* --- PERBAIKAN DI SINI: GUNAKAN '\n' --- */}
         <SidebarItem
           href="/organization-culture"
           icon={<Network size={20} />}
-          title={
-            <>
-              Organization
-              <br />& Culture
-            </>
-          }
+          title={"Organization\n& Culture"}
         />
-        {/* --- PERUBAHAN 3: GUNAKAN TAG <br /> UNTUK MEMBUAT BARIS BARU --- */}
         <SidebarItem
           href="/workforce-planning"
           icon={<ClipboardList size={20} />}
-          title={
-            <>
-              Workforce
-              <br />
-              Planning
-            </>
-          }
+          title={"Workforce\nPlanning"}
         />
 
         {user?.role === "SUPER_ADMIN" && (
@@ -104,13 +101,7 @@ const Sidebar = () => {
             <SidebarItem
               href="/admin/users"
               icon={<Users size={20} />}
-              title={
-                <>
-                  User
-                  <br />
-                  Management
-                </>
-              }
+              title={"User\nManagement"}
             />
           </>
         )}
@@ -130,8 +121,8 @@ const Sidebar = () => {
       {/* --- PERUBAHAN DI SINI: BAGIAN USER & LOGOUT --- */}
       <div className="px-4 py-4 border-t border-gray-200">
         {/* --- BLOK INFO USER BARU --- */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+        <div className="flex items-start gap-3 mb-4">
+          <div className="flex h-10 w-10 items-start justify-center rounded-full bg-gray-100">
             <UserIcon className="h-6 w-6 text-gray-600" />
           </div>
           <div className="overflow-hidden">

@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     ];
 
     const responseData = {
-      title: "Key Performance Indicators",
+      title: "Key Performance\nIndicators",
       mainScore: currentMonthRecord?.totalScore ?? 0,
       scoreLabel: "Total Score",
       trend: "-",

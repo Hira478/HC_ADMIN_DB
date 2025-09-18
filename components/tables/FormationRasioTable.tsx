@@ -4,13 +4,14 @@
 import React from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import InfoTooltip from "@/components/ui/InfoTooltip";
+import { CogIcon } from "@heroicons/react/24/outline";
 
 // Tipe untuk setiap baris data yang diterima dari API
 interface TableRow {
   jobFamily: string;
   rasio: string;
   market: string;
-  statusRatio: number;
+  rasioGap: number;
 }
 
 // Tipe untuk props komponen utama
@@ -27,22 +28,15 @@ interface TableProps {
 }
 
 // Logika untuk menentukan status berdasarkan perbandingan rasio vs market
-const getStatusInfo = (statusRatio: number) => {
-  if (statusRatio > 110) {
-    return { text: "🔵 Overstaffed", className: "bg-blue-100 text-blue-800" };
-  } else if (statusRatio >= 90) {
+const getStatusInfo = (rasioGap: number) => {
+  if (rasioGap > 5) {
+    return { text: "🔵 Above", className: "bg-blue-100 text-blue-800" };
+  } else if (rasioGap < -5) {
+    return { text: "🔴 Below", className: "bg-red-100 text-red-800" };
+  } else {
+    // Ini mencakup -5 s/d +5
     return { text: "🟢 Fit", className: "bg-green-100 text-green-800" };
-  } else if (statusRatio >= 80) {
-    return { text: "🟠 Need", className: "bg-orange-100 text-orange-800" };
-  } else if (statusRatio >= 70) {
-    return { text: "🔴 Urgently Need", className: "bg-red-100 text-red-800" };
-  } else if (statusRatio > 0) {
-    return {
-      text: "🚨 Critical Gap",
-      className: "bg-red-200 text-red-900 font-bold",
-    };
   }
-  return { text: "-", className: "bg-gray-100 text-gray-800" };
 };
 
 // Komponen Paginasi yang Fungsional
@@ -74,7 +68,6 @@ const Pagination: React.FC<Pick<TableProps, "meta" | "onPageChange">> = ({
 
   return (
     <div className="flex justify-center items-center gap-2 mt-6">
-      {/* ...isi pagination tidak berubah... */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
@@ -122,66 +115,56 @@ const FormationRasioTable: React.FC<TableProps> = ({
   isLoading,
 }) => {
   return (
-    // --- PERUBAHAN DI BAWAH INI ---
-    // 1. Hapus 'style' prop yang berisi minHeight: 490px
-    // 2. Tambahkan 'h-full' ke className agar mengisi tinggi parent (yang sudah di-stretch)
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <p className="text-sm text-gray-500">{subtitle}</p>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">{title}</h2>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
         </div>
-        <InfoTooltip content="Tabel ini membandingkan rasio komposisi karyawan per Job Family dengan benchmark pasar di industri sejenis." />
+        <InfoTooltip content="Perbandingan rasio komposisi karyawan per job family dibandingkan dengan pasar di industri sejenis." />
       </div>
 
       {isLoading ? (
-        // flex-grow akan memastikan ini mengisi sisa ruang
         <div className="flex-grow flex justify-center items-center">
           <p>Loading data...</p>
         </div>
       ) : (
         <>
-          {/* flex-grow akan memastikan ini mengisi sisa ruang */}
           <div className="overflow-x-auto flex-grow">
             <table className="min-w-full">
-              {/* --- PERUBAHAN UTAMA DI SINI --- */}
-              {/* 1. Tambahkan background abu-abu ke thead */}
               <thead>
-                <tr className="border-b">
-                  {/* 2. Ubah style text header agar lebih 'label-like' */}
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider p-4">
+                <tr className="border-b border-gray-200">
+                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
                     Job Family
                   </th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider p-4">
-                    Rasio
+                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
+                    Rasio (%)
                   </th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider p-4">
-                    Market
+                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
+                    Market (%)
                   </th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider p-4">
+                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white">
-                {/* 3. Pastikan tbody memiliki background putih (jika diperlukan) */}
+              <tbody>
                 {data && data.length > 0 ? (
                   data.map((row) => {
-                    const statusInfo = getStatusInfo(row.statusRatio);
+                    const statusInfo = getStatusInfo(row.rasioGap);
                     return (
                       <tr
                         key={row.jobFamily}
-                        className="border-b hover:bg-gray-50"
+                        className="border-b border-gray-100 hover:bg-gray-50"
                       >
-                        {/* Style data row (font-medium) sekarang akan kontras dengan header */}
-                        <td className="p-4 text-gray-800 font-medium">
-                          {row.jobFamily}
-                        </td>
+                        <td className="p-4 text-gray-800">{row.jobFamily}</td>
                         <td className="p-4 text-gray-800">{row.rasio}</td>
                         <td className="p-4 text-gray-800">{row.market}</td>
                         <td className="p-4">
                           <span
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.className}`}
+                            className={`px-3 py-1 rounded-full text-sm ${statusInfo.className}`}
                           >
                             {statusInfo.text}
                           </span>
@@ -199,8 +182,10 @@ const FormationRasioTable: React.FC<TableProps> = ({
               </tbody>
             </table>
           </div>
-          {/* Pagination akan otomatis menempel di bawah */}
-          <Pagination meta={meta} onPageChange={onPageChange} />
+          {/* Paginasi akan muncul jika item lebih dari 7 */}
+          {meta.totalPages > 1 && (
+            <Pagination meta={meta} onPageChange={onPageChange} />
+          )}
         </>
       )}
     </div>

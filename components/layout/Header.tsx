@@ -77,7 +77,7 @@ const Header = () => {
   };
 
   return (
-    <header className="flex h-20 w-full items-center justify-between border-b bg-white px-6">
+    <header className="flex h-20 w-full items-center justify-between bg-white px-6">
       <div className="flex items-center">
         {/* Hanya render jika 'selectedCompany' sudah ada nilainya */}
         {selectedCompany && (

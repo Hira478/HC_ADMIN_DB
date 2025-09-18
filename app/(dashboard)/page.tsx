@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
   useAutoScrollPage({
     speed: 0.5,
-    pauseBottom: 3000,
+    pauseAtEdge: 3000,
     enabled: isSlideshowMode && isAutoScrolling,
   });
 

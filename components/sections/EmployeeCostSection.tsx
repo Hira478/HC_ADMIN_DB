@@ -22,11 +22,11 @@ const EmployeeCostSection = ({
   rkapData: RkapTargetData | null; // <-- TIPE PROP BARU
 }) => {
   const totalEmployeCostDetails =
-    "Total employee cost adalah beban biaya karyawan termasuk gaji dan tujangan (salary), kompensasi kinerja (incentive), tunjangan Pph 21 dan dana pensiun (pension), beban training & rekrutmen  (training  & recruitment), dan beban karyawan lainnya (others).";
+    "Total biaya beban karyawan yang dikeluarkan perusahaan pada periode tertentu  (gaji, incentive, PPH 21, training, rekrutment & beban karyawan lainnya).";
   const constPerEmployeeDetails =
-    "Cost Per Employee adalah ukuran yang menunjukkan berapa besar biaya rata-rata yang dikeluarkan perusahaan untuk setiap karyawan dalam periode tertentu.";
+    "Besaran biaya rata-rata yang dikeluarkan perusahaan untuk setiap karyawan dalam periode tertentu.";
   const employeeCostRasioDetails =
-    "Employee Cost Ratio (ECR) adalah ukuran yang menunjukkan porsi biaya karyawan (employee cost) dibandingkan dengan biaya operasional perusahaan.";
+    "Besaran porsi biaya karyawan dibandingkan dengan biaya operasioan perusahaan.";
   if (loading) {
     return (
       <section>
