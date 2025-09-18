@@ -23,6 +23,7 @@ type SlideshowMode = null | "company" | "period" | "loop";
 
 export default function SlideshowPage() {
   const {
+    user,
     companies,
     availablePeriods,
     selectedCompany,
@@ -125,13 +126,16 @@ export default function SlideshowPage() {
             <Repeat className="text-purple-600" />
             <span className="font-semibold">Normal Loop</span>
           </button>
-          <button
-            onClick={() => setSlideshowMode("company")}
-            className="flex items-center gap-2 py-3 px-6 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
-          >
-            <ScreenShare className="text-blue-600" />
-            <span className="font-semibold">Base of Companies</span>
-          </button>
+          {user &&
+            (user.role === "ADMIN_HOLDING" || user.role === "SUPER_ADMIN") && (
+              <button
+                onClick={() => setSlideshowMode("company")}
+                className="flex items-center gap-2 py-3 px-6 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+              >
+                <ScreenShare className="text-blue-600" />
+                <span className="font-semibold">Berdasarkan Perusahaan</span>
+              </button>
+            )}
           <button
             onClick={() => setSlideshowMode("period")}
             className="flex items-center gap-2 py-3 px-6 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors"
