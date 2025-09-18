@@ -1,4 +1,3 @@
-// File: hooks/useAutoScrollPage.ts
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -6,17 +5,19 @@ import { useEffect, useRef } from "react";
 interface AutoScrollOptions {
   enabled?: boolean;
   speed?: number;
-  pauseBottom?: number;
-  pauseTop?: number;
+  pauseAtEdge?: number;
   resumeDelay?: number;
+  onEnd?: () => void;
+  loopMode?: "continuous" | "loop";
 }
 
 export function useAutoScrollPage({
   enabled = true,
-  speed = 1,
-  pauseBottom = 2000,
-  pauseTop = 1000,
+  speed = 0.5,
+  pauseAtEdge = 2000,
   resumeDelay = 5000,
+  onEnd,
+  loopMode = "continuous",
 }: AutoScrollOptions = {}) {
   const running = useRef(true);
   const rafId = useRef<number | null>(null);
@@ -27,43 +28,57 @@ export function useAutoScrollPage({
     scrollContainerRef.current = document.getElementById("main-content");
   }, []);
 
-  // --- PERBAIKAN DI SINI: TAMBAHKAN useEffect BARU ---
-  // Hook ini bertugas untuk me-reset state 'running' internal
-  // setiap kali scroll diaktifkan dari luar.
   useEffect(() => {
     if (enabled) {
       running.current = true;
+    } else {
+      running.current = false;
     }
-  }, [enabled]); // Hook ini hanya berjalan saat prop 'enabled' berubah.
+  }, [enabled]);
 
   useEffect(() => {
     const step = () => {
       const scrollContainer = scrollContainerRef.current;
-      if (!scrollContainer) {
-        if (rafId.current) cancelAnimationFrame(rafId.current);
-        return;
-      }
-
-      if (!enabled || !running.current || document.hidden) {
+      if (!scrollContainer || !enabled || !running.current || document.hidden) {
         rafId.current = requestAnimationFrame(step);
         return;
       }
 
+      // Selalu scroll ke bawah
       scrollContainer.scrollBy(0, speed);
 
       const atBottom =
         scrollContainer.scrollTop + scrollContainer.clientHeight >=
         scrollContainer.scrollHeight - 1;
+
       if (atBottom) {
-        running.current = false;
+        running.current = false; // Berhenti sementara
+
+        // Jeda sejenak di bawah
         setTimeout(() => {
-          scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
-          setTimeout(() => (running.current = true), pauseTop);
-        }, pauseBottom);
+          if (loopMode === "continuous") {
+            // Untuk mode ganti filter, panggil onEnd dan berhenti
+            onEnd?.();
+          } else if (loopMode === "loop") {
+            // --- PERBAIKAN LOGIKA LOOP DI SINI ---
+            // Langsung lompat ke atas tanpa animasi
+            scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+            // Setelah jeda singkat, lanjutkan scroll
+            setTimeout(() => {
+              running.current = true;
+              rafId.current = requestAnimationFrame(step);
+            }, 5000); // Jeda 0.5 detik di atas sebelum mulai lagi
+          }
+        }, pauseAtEdge);
+
+        // Hentikan loop saat ini, akan dilanjutkan oleh setTimeout
+        return;
       }
 
       rafId.current = requestAnimationFrame(step);
     };
+
+    rafId.current = requestAnimationFrame(step);
 
     const onInteract = () => {
       running.current = false;
@@ -97,10 +112,12 @@ export function useAutoScrollPage({
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    if (!prefersReducedMotion) {
-      rafId.current = requestAnimationFrame(step);
+    if (prefersReducedMotion) {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+      return;
     }
 
+    // Fungsi cleanup
     return () => {
       if (rafId.current) cancelAnimationFrame(rafId.current);
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
@@ -112,5 +129,5 @@ export function useAutoScrollPage({
         container.removeEventListener("keyup", onRelease);
       }
     };
-  }, [speed, pauseBottom, pauseTop, resumeDelay, enabled]);
+  }, [speed, pauseAtEdge, resumeDelay, enabled, onEnd, loopMode]);
 }

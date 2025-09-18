@@ -15,6 +15,8 @@ interface GroupedBarChartProps {
   showSummary?: boolean;
   yAxisMax?: number;
   tooltipText?: string;
+  summaryUnit?: string;
+  layoutMode?: "default" | "wide";
 }
 
 const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
@@ -24,12 +26,11 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   showSummary = true,
   yAxisMax,
   tooltipText,
+  summaryUnit,
+  layoutMode = "default",
 }) => {
-  // Periksa juga apakah 'chartData' ada di dalam objek data
-  // Periksa juga apakah 'chartData' ada di dalam objek data
   if (isLoading || !data || !data.chartData) {
     const message = isLoading ? "Loading data..." : "No Data.";
-    // Hapus baris 'const height = ...' karena kita tidak lagi membutuhkan tinggi hardcoded
 
     return (
       <div
@@ -119,36 +120,54 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
   };
 
   return (
-    // --- PERUBAHAN 1: Tambahkan 'relative' untuk positioning tooltip ---
     <div
       className={`relative p-6 rounded-lg shadow-md w-full h-full flex flex-col ${cardClassName}`}
     >
       {showSummary ? (
-        // --- BLOK UNTUK TAMPILAN DENGAN SUMMARY ---
-        <div className="flex flex-col md:flex-row gap-6 items-center">
-          <div className="flex-shrink-0 text-center md:text-left md:pl-4">
+        // --- 3. GUNAKAN KONDISI UNTUK MEMILIH LAYOUT ---
+        <div
+          className={`flex h-full items-center ${
+            layoutMode === "wide"
+              ? "flex-col md:flex-row gap-4"
+              : "flex-col md:flex-row gap-6"
+          }`}
+        >
+          {/* Kolom Ringkasan Kiri */}
+          <div
+            className={
+              layoutMode === "wide"
+                ? "w-full md:max-w-xs flex-shrink-0 text-center md:text-left md:pl-4" // Layout 'wide'
+                : "md:w-1/4 text-center md:text-left md:pl-4" // Layout 'default'
+            }
+          >
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold whitespace-pre-line">
-                {title}
+                {data.title}
               </h2>
-              {/* Tooltip tetap di sini untuk mode summary */}
             </div>
             <div className="my-2">
-              <span className="text-3xl font-bold">{mainScore}</span>
-              <p className="text-base">{scoreLabel}</p>
-              <p className="text-sm text-green-500">{trend}</p>
+              <span className="text-3xl font-bold">{data.mainScore}</span>
+              <p className="text-base">{data.scoreLabel}</p>
+              <p className="text-sm text-green-500">{data.trend}</p>
             </div>
           </div>
-          <div className="flex-1 w-full">
-            {tooltipText && (
-              <div className="absolute top-4 right-4 z-10">
+
+          {/* Kolom Chart Kanan */}
+          <div className="relative flex-1 w-full h-full">
+            <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
+              {summaryUnit && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                  {summaryUnit}
+                </span>
+              )}
+              {tooltipText && (
                 <InfoTooltip
                   content={tooltipText}
                   position="bottom"
                   align="right"
                 />
-              </div>
-            )}
+              )}
+            </div>
             <ReactECharts
               option={options}
               style={{ height: "100%", minHeight: "250px" }}
@@ -156,9 +175,8 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
           </div>
         </div>
       ) : (
-        // --- BLOK UNTUK TAMPILAN HANYA CHART ---
+        // --- BLOK UNTUK TAMPILAN HANYA CHART (Tidak berubah) ---
         <>
-          {/* --- PERUBAHAN 2: Tambahkan Tooltip di pojok kanan atas HANYA untuk mode ini --- */}
           {tooltipText && (
             <div className="absolute top-4 right-4 z-10">
               <InfoTooltip

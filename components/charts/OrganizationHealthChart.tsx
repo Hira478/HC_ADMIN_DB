@@ -78,7 +78,7 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
         {/* Judul akan otomatis di kiri */}
         <h2 className="text-xl font-semibold">Organization Health Index</h2>
         {/* Tooltip akan otomatis di kanan */}
-        <InfoTooltip content="Organization Health Index (OHI) mengukur kesehatan organisasi melalui 9 dimensi kunci untuk menilai efektivitas dan keberlanjutan." />
+        <InfoTooltip content="Indikator untuk melihat kondisi kesehatan sebuah organisasi melalui 9 outcome kesehatan organisasi." />
       </div>
 
       {/* Tampilkan skor hanya jika tidak loading dan data ada */}

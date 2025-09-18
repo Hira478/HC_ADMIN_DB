@@ -91,10 +91,12 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
     <div className="bg-gray-800 text-white p-6 rounded-lg shadow-md h-full flex">
       {/* Kolom Kiri: KPI */}
       <div className="w-1/4 flex flex-col justify-center items-center pr-4 border-r border-gray-600">
-        <p className="text-gray-400 text-sm">Turn Over Ratio</p>
-        {/* Gunakan 'monthlyRatio' dan tambahkan null check untuk keamanan */}
-        <p className="text-5xl font-bold my-1">{data?.ytdRatio ?? 0}%</p>
-        <p className="text-sm text-red-400">{data?.change}</p>
+        {/* 2. Tambahkan div pembungkus baru untuk teks */}
+        <div>
+          <p className="text-gray-400 text-sm">Turn Over Ratio</p>
+          <p className="text-5xl font-bold my-1">{data?.ytdRatio ?? 0}%</p>
+          <p className="text-sm text-red-400">{data?.change}</p>
+        </div>
       </div>
 
       {/* Kolom Kanan: Chart */}

@@ -112,7 +112,7 @@ export interface FormationRasioTableRow {
   jobFamily: string;
   rasio: string;
   market: string;
-  statusRatio: number;
+  rasioGap: number;
 }
 
 // Tipe untuk keseluruhan data tabel Formation Rasio, termasuk paginasi
