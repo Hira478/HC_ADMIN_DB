@@ -34,7 +34,7 @@ const SidebarItem = ({ icon, href, title }: SidebarItemProps) => {
   return (
     <Link href={href} className="w-full">
       <button
-        className={`w-full flex items-start gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors text-left ${
+        className={`w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors text-left ${
           isActive
             ? "bg-red-100 text-red-700 font-semibold"
             : "text-gray-600 hover:bg-gray-100 hover:text-gray-800"
@@ -63,9 +63,9 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="hidden md:flex h-screen w-56 flex-col border-r border-gray-200 bg-white">
+    <aside className="hidden md:flex h-screen w-53 flex-col border-r border-gray-200 bg-white">
       {/* Logo */}
-      <div className="flex h-20 w-full items-start justify-start gap-3 border-b border-gray-200 px-6">
+      <div className="flex h-20 w-full items-center justify-start gap-3 border-b border-gray-200 px-6">
         <div>
           <p className="text-lg font-bold text-gray-800">IFG HC Dashboard</p>
         </div>
@@ -122,7 +122,7 @@ const Sidebar = () => {
       <div className="px-4 py-4 border-t border-gray-200">
         {/* --- BLOK INFO USER BARU --- */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="flex h-10 w-10 items-start justify-center rounded-full bg-gray-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             <UserIcon className="h-6 w-6 text-gray-600" />
           </div>
           <div className="overflow-hidden">
