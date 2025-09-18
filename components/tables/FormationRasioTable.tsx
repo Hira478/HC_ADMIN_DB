@@ -136,16 +136,16 @@ const FormationRasioTable: React.FC<TableProps> = ({
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
+                  <th className="text-left text-base font-bold text-gray-700 tracking-wider p-4">
                     Job Family
                   </th>
-                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
+                  <th className="text-left text-base font-bold text-gray-700 tracking-wider p-4">
                     Rasio (%)
                   </th>
-                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
+                  <th className="text-left text-base font-bold text-gray-700 tracking-wider p-4">
                     Market (%)
                   </th>
-                  <th className="text-left text-base font-bold text-gray-700 uppercase tracking-wider p-4">
+                  <th className="text-left text-base font-bold text-gray-700 tracking-wider p-4">
                     Status
                   </th>
                 </tr>

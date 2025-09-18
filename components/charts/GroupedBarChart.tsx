@@ -73,8 +73,18 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
         // rotate: 30, // <-- Dihapus, tidak perlu lagi dimiringkan
         // 2. Tambahkan formatter untuk memecah teks menjadi 2 baris
         formatter: function (value: string) {
-          // Ganti spasi dengan karakter newline (\n)
-          return value.split(" ").join("\n");
+          // 1. Membersihkan spasi di awal/akhir dan memecah menjadi kata-kata
+          const words = value.trim().split(/\s+/);
+
+          // 2. Logika untuk label panjang (3+ kata)
+          if (words.length >= 3) {
+            const firstLine = words.slice(0, 2).join(" ");
+            const secondLine = words.slice(2).join(" ");
+            return `${firstLine}\n${secondLine}`;
+          }
+
+          // 3. Logika untuk label 1 atau 2 kata (lebih aman)
+          return words.join("\n");
         },
       },
     },
