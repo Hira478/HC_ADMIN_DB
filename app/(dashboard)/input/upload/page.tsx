@@ -21,6 +21,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_headcount.xlsx",
     title: "Data Headcount",
   },
+  education: {
+    apiUrl: "/api/uploads/education",
+    templateUrl: "/templates/template_education.xlsx",
+    title: "Data Edukasi",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
