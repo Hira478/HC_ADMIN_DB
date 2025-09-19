@@ -1,8 +1,7 @@
+// File: app/api/filters/available-periods/route.ts
 import { NextResponse } from "next/server";
 
-import prisma from "@/lib/prisma";
-
-// Definisikan tipe untuk hasil query mentah agar TypeScript tidak error
+// Definisikan tipe untuk hasil agar TypeScript tidak error
 type AvailablePeriod = {
   year: number;
   month: number;
@@ -10,35 +9,32 @@ type AvailablePeriod = {
 
 export async function GET() {
   try {
-    // Kita akan menggunakan query mentah (raw query) untuk melakukan INNER JOIN
-    // INNER JOIN memastikan kita hanya mendapatkan (tahun, bulan) yang ada di SEMUA tabel yang disebutkan.
-    const availablePeriods: AvailablePeriod[] = await prisma.$queryRaw`
-      SELECT DISTINCT
-        p.year,
-        p.month
-      FROM
-        "ProductivityStat" AS p
-      INNER JOIN "Headcount" AS h
-        ON p.year = h.year AND p.month = h.month
-      INNER JOIN "AgeStat" AS a
-        ON p.year = a.year AND p.month = a.month
-      INNER JOIN "LevelStat" AS l
-        ON p.year = l.year AND p.month = l.month
-      INNER JOIN "EducationStat" AS e
-        ON p.year = e.year AND p.month = e.month
-      INNER JOIN "LengthOfServiceStat" AS los
-        ON p.year = los.year AND p.month = los.month
-      INNER JOIN "EmployeeStatusStat" AS es
-        ON p.year = es.year AND p.month = es.month
-      -- <<< Tambahkan INNER JOIN untuk tabel statistik penting lainnya di sini jika ada >>>
-      ORDER BY
-        p.year DESC,
-        p.month ASC;
-    `;
+    // --- LOGIKA BARU: BUAT PERIODE SECARA MANUAL ---
+
+    const availablePeriods: AvailablePeriod[] = [];
+    const startYear = 2023;
+    const endYear = 2025;
+
+    // Lakukan loop dari tahun awal hingga akhir
+    for (let year = startYear; year <= endYear; year++) {
+      // Untuk setiap tahun, tambahkan 12 bulan
+      for (let month = 1; month <= 12; month++) {
+        availablePeriods.push({ year, month });
+      }
+    }
+
+    // Mengurutkan hasilnya agar tahun terbaru muncul lebih dulu,
+    // ini penting untuk logika 'periode default terbaru' di FilterContext Anda.
+    availablePeriods.sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year; // Tahun descending (2025, 2024, 2023)
+      }
+      return a.month - b.month; // Bulan ascending (1, 2, 3, ...)
+    });
 
     return NextResponse.json(availablePeriods);
   } catch (error) {
     console.error("API Error in /available-periods:", error);
-    return NextResponse.json({ error: "Fail to fecth data." }, { status: 500 });
+    return NextResponse.json({ error: "Fail to fetch data." }, { status: 500 });
   }
 }
