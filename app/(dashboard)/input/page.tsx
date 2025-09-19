@@ -1,5 +1,5 @@
 // app/(dashboard)/input/page.tsx
-import { ArrowRight, Calendar, CalendarClock } from "lucide-react";
+import { ArrowRight, Calendar, CalendarClock, Target } from "lucide-react";
 import Link from "next/link";
 
 const InputPortalPage = () => {
@@ -47,6 +47,25 @@ const InputPortalPage = () => {
               </h2>
               <p className="text-sm text-gray-500">
                 Input untuk RKAP, HCMA, Culture Score, dll.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
+          </div>
+        </Link>
+        <Link
+          href="/input/rkap"
+          className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <Target className="h-6 w-6 text-orange-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Target RKAP Tahunan
+              </h2>
+              <p className="text-sm text-gray-500">
+                Input untuk target Revenue, Profit, dll.
               </p>
             </div>
             <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
