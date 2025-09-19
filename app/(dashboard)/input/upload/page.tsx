@@ -16,6 +16,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_productivity.xlsx",
     title: "Data Produktivitas",
   },
+  headcount: {
+    apiUrl: "/api/uploads/headcount",
+    templateUrl: "/templates/template_headcount.xlsx",
+    title: "Data Headcount",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
