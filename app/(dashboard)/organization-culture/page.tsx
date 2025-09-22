@@ -269,6 +269,7 @@ export default function OrganizationCulturePage() {
             title="Enabler vs Revenue Generator"
             alignMode="start"
             tooltipText="Perbandingan komposisi enabler dengan revenue generator."
+            layout="vertical"
             tooltipAlign="right"
             metrics={[
               {
@@ -276,7 +277,7 @@ export default function OrganizationCulturePage() {
                 value: isLoadingEnablerRevenue
                   ? "..."
                   : `${enablerPercentage}% : ${revenueGeneratorPercentage}%`,
-                label: "Enabler : \nRevenue Generator",
+                label: "Enabler : Revenue Generator",
               },
             ]}
           />
@@ -351,7 +352,7 @@ export default function OrganizationCulturePage() {
                   value: isLoadingHcma
                     ? "..."
                     : hcmaData?.mainScore?.toFixed(2) || 0,
-                  label: "out of 4.0",
+                  label: isLoadingHcma ? "" : hcmaData?.scoreLabel || "N/A",
                 },
               ]}
             />
@@ -361,7 +362,7 @@ export default function OrganizationCulturePage() {
               metrics={[
                 {
                   value: isLoadingHcma ? "..." : hcmaData?.ifgAverageScore || 0,
-                  label: "Out of 4.0",
+                  label: isLoadingHcma ? "" : hcmaData?.scoreLabel || "N/A",
                 },
               ]}
             />

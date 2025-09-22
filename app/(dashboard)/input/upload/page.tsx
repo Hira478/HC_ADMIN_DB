@@ -36,6 +36,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_level.xlsx",
     title: "Data Level Jabatan",
   },
+  employeeEngagement: {
+    apiUrl: "/api/uploads/employee-engagement",
+    templateUrl: "/templates/template_engagement.xlsx",
+    title: "Data Employee Engagement",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
