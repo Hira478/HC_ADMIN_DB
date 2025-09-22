@@ -41,6 +41,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_engagement.xlsx",
     title: "Data Employee Engagement",
   },
+  cultureMaturity: {
+    apiUrl: "/api/uploads/culture-maturity",
+    templateUrl: "/templates/template_culture.xlsx",
+    title: "Data Culture Maturity",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
