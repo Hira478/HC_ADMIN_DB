@@ -1,7 +1,7 @@
 // app/api/charts/culture-maturity/route.ts
 
 import { NextResponse } from "next/server";
-
+import { getScoreLabel } from "@/lib/scoring";
 import prisma from "@/lib/prisma";
 
 // Tipe data yang akan dikirim ke frontend
@@ -84,10 +84,13 @@ export async function GET(request: Request) {
       )}% | Year on Year`;
     }
 
+    const currentScore = currYearRecord?.totalScore ?? 0;
+    const dynamicScoreLabel = getScoreLabel(currentScore);
+
     const responseData: CultureMaturityData = {
       title: "Culture Maturity",
       mainScore: currYearRecord?.totalScore.toFixed(1) || "N/A",
-      scoreLabel: "Moderate High", // Anda bisa membuat ini dinamis jika perlu
+      scoreLabel: dynamicScoreLabel, // Anda bisa membuat ini dinamis jika perlu
       trend,
       chartData: {
         categories,

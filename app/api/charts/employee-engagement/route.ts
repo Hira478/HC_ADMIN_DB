@@ -2,6 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { EmployeeEngagementStat } from "@prisma/client";
+import { getScoreLabel } from "@/lib/scoring";
 
 // Kita bisa gunakan kembali tipe data ini karena strukturnya sama
 import { CultureMaturityData as GroupedChartData } from "../culture-maturity/route";
@@ -46,10 +47,13 @@ export async function GET(request: Request) {
       )}% | Year on Year`;
     }
 
+    const currentScore = currYearRecord?.totalScore ?? 0;
+    const dynamicScoreLabel = getScoreLabel(currentScore);
+
     const responseData: GroupedChartData = {
       title: "Employee Engagement",
       mainScore: currYearRecord?.totalScore.toFixed(1) || "N/A",
-      scoreLabel: "Moderate High",
+      scoreLabel: dynamicScoreLabel,
       trend,
       chartData: {
         categories,

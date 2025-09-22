@@ -2,6 +2,7 @@
 
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { getHcmaScoreLabel } from "@/lib/scoring";
 
 const toTitleCase = (str: string) => {
   return str
@@ -57,6 +58,8 @@ export async function GET(request: NextRequest) {
     );
     const averageScore = totalScore / hcmaIndicators.length;
 
+    const dynamicScoreLabel = getHcmaScoreLabel(averageScore);
+
     // Siapkan data untuk chart (hanya ada data tahun ini)
     const chartData = {
       categories: hcmaIndicators.map(toTitleCase),
@@ -69,7 +72,7 @@ export async function GET(request: NextRequest) {
     const response = {
       title: "HC Maturity Assessment",
       mainScore: parseFloat(averageScore.toFixed(2)),
-      scoreLabel: "Average Score",
+      scoreLabel: dynamicScoreLabel,
       trend: "", // YoY tidak relevan karena data statis
       ifgAverageScore: hcmaData.ifgAverageScore,
       chartData: chartData,
