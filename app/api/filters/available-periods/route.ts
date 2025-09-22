@@ -12,7 +12,7 @@ export async function GET() {
     // --- LOGIKA BARU: BUAT PERIODE SECARA MANUAL ---
 
     const availablePeriods: AvailablePeriod[] = [];
-    const startYear = 2023;
+    const startYear = 2024;
     const endYear = 2025;
 
     // Lakukan loop dari tahun awal hingga akhir

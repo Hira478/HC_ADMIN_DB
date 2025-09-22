@@ -1,4 +1,3 @@
-// components/tables/FormationRasioTable.tsx
 "use client";
 
 import React from "react";
@@ -11,7 +10,7 @@ interface TableRow {
   jobFamily: string;
   rasio: string;
   market: string;
-  rasioGap: number;
+  rasioGap: number; // Kita biarkan di sini jika masih digunakan di tempat lain
 }
 
 // Tipe untuk props komponen utama
@@ -27,19 +26,36 @@ interface TableProps {
   isLoading: boolean;
 }
 
-// Logika untuk menentukan status berdasarkan perbandingan rasio vs market
-const getStatusInfo = (rasioGap: number) => {
-  if (rasioGap > 5) {
+// --- PERUBAHAN UTAMA DI SINI ---
+// 1. Mengubah parameter fungsi untuk menerima rasio dan market
+const getStatusInfo = (rasioStr: string, marketStr: string) => {
+  // 2. Konversi string ke angka untuk perhitungan, hapus simbol '%' jika ada
+  const rasio = parseFloat(rasioStr);
+  const market = parseFloat(marketStr);
+
+  // 3. Menangani kasus khusus jika market 0 untuk menghindari pembagian dengan nol
+  if (market === 0) {
+    // Jika market 0 dan rasio kita juga 0, anggap 'Fit'. Jika tidak, anggap 'Above'.
+    return rasio > 0
+      ? { text: "🔵 Above", className: "bg-blue-100 text-blue-800" }
+      : { text: "🟢 Fit", className: "bg-green-100 text-green-800" };
+  }
+
+  // 4. Hitung perbandingan dalam persentase
+  const comparisonPercentage = (rasio / market) * 100;
+
+  // 5. Terapkan aturan baru Anda
+  if (comparisonPercentage > 110) {
     return { text: "🔵 Above", className: "bg-blue-100 text-blue-800" };
-  } else if (rasioGap < -5) {
+  } else if (comparisonPercentage < 90) {
     return { text: "🔴 Below", className: "bg-red-100 text-red-800" };
   } else {
-    // Ini mencakup -5 s/d +5
+    // Ini mencakup rentang 90% s/d 110%
     return { text: "🟢 Fit", className: "bg-green-100 text-green-800" };
   }
 };
 
-// Komponen Paginasi yang Fungsional
+// Komponen Paginasi (Tidak ada perubahan)
 const Pagination: React.FC<Pick<TableProps, "meta" | "onPageChange">> = ({
   meta,
   onPageChange,
@@ -153,7 +169,8 @@ const FormationRasioTable: React.FC<TableProps> = ({
               <tbody>
                 {data && data.length > 0 ? (
                   data.map((row) => {
-                    const statusInfo = getStatusInfo(row.rasioGap);
+                    // Panggil fungsi dengan parameter yang baru
+                    const statusInfo = getStatusInfo(row.rasio, row.market);
                     return (
                       <tr
                         key={row.jobFamily}
@@ -182,7 +199,6 @@ const FormationRasioTable: React.FC<TableProps> = ({
               </tbody>
             </table>
           </div>
-          {/* Paginasi akan muncul jika item lebih dari 7 */}
           {meta.totalPages > 1 && (
             <Pagination meta={meta} onPageChange={onPageChange} />
           )}

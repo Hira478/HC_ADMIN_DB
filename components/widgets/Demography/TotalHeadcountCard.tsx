@@ -5,12 +5,11 @@ import { Mars, Venus, TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 
-// 1. Perbarui interface untuk menerima 'change'
 interface HeadcountData {
   total: number;
   male: number;
   female: number;
-  change?: string; // <-- Tambahkan properti opsional 'change'
+  change?: string;
 }
 
 const TotalHeadcountCard = () => {
@@ -41,7 +40,7 @@ const TotalHeadcountCard = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const apiData: HeadcountData = await response.json(); // Terapkan tipe baru
+        const apiData: HeadcountData = await response.json();
         setData(apiData);
       } catch (error) {
         console.error("Fetch error for Headcount:", error);
@@ -65,7 +64,6 @@ const TotalHeadcountCard = () => {
           <span className="text-xl font-normal">Employee</span>
         </p>
 
-        {/* 2. Tampilkan data YoY secara dinamis */}
         {data?.change && (
           <p className="text-green-500 text-sm mt-1 flex items-center gap-1">
             {data.change}
@@ -76,21 +74,29 @@ const TotalHeadcountCard = () => {
       <div className="border-t border-gray-700 my-4"></div>
 
       <div className="flex justify-between mt-auto">
+        {/* --- Bagian Pria --- */}
         <div className="flex flex-col items-center flex-1">
-          <div className="p-3 bg-blue-900/30 rounded-full mb-2">
-            <Mars className="h-8 w-8 text-blue-400" />
+          {/* UBAH: Background ikon menjadi solid dan lebih cerah */}
+          <div className="p-3 bg-sky-500 rounded-full mb-2">
+            {/* UBAH: Warna ikon menjadi putih untuk kontras maksimal */}
+            <Mars className="h-8 w-8 text-white" />
           </div>
-          <p className="text-2xl font-bold">
+          {/* UBAH: Warna angka disesuaikan dengan tema gender */}
+          <p className="text-2xl font-bold text-sky-400">
             {loading ? "..." : data?.male.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-sm text-gray-400 mt-1">Male</p>
         </div>
 
+        {/* --- Bagian Wanita --- */}
         <div className="flex flex-col items-center flex-1">
-          <div className="p-3 bg-pink-900/30 rounded-full mb-2">
-            <Venus className="h-8 w-8 text-pink-400" />
+          {/* UBAH: Background ikon menjadi solid dan lebih cerah */}
+          <div className="p-3 bg-pink-500 rounded-full mb-2">
+            {/* UBAH: Warna ikon menjadi putih untuk kontras maksimal */}
+            <Venus className="h-8 w-8 text-white" />
           </div>
-          <p className="text-2xl font-bold">
+          {/* UBAH: Warna angka disesuaikan dengan tema gender */}
+          <p className="text-2xl font-bold text-pink-400">
             {loading ? "..." : data?.female.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-sm text-gray-400 mt-1">Female</p>
