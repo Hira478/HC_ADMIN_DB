@@ -46,6 +46,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_culture.xlsx",
     title: "Data Culture Maturity",
   },
+  hcmaScore: {
+    apiUrl: "/api/uploads/hcma-score",
+    templateUrl: "/templates/template_hcma.xlsx",
+    title: "Data HCMA Score",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
