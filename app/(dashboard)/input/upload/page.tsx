@@ -31,6 +31,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_age.xlsx",
     title: "Data Rentang Usia",
   },
+  level: {
+    apiUrl: "/api/uploads/level",
+    templateUrl: "/templates/template_level.xlsx",
+    title: "Data Level Jabatan",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
