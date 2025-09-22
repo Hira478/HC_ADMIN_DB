@@ -51,6 +51,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_hcma.xlsx",
     title: "Data HCMA Score",
   },
+  divisionStat: {
+    apiUrl: "/api/uploads/division-stat",
+    templateUrl: "/templates/template_division.xlsx",
+    title: "Data Per Divisi",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
