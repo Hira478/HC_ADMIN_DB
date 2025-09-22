@@ -26,6 +26,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_education.xlsx",
     title: "Data Edukasi",
   },
+  age: {
+    apiUrl: "/api/uploads/age",
+    templateUrl: "/templates/template_age.xlsx",
+    title: "Data Rentang Usia",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
