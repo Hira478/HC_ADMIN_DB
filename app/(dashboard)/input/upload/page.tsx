@@ -56,6 +56,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_division.xlsx",
     title: "Data Per Divisi",
   },
+  manpowerPlanning: {
+    apiUrl: "/api/uploads/manpower-planning",
+    templateUrl: "/templates/template_mpp.xlsx",
+    title: "Data Manpower Planning",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
