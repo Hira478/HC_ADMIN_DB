@@ -61,6 +61,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_mpp.xlsx",
     title: "Data Manpower Planning",
   },
+  formationRatio: {
+    apiUrl: "/api/uploads/formation-ratio",
+    templateUrl: "/templates/template_formation_ratio.xlsx",
+    title: "Data Rasio Formasi",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
