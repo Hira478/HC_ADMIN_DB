@@ -78,6 +78,7 @@ const EmployeeCostSection = ({
             details={totalEmployeCostDetails}
             variant="dark"
             className="flex-1"
+            rkapYear={rkapData?.year}
           />
           {/* KARTU 2: Cost per Employee */}
           <StatCard
