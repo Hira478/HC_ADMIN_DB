@@ -1,15 +1,18 @@
+// File: /api/charts/formation-rasio/route.ts
+
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. Import helper keamanan
+import { getCompanyFilter } from "@/lib/prisma-filter";
 
 const jobFamilies = [
+  // Urutan ini akan menjadi urutan di chart
+  { key: "it", name: "IT" },
+  { key: "hcGa", name: "HC & GA" },
+  { key: "finance", name: "Finance" },
+  { key: "compliance", name: "Compliance" },
   { key: "strategy", name: "Strategy" },
   { key: "business", name: "Business" },
-  { key: "finance", name: "Finance" },
-  { key: "hcGa", name: "HC & GA" },
   { key: "operation", name: "Operation" },
-  { key: "compliance", name: "Compliance" },
-  { key: "it", name: "IT" },
 ];
 
 export async function GET(request: NextRequest) {
@@ -20,33 +23,31 @@ export async function GET(request: NextRequest) {
   const month = parseInt(
     searchParams.get("month") || (new Date().getMonth() + 1).toString()
   );
-  const page = parseInt(searchParams.get("page") || "1");
-  const pageSize = 4; // Tampilkan 4 item per halaman // Tampilkan 7 item (semua) per halaman, nonaktifkan paginasi
+  // Hapus 'page', kita tidak memerlukannya lagi
+  // const page = parseInt(searchParams.get("page") || "1");
 
   try {
-    // 2. Gunakan filter keamanan, bukan companyId dari URL
     const companyFilter = await getCompanyFilter(request);
 
     const [formationData, headcountData] = await Promise.all([
       prisma.formationRasioGroupedStat.findFirst({
-        where: { year, month, ...companyFilter }, // <-- Terapkan filter
+        where: { year, month, ...companyFilter },
       }),
       prisma.headcount.findFirst({
-        where: { year, month, ...companyFilter }, // <-- Terapkan filter
+        where: { year, month, ...companyFilter },
       }),
     ]);
 
     const marketBenchmark = {
+      it: 8.0,
+      hcGa: 7.0,
+      finance: 6.0,
+      compliance: 5.0,
       strategy: 5.0,
       business: 36.0,
-      finance: 6.0,
-      hcGa: 7.0,
       operation: 33.0,
-      compliance: 5.0,
-      it: 8.0,
     };
 
-    // Penanganan jika data tidak ada, tetap kirim struktur tabel yang benar
     if (!formationData || !headcountData || headcountData.totalCount === 0) {
       const emptyData = jobFamilies.map((family) => ({
         jobFamily: family.name,
@@ -57,10 +58,8 @@ export async function GET(request: NextRequest) {
         rasioGap: -marketBenchmark[family.key as keyof typeof marketBenchmark],
       }));
 
-      return NextResponse.json({
-        data: emptyData,
-        meta: { currentPage: 1, totalPages: 1 },
-      });
+      // Kirim data kosong tanpa meta paginasi
+      return NextResponse.json({ data: emptyData, meta: null });
     }
 
     const totalHeadcount = headcountData.totalCount;
@@ -72,11 +71,6 @@ export async function GET(request: NextRequest) {
       const companyRatio = (companyHeadcount / totalHeadcount) * 100;
       const marketRatio =
         marketBenchmark[family.key as keyof typeof marketBenchmark];
-
-      // 3. Hapus kalkulasi 'statusRatio' yang lama
-      // const statusRatio = ...
-
-      // Logika 'rasioGap' Anda sudah benar
       const rasioGap = companyRatio - marketRatio;
 
       return {
@@ -87,15 +81,11 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const totalPages = Math.ceil(allRows.length / pageSize);
-    const paginatedData = allRows.slice((page - 1) * pageSize, page * pageSize);
-
+    // UBAH: Kirim semua data, bukan data per halaman
     const response = {
-      data: paginatedData,
-      meta: {
-        currentPage: page,
-        totalPages: totalPages,
-      },
+      data: allRows,
+      // Hapus meta paginasi, atau set ke null
+      meta: null,
     };
 
     return NextResponse.json(response);

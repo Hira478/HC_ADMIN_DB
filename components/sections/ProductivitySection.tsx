@@ -75,6 +75,7 @@ const ProductivitySection = ({
             actualRevenue,
             rkapData?.revenue ?? 0
           )}
+          rkapYear={rkapData?.year}
           variant="dark"
         />
         <StatCard
@@ -86,6 +87,7 @@ const ProductivitySection = ({
             actualNetProfit,
             rkapData?.netProfit ?? 0
           )}
+          rkapYear={rkapData?.year}
           variant="dark"
         />
         <StatCard

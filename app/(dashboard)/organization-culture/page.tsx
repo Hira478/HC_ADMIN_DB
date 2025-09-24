@@ -8,6 +8,7 @@ import GroupedBarChart from "@/components/charts/GroupedBarChart";
 import OrganizationHealthChart from "@/components/charts/OrganizationHealthChart";
 import InfoCard from "@/components/ui/InfoCard";
 import FormationRasioTable from "@/components/tables/FormationRasioTable";
+import FormationRasioBarChart from "@/components/charts/FormationRasioBarChart";
 
 // Tipe data terpusat
 import type {
@@ -83,8 +84,9 @@ export default function OrganizationCulturePage() {
           return res.json();
         })
         .then((data) => {
-          // Tambahkan juga pengecekan validitas data
-          if (data && data.meta) {
+          // Pengecekan baru: Cukup pastikan properti 'data' (array) ada.
+          if (data && data.data) {
+            // <-- PERUBAHAN DI SINI
             setFormationRasioData(data);
           } else {
             throw new Error("Invalid data format received");
@@ -254,14 +256,19 @@ export default function OrganizationCulturePage() {
       {/* --- SECTION 1 --- */}
       {/* --- SECTION 1 --- */}
       <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">
-        <div className="w-full lg:w-3/4">
-          <FormationRasioTable
+        {/* <FormationRasioTable
             title="Employee Formation Rasio"
             subtitle={period.year.toString()}
             data={formationRasioData?.data || []}
             meta={formationRasioData?.meta || { currentPage: 1, totalPages: 1 }}
             isLoading={isLoadingFormation}
             onPageChange={setFormationPage}
+          /> */}
+
+        <div className="w-full lg:w-3/4">
+          <FormationRasioBarChart
+            data={formationRasioData}
+            isLoading={isLoadingFormation}
           />
         </div>
         <div className="w-full lg:w-1/4 flex flex-col gap-6">

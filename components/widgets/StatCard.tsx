@@ -12,6 +12,7 @@ interface StatCardProps {
   className?: string;
   rkdapInfo?: string;
   details?: string;
+  rkapYear?: number;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -23,6 +24,7 @@ const StatCard: React.FC<StatCardProps> = ({
   className,
   rkdapInfo,
   details,
+  rkapYear,
 }) => {
   const isDark = variant === "dark";
   const bgColor = isDark ? "bg-gray-800" : "bg-white";
@@ -70,7 +72,9 @@ const StatCard: React.FC<StatCardProps> = ({
       {/* --- TAMBAHAN BARU DI SINI --- */}
       {/* Tampilkan info RKAP jika ada */}
       {rkdapInfo && (
-        <div className="text-xs text-gray-400">{rkdapInfo} | RKAP 2025</div>
+        <div className="text-xs text-gray-400">
+          {rkdapInfo} | RKAP {rkapYear}
+        </div>
       )}
     </div>
   );

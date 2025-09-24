@@ -148,6 +148,7 @@ export interface OrganizationHealthData {
 
 // --- TIPE BARU UNTUK DATA TARGET RKAP ---
 export interface RkapTargetData {
+  year: number;
   revenue: number;
   netProfit: number;
   totalEmployeeCost: number;
