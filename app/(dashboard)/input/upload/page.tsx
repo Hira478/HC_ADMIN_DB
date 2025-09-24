@@ -66,6 +66,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_formation_ratio.xlsx",
     title: "Data Rasio Formasi",
   },
+  turnover: {
+    apiUrl: "/api/uploads/turnover",
+    templateUrl: "/templates/template_turnover.xlsx",
+    title: "Data Turnover",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 
