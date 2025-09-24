@@ -23,20 +23,15 @@ export async function GET(request: NextRequest) {
   const month = parseInt(
     searchParams.get("month") || (new Date().getMonth() + 1).toString()
   );
-  // Hapus 'page', kita tidak memerlukannya lagi
-  // const page = parseInt(searchParams.get("page") || "1");
 
   try {
     const companyFilter = await getCompanyFilter(request);
 
-    const [formationData, headcountData] = await Promise.all([
-      prisma.formationRasioGroupedStat.findFirst({
-        where: { year, month, ...companyFilter },
-      }),
-      prisma.headcount.findFirst({
-        where: { year, month, ...companyFilter },
-      }),
-    ]);
+    // 1. Hapus pengambilan data 'headcountData'
+    // 2. Ubah `Promise.all` menjadi `await` tunggal karena hanya mengambil 1 data
+    const formationData = await prisma.formationRasioGroupedStat.findFirst({
+      where: { year, month, ...companyFilter },
+    });
 
     const marketBenchmark = {
       it: 8.0,
@@ -48,7 +43,8 @@ export async function GET(request: NextRequest) {
       operation: 33.0,
     };
 
-    if (!formationData || !headcountData || headcountData.totalCount === 0) {
+    // 3. Ubah kondisi 'data tidak ada' menjadi hanya mengecek 'formationData'
+    if (!formationData) {
       const emptyData = jobFamilies.map((family) => ({
         jobFamily: family.name,
         rasio: "0.0%",
@@ -57,18 +53,37 @@ export async function GET(request: NextRequest) {
         ].toFixed(1)}%`,
         rasioGap: -marketBenchmark[family.key as keyof typeof marketBenchmark],
       }));
-
-      // Kirim data kosong tanpa meta paginasi
       return NextResponse.json({ data: emptyData, meta: null });
     }
 
-    const totalHeadcount = headcountData.totalCount;
+    // 4. HITUNG TOTAL HEADCOUNT BARU dari jumlah 7 job family
+    const totalHeadcountFromJobFamilies = jobFamilies.reduce((sum, family) => {
+      // Ambil nilai dari formationData, jika tidak ada anggap 0
+      const count =
+        (formationData as { [key: string]: number })[family.key] ?? 0;
+      return sum + count;
+    }, 0);
+
+    // Tambahkan pengecekan jika totalnya 0 untuk menghindari pembagian dengan nol
+    if (totalHeadcountFromJobFamilies === 0) {
+      const emptyData = jobFamilies.map((family) => ({
+        jobFamily: family.name,
+        rasio: "0.0%",
+        market: `${marketBenchmark[
+          family.key as keyof typeof marketBenchmark
+        ].toFixed(1)}%`,
+        rasioGap: -marketBenchmark[family.key as keyof typeof marketBenchmark],
+      }));
+      return NextResponse.json({ data: emptyData, meta: null });
+    }
 
     const allRows = jobFamilies.map((family) => {
       const companyHeadcount = (formationData as { [key: string]: number })[
         family.key
       ] as number;
-      const companyRatio = (companyHeadcount / totalHeadcount) * 100;
+      // 5. Gunakan total headcount baru sebagai pembagi dalam kalkulasi rasio
+      const companyRatio =
+        (companyHeadcount / totalHeadcountFromJobFamilies) * 100;
       const marketRatio =
         marketBenchmark[family.key as keyof typeof marketBenchmark];
       const rasioGap = companyRatio - marketRatio;
@@ -81,10 +96,8 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // UBAH: Kirim semua data, bukan data per halaman
     const response = {
       data: allRows,
-      // Hapus meta paginasi, atau set ke null
       meta: null,
     };
 
