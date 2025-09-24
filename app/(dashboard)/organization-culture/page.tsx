@@ -338,15 +338,18 @@ export default function OrganizationCulturePage() {
       </div>
 
       {/* --- SECTION 3 --- */}
+      {/* --- SECTION 3 --- */}
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           HC Maturity Assessment
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        {/* UBAH: Dari lg:grid-cols-3 menjadi lg:grid-cols-4 */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
           <div className="lg:col-span-1 flex flex-col gap-6">
             <InfoCard
               title="HC Maturity"
               tooltipText="Ini Average Score dari 5 dimensi penilaian HC Maturity Assessment."
+              labelSize="base"
               metrics={[
                 {
                   value: isLoadingHcma
@@ -359,15 +362,20 @@ export default function OrganizationCulturePage() {
             <InfoCard
               title="HC Maturity IFG Group"
               tooltipText="Ini Average Score dari kelompok IFG dalam HC Maturity Assessment."
+              labelSize="base"
               metrics={[
                 {
-                  value: isLoadingHcma ? "..." : hcmaData?.ifgAverageScore || 0,
+                  // UBAH BARIS INI
+                  value: isLoadingHcma
+                    ? "..."
+                    : hcmaData?.ifgAverageScore?.toFixed(2) || 0,
                   label: isLoadingHcma ? "" : hcmaData?.scoreLabel || "N/A",
                 },
               ]}
             />
           </div>
-          <div className="lg:col-span-2">
+          {/* UBAH: Dari lg:col-span-2 menjadi lg:col-span-3 */}
+          <div className="lg:col-span-3">
             <GroupedBarChart
               data={hcmaData}
               isLoading={isLoadingHcma}
