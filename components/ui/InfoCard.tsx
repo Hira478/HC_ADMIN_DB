@@ -14,8 +14,9 @@ interface InfoCardProps {
   alignMode?: "baseline" | "start";
   tooltipText?: string;
   tooltipAlign?: "center" | "left" | "right";
-  // 1. Tambahkan prop baru untuk layout
   layout?: "horizontal" | "vertical";
+  // 1. Tambahkan prop baru untuk ukuran font label
+  labelSize?: "xs" | "sm" | "base" | "lg";
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({
@@ -24,8 +25,9 @@ const InfoCard: React.FC<InfoCardProps> = ({
   alignMode = "baseline",
   tooltipText,
   tooltipAlign,
-  // 2. Set nilai default prop layout ke 'horizontal'
   layout = "horizontal",
+  // 2. Set nilai default ke 'xs' agar tidak merusak tampilan lain
+  labelSize = "xs",
 }) => {
   return (
     <div className="bg-[#343A40] p-6 rounded-lg shadow-md text-white flex flex-col flex-1">
@@ -42,23 +44,23 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
       <div className="flex flex-grow items-center justify-start">
         {metrics.map((metric, index) => (
-          // 3. Terapkan logika untuk mengubah kelas CSS berdasarkan prop 'layout'
           <div
             key={index}
             className={`flex ${
               layout === "vertical"
-                ? "flex-col" // Terapkan flex-col untuk layout atas-bawah
+                ? "flex-col"
                 : alignMode === "start"
                 ? "items-start"
-                : "items-baseline" // Layout default kiri-kanan
+                : "items-baseline"
             } mr-8 last:mr-0`}
           >
             <p className="text-3xl font-bold">{metric.value}</p>
+            {/* 3. Gunakan prop 'labelSize' untuk mengatur kelas font secara dinamis */}
             <p
-              className={`text-xs text-gray-400 whitespace-pre-line ${
-                // 4. Ubah margin berdasarkan layout
+              // UBAH: Dari text-gray-400 menjadi text-white
+              className={`whitespace-pre-line ${
                 layout === "vertical" ? "mt-1" : "ml-2"
-              }`}
+              } text-${labelSize} text-white`}
             >
               {metric.label}
             </p>

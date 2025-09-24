@@ -104,7 +104,7 @@ const ProductivitySection = ({
         />
       </div>
       <div className="flex flex-col gap-6 mt-6">
-        <div className="w-full h-96">
+        <div className="w-full">
           <ProductivityChartCard />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

@@ -3,11 +3,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
-import { Settings } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import CardLoader from "./CardLoader";
 
-// Interface untuk data chart
+// Interface untuk data chart (tetap sama)
 interface ProductivityChartData {
   months: string[];
   revenue: number[];
@@ -16,6 +15,70 @@ interface ProductivityChartData {
   netProfitPerEmployee: number[];
 }
 
+// 1. BUAT SUB-KOMPONEN UNTUK SATU CHART INDIVIDUAL
+// Ini akan membantu kita menghindari duplikasi kode
+const IndividualChart = ({
+  title,
+  seriesData,
+  months,
+  color,
+}: {
+  title: string;
+  seriesData: number[];
+  months: string[];
+  color: string;
+}) => {
+  const option = {
+    tooltip: { trigger: "axis" },
+    xAxis: {
+      type: "category",
+      boundaryGap: false,
+      data: months,
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: {
+        formatter: (value: number) => {
+          if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
+          if (Math.abs(value) >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+          return value;
+        },
+      },
+    },
+    series: [
+      {
+        name: title,
+        type: "line",
+        smooth: false,
+        data: seriesData,
+        color: color,
+        areaStyle: { opacity: 0.3 },
+      },
+    ],
+    grid: {
+      left: "3%",
+      right: "4%",
+      bottom: "3%",
+      top: "15%", // Beri ruang di atas untuk judul
+      containLabel: true,
+    },
+    title: {
+      text: title,
+      left: "center",
+      textStyle: {
+        fontSize: 16,
+        fontWeight: "bold",
+      },
+    },
+  };
+
+  return (
+    <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-200 h-80">
+      <ReactECharts option={option} style={{ height: "100%", width: "100%" }} />
+    </div>
+  );
+};
+
 const ProductivityChartCard = () => {
   const { selectedCompany, period } = useFilters();
   const [chartData, setChartData] = useState<ProductivityChartData | null>(
@@ -23,7 +86,7 @@ const ProductivityChartCard = () => {
   );
   const [loading, setLoading] = useState(true);
 
-  // Logika fetch data tetap sama
+  // Logika fetch data tidak berubah
   useEffect(() => {
     if (!selectedCompany || !period) {
       setLoading(false);
@@ -51,85 +114,6 @@ const ProductivityChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
-  const option = {
-    tooltip: { trigger: "axis", axisPointer: { type: "cross" } },
-    legend: {
-      data: [
-        "Revenue",
-        "Net Profit",
-        "Revenue/Employee",
-        "Net Profit/Employee",
-      ],
-      bottom: 10,
-    },
-    xAxis: {
-      type: "category",
-      boundaryGap: false,
-      data: chartData?.months || [],
-    },
-    // --- PERUBAHAN UTAMA ADA DI SINI ---
-    yAxis: {
-      // <-- Diubah dari array [ {..}, {..} ] menjadi satu objek saja
-      type: "value",
-
-      name: "Unit: Million Rupiah", // <-- Nama diubah menjadi lebih generik
-      position: "left",
-      interval: 400000, // Atur interval menjadi 400K (400,000)
-      axisLabel: {
-        formatter: (value: number) => {
-          if (value >= 1e6 || value <= -1e6) return `${value / 1e6}M`;
-          if (value >= 1e3 || value <= -1e3) return `${value / 1e3}K`;
-          return value;
-        },
-      },
-    },
-    series: [
-      {
-        name: "Revenue",
-        type: "line",
-        smooth: false,
-        data: chartData?.revenue || [],
-        color: "#3B82F6",
-        areaStyle: { opacity: 0.3 },
-        // yAxisIndex: 0 tidak perlu ditulis karena default
-      },
-      {
-        name: "Net Profit",
-        type: "line",
-        smooth: false,
-        data: chartData?.netProfit || [],
-        color: "#84CC16",
-        areaStyle: { opacity: 0.3 },
-      },
-      {
-        name: "Revenue/Employee",
-        type: "line",
-        smooth: false,
-        // yAxisIndex: 1, // <-- Dihapus, akan otomatis menggunakan sumbu Y pertama
-        data: chartData?.revenuePerEmployee || [],
-        color: "#F97316",
-        areaStyle: { opacity: 0.3 },
-      },
-      {
-        name: "Net Profit/Employee",
-        type: "line",
-        smooth: false,
-        // yAxisIndex: 1, // <-- Dihapus, akan otomatis menggunakan sumbu Y pertama
-        data: chartData?.netProfitPerEmployee || [],
-        color: "#EF4444",
-        areaStyle: { opacity: 0.3 },
-      },
-    ],
-    // --- AKHIR DARI PERUBAHAN ---
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "15%",
-      containLabel: true,
-    },
-  };
-
-  // Logika rendering JSX tetap sama
   if (loading) return <CardLoader />;
   if (!chartData)
     return (
@@ -137,19 +121,40 @@ const ProductivityChartCard = () => {
         No Data.
       </div>
     );
+
+  // 2. UBAH TAMPILAN UNTUK MERENDER GRID 2x2 DARI CHART INDIVIDUAL
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
+    <div className="bg-white p-6 rounded-lg shadow-md h-full">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-3">
-          <h3 className="font-bold text-lg text-gray-800">Productivity</h3>
-          <p className="text-sm text-gray-500">{period.year}</p>
-        </div>
-        <button className="text-gray-500 hover:text-gray-800">
-          <Settings className="h-5 w-5" />
-        </button>
+        <h3 className="font-bold text-lg text-gray-800">
+          Productivity Details {period.year}
+        </h3>
       </div>
-      <div className="flex-grow min-h-0">
-        <ReactECharts option={option} style={{ height: "100%" }} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <IndividualChart
+          title="Revenue"
+          seriesData={chartData.revenue}
+          months={chartData.months}
+          color="#3B82F6" // Blue
+        />
+        <IndividualChart
+          title="Net Profit"
+          seriesData={chartData.netProfit}
+          months={chartData.months}
+          color="#84CC16" // Green
+        />
+        <IndividualChart
+          title="Revenue/Employee"
+          seriesData={chartData.revenuePerEmployee}
+          months={chartData.months}
+          color="#F97316" // Orange
+        />
+        <IndividualChart
+          title="Net Profit/Employee"
+          seriesData={chartData.netProfitPerEmployee}
+          months={chartData.months}
+          color="#EF4444" // Red
+        />
       </div>
     </div>
   );
