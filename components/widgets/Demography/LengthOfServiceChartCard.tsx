@@ -3,12 +3,6 @@ import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
 
-// Definisikan tipe untuk parameter formatter ECharts
-interface EChartsFormatterParams {
-  value: number;
-  // Anda bisa tambahkan properti lain jika dibutuhkan, misal: name, seriesName
-}
-
 interface ChartData {
   labels: string[];
   values: number[];
@@ -54,7 +48,27 @@ const LengthOfServiceChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // --- 1. KALKULASI TOTAL DAN PERSENTASE ---
+  const absoluteValues = chartData?.values || [];
+  const totalEmployees = absoluteValues.reduce((sum, value) => sum + value, 0);
+  const percentageValues = absoluteValues.map((value) =>
+    totalEmployees > 0 ? (value / totalEmployees) * 100 : 0
+  );
+
+  // Kalkulasi sumbu Y dinamis berdasarkan persentase tertinggi
+  const maxPercentage = Math.max(...percentageValues, 0);
+  const yAxisMax = Math.min(100, Math.ceil(maxPercentage / 10) * 10 + 10);
+
   const option = {
+    tooltip: {
+      // 2. Ganti trigger ke 'axis' dan format tooltip untuk persen
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params: Array<{ name: string; value: number }>) => {
+        const data = params[0];
+        return `${data.name} years<br/>Persentase: ${data.value.toFixed(1)}%`;
+      },
+    },
     grid: {
       top: "12%",
       bottom: "12%",
@@ -76,9 +90,12 @@ const LengthOfServiceChartCard = () => {
     },
     yAxis: {
       type: "value",
+      max: yAxisMax, // Gunakan batas atas dinamis
+      // 3. Format label sumbu Y untuk menampilkan persen
       axisLabel: {
         fontSize: 10,
         margin: 2,
+        formatter: "{value}%",
       },
       splitLine: {
         show: true,
@@ -90,7 +107,8 @@ const LengthOfServiceChartCard = () => {
     },
     series: [
       {
-        data: chartData?.values || [],
+        // 4. Gunakan data persentase
+        data: percentageValues,
         type: "bar",
         barWidth: "45%",
         color: "#C53030",
@@ -99,19 +117,15 @@ const LengthOfServiceChartCard = () => {
           position: "top",
           fontSize: 10,
           color: "#1f2937",
-          // Perbaikan di sini: ganti 'any' dengan tipe yang sudah didefinisikan
-          formatter: (params: EChartsFormatterParams) =>
-            params.value > 5 ? params.value : "",
+          // 5. Format label di atas bar untuk menampilkan persen
+          formatter: (params: { value: number }) =>
+            params.value > 0 ? `${params.value.toFixed(1)}%` : "",
         },
         itemStyle: {
           borderRadius: [3, 3, 0, 0],
         },
       },
     ],
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: {c}",
-    },
   };
 
   if (loading) {

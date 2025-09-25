@@ -48,7 +48,27 @@ const LevelChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // --- 1. KALKULASI TOTAL DAN PERSENTASE ---
+  const absoluteValues = chartData?.values || [];
+  const totalEmployees = absoluteValues.reduce((sum, value) => sum + value, 0);
+  const percentageValues = absoluteValues.map((value) =>
+    totalEmployees > 0 ? (value / totalEmployees) * 100 : 0
+  );
+
+  // Kalkulasi sumbu Y dinamis berdasarkan persentase tertinggi
+  const maxPercentage = Math.max(...percentageValues, 0);
+  const yAxisMax = Math.min(100, Math.ceil(maxPercentage / 10) * 10 + 10);
+
   const option = {
+    // 2. Tambahkan tooltip untuk menampilkan detail saat hover
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      formatter: (params: Array<{ name: string; value: number }>) => {
+        const data = params[0];
+        return `${data.name}<br/>Persentase: ${data.value.toFixed(1)}%`;
+      },
+    },
     grid: { top: "20%", bottom: "20%", left: "10%", right: "5%" },
     xAxis: {
       type: "category",
@@ -63,7 +83,11 @@ const LevelChartCard = () => {
     },
     yAxis: {
       type: "value",
-      show: true,
+      max: yAxisMax, // Gunakan batas atas dinamis
+      // 3. Format label sumbu Y untuk menampilkan persen
+      axisLabel: {
+        formatter: "{value}%",
+      },
       splitLine: {
         show: true,
         lineStyle: { color: "#e0e6f1", type: "dashed" },
@@ -71,7 +95,8 @@ const LevelChartCard = () => {
     },
     series: [
       {
-        data: chartData?.values || [],
+        // 4. Gunakan data persentase
+        data: percentageValues,
         type: "bar",
         barWidth: "50%",
         color: "#4A5568",
@@ -80,6 +105,9 @@ const LevelChartCard = () => {
           position: "top",
           fontSize: 10,
           color: "#1f2937",
+          // 5. Format label di atas bar untuk menampilkan persen
+          formatter: (params: { value: number }) =>
+            `${params.value.toFixed(1)}%`,
         },
       },
     ],

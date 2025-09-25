@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
 
+// Definisikan tipe untuk parameter formatter ECharts
 interface EChartsFormatterParams {
   name: string;
   value: number;
-  // Anda bisa tambahkan properti lain jika dibutuhkan, misal: seriesName
 }
 
 interface ChartData {
@@ -54,63 +54,68 @@ const AgeChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // --- 1. KALKULASI TOTAL DAN PERSENTASE ---
+  const absoluteValues = chartData?.values || [];
+  const totalEmployees = absoluteValues.reduce((sum, value) => sum + value, 0);
+  const percentageValues = absoluteValues.map((value) =>
+    totalEmployees > 0 ? (value / totalEmployees) * 100 : 0
+  );
+
+  // Kalkulasi sumbu X dinamis berdasarkan persentase tertinggi
+  const maxPercentage = Math.max(...percentageValues, 0);
+  const xAxisMax = Math.min(100, Math.ceil(maxPercentage / 10) * 10);
+
   const option = {
     grid: {
-      left: "5%", // Further reduced from 8%
-      right: "5%", // Further reduced from 3%
-      top: "10%", // Reduced from 12%
-      bottom: "10%", // Reduced from 12%
+      left: "5%",
+      right: "5%",
+      top: "10%",
+      bottom: "10%",
       containLabel: true,
     },
     xAxis: {
       type: "value",
+      max: xAxisMax, // Gunakan batas atas dinamis
+      // 2. Format label sumbu X (sumbu nilai) untuk menampilkan persen
       axisLabel: {
         fontSize: 10,
-        margin: 1, // Reduced from 2
+        margin: 1,
+        formatter: "{value}%",
       },
-      axisLine: {
-        show: true, // Pastikan ini true untuk kontrol penuh
-        lineStyle: {
-          width: 1,
-        },
-      },
+      axisLine: { show: true, lineStyle: { width: 1 } },
       splitLine: {
         show: true,
-        lineStyle: {
-          color: "#e0e6f1",
-          type: "dashed",
-        },
+        lineStyle: { color: "#e0e6f1", type: "dashed" },
       },
       boundaryGap: ["0%", "2%"],
     },
     yAxis: {
       type: "category",
       data: chartData?.labels || [],
-      axisLabel: {
-        fontSize: 11, // Slightly reduced from 12
-        margin: 1, // Reduced from 2
-      },
+      axisLabel: { fontSize: 11, margin: 1 },
       axisLine: { show: true },
       axisTick: { show: true },
     },
     series: [
       {
-        data: (chartData?.values || []).map((value) => ({
+        // 3. Gunakan data persentase
+        data: percentageValues.map((value) => ({
           value,
           itemStyle: {
             color: "#C53030",
-            borderRadius: [0, 3, 3, 0], // Rounded right corners only
+            borderRadius: [0, 3, 3, 0],
           },
         })),
         type: "bar",
-        barWidth: "45%", // Reduced from 50%
+        barWidth: "45%",
         label: {
           show: true,
           position: "right",
           fontSize: 10,
           color: "#1f2937",
-          fformatter: (params: EChartsFormatterParams) =>
-            params.value > 5 ? params.value : "",
+          // 4. Format label di ujung bar untuk menampilkan persen & perbaiki typo 'fformatter'
+          formatter: (params: { value: number }) =>
+            `${params.value.toFixed(1)}%`,
         },
         emphasis: {
           itemStyle: {
@@ -122,12 +127,13 @@ const AgeChartCard = () => {
     ],
     tooltip: {
       trigger: "axis",
-      axisPointer: {
-        type: "shadow",
-      },
-      formatter: (params: EChartsFormatterParams[]) => {
+      axisPointer: { type: "shadow" },
+      // 5. Format tooltip untuk menampilkan persen
+      formatter: (params: Array<{ name: string; value: number }>) => {
         const data = params[0];
-        return `<strong>${data.name}</strong><br/>Count: ${data.value}`;
+        return `<strong>${
+          data.name
+        }</strong><br/>Persentase: ${data.value.toFixed(1)}%`;
       },
     },
   };
@@ -143,18 +149,14 @@ const AgeChartCard = () => {
   return (
     <div className="bg-white p-4 rounded-lg shadow-md h-full flex flex-col">
       <div className="flex justify-between items-center mb-1">
-        {" "}
-        {/* Changed from items-start */}
         <h3 className="font-bold text-lg text-gray-800">Age</h3>
       </div>
       <div className="flex-1 -ml-1.5">
-        {" "}
-        {/* Increased negative margin */}
         <ReactECharts
           option={option}
           style={{
             height: "100%",
-            width: "100%", // Increased from 8px
+            width: "100%",
             minHeight: "250px",
           }}
         />
