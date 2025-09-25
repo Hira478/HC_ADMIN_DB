@@ -15,7 +15,7 @@ interface UserSession {
   id: number;
   name: string;
   email: string;
-  role: "ADMIN_HOLDING" | "USER_ANPER" | "SUPER_ADMIN"; // Dibuat lebih spesifik
+  role: "ADMIN_HOLDING" | "USER_ANPER" | "SUPER_ADMIN";
   companyId: number;
   companyName: string;
 }
@@ -46,7 +46,7 @@ interface FilterContextType {
   loading: boolean;
   user: UserSession | null;
   logout: () => void;
-  isSlideshowMode: boolean; // <-- Tambahkan state baru
+  isSlideshowMode: boolean;
   toggleSlideshowMode: () => void;
 }
 
@@ -59,32 +59,31 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   );
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // --- PERUBAHAN 1: Ubah nilai awal state 'period' ---
   const [period, setPeriod] = useState<Period>({
     type: "monthly",
-    year: new Date().getFullYear(),
-    value: new Date().getMonth() + 1,
+    year: 2025, // <-- Ubah ke 2025
+    value: 8, // <-- Ubah ke 8 (Agustus)
   });
 
   const [user, setUser] = useState<UserSession | null>(null);
   const [isSlideshowMode, setIsSlideshowMode] = useState(false);
   const router = useRouter();
 
-  // --- FUNGSI BARU UNTUK TOGGLE SLIDESHOW ---
   const toggleSlideshowMode = () => {
     setIsSlideshowMode((prev) => !prev);
   };
 
-  // --- useEffect BARU UNTUK TOMBOL ESCAPE ---
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsSlideshowMode(false); // Selalu matikan saat Escape ditekan
+        setIsSlideshowMode(false);
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []); // Dijalankan sekali saja
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -99,7 +98,6 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
 
         const [companyData, periodData] = await Promise.all([
           fetch("/api/companies").then((res) => res.json()),
-          // Beri tahu TypeScript bahwa hasil json() adalah Promise<AvailablePeriod[]>
           fetch("/api/filters/available-periods").then(
             (res) => res.json() as Promise<AvailablePeriod[]>
           ),
@@ -107,19 +105,38 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
         setCompanies(companyData);
         setAvailablePeriods(periodData);
 
+        // --- PERUBAHAN 2: Logika baru untuk menentukan periode default ---
         if (periodData && periodData.length > 0) {
-          const latestYear = Math.max(...periodData.map((p) => p.year));
-          const periodsInLatestYear = periodData.filter(
-            (p) => p.year === latestYear
+          const defaultYear = 2025;
+          const defaultMonth = 8; // Agustus
+
+          // Cek apakah default (Agustus 2025) tersedia dalam data dari API
+          const isDefaultAvailable = periodData.some(
+            (p) => p.year === defaultYear && p.month === defaultMonth
           );
-          const latestMonth = Math.max(
-            ...periodsInLatestYear.map((p) => p.month)
-          );
-          setPeriod((prev) => ({
-            ...prev,
-            year: latestYear,
-            value: latestMonth,
-          }));
+
+          if (isDefaultAvailable) {
+            // Jika ya, set ke Agustus 2025
+            setPeriod((prev) => ({
+              ...prev,
+              year: defaultYear,
+              value: defaultMonth,
+            }));
+          } else {
+            // Jika tidak, gunakan fallback ke periode terbaru yang tersedia
+            const latestYear = Math.max(...periodData.map((p) => p.year));
+            const periodsInLatestYear = periodData.filter(
+              (p) => p.year === latestYear
+            );
+            const latestMonth = Math.max(
+              ...periodsInLatestYear.map((p) => p.month)
+            );
+            setPeriod((prev) => ({
+              ...prev,
+              year: latestYear,
+              value: latestMonth,
+            }));
+          }
         }
       } catch (error) {
         console.error("Initialization Error:", error);
@@ -146,9 +163,7 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // --- PERUBAHAN UTAMA ---
   const handleSetSelectedCompany = (companyId: number) => {
-    // Hanya izinkan perubahan jika user adalah ADMIN_HOLDING
     if (user?.role === "ADMIN_HOLDING" || user?.role === "SUPER_ADMIN") {
       setSelectedCompany(companyId);
     }
@@ -158,14 +173,14 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     companies,
     availablePeriods,
     selectedCompany,
-    setSelectedCompany: handleSetSelectedCompany, // <-- Gunakan fungsi handler yang baru
+    setSelectedCompany: handleSetSelectedCompany,
     period,
     setPeriod,
     loading,
     user,
     logout,
-    isSlideshowMode, // <-- Tambahkan ke value
-    toggleSlideshowMode, // <-- Tambahkan ke value
+    isSlideshowMode,
+    toggleSlideshowMode,
   };
 
   return (
