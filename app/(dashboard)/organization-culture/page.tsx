@@ -7,7 +7,8 @@ import { useFilters } from "@/contexts/FilterContext";
 import GroupedBarChart from "@/components/charts/GroupedBarChart";
 import OrganizationHealthChart from "@/components/charts/OrganizationHealthChart";
 import InfoCard from "@/components/ui/InfoCard";
-import FormationRasioTable from "@/components/tables/FormationRasioTable";
+// HAPUS: import FormationRasioTable tidak lagi digunakan
+// import FormationRasioTable from "@/components/tables/FormationRasioTable";
 import FormationRasioBarChart from "@/components/charts/FormationRasioBarChart";
 
 // Tipe data terpusat
@@ -15,7 +16,8 @@ import type {
   OrganizationHealthData,
   GroupedChartData,
   HcmaData,
-  OrgStructureData,
+  // HAPUS: OrgStructureData tidak lagi digunakan
+  // OrgStructureData,
   FormationRasioTableData,
 } from "@/types";
 
@@ -45,7 +47,8 @@ export default function OrganizationCulturePage() {
   const [formationRasioData, setFormationRasioData] =
     useState<FormationRasioTableData | null>(null);
   const [isLoadingFormation, setIsLoadingFormation] = useState(true);
-  const [formationPage, setFormationPage] = useState(1);
+  // HAPUS: State untuk paginasi tidak lagi digunakan
+  // const [formationPage, setFormationPage] = useState(1);
 
   // State untuk Section 2
   const [healthData, setHealthData] = useState<OrganizationHealthData | null>(
@@ -63,48 +66,40 @@ export default function OrganizationCulturePage() {
   const [hcmaData, setHcmaData] = useState<HcmaData | null>(null);
   const [isLoadingHcma, setIsLoadingHcma] = useState(true);
 
-  // useEffect untuk Formation Rasio Table (dengan paginasi)
-  // useEffect untuk Formation Rasio Table (dengan paginasi)
   useEffect(() => {
     if (selectedCompany && period.year && period.value) {
       setIsLoadingFormation(true);
+      // Hapus 'page' dari parameter karena API tidak lagi menggunakannya
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
         year: String(period.year),
         month: String(period.value),
-        page: String(formationPage),
       });
 
       fetch(`/api/charts/formation-rasio?${params.toString()}`)
         .then((res) => {
-          // TAMBAHKAN PENGECEKAN INI
           if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);
           }
           return res.json();
         })
         .then((data) => {
-          // Pengecekan baru: Cukup pastikan properti 'data' (array) ada.
           if (data && data.data) {
-            // <-- PERUBAHAN DI SINI
             setFormationRasioData(data);
           } else {
             throw new Error("Invalid data format received");
           }
         })
         .catch((err) => {
-          // Blok catch ini sekarang akan menangani error HTTP dan data invalid
           console.error("Error fetching formation rasio table:", err);
-          setFormationRasioData(null); // Set ke null agar data benar-benar kosong
+          setFormationRasioData(null);
         })
         .finally(() => setIsLoadingFormation(false));
     }
-  }, [selectedCompany, period, formationPage]);
+    // Hapus 'formationPage' dari dependency array
+  }, [selectedCompany, period]);
 
-  // --- HAPUS useEffect UNTUK organization-structure ---
-  // useEffect(() => { ... }, [selectedCompany, period.year]);
-
-  // --- BUAT useEffect BARU UNTUK MENGAMBIL DATA ENABLER VS REVENUE ---
+  // useEffect untuk Enabler vs Revenue
   useEffect(() => {
     if (selectedCompany && period.year && period.value) {
       setIsLoadingEnablerRevenue(true);
@@ -130,7 +125,7 @@ export default function OrganizationCulturePage() {
     }
   }, [selectedCompany, period]);
 
-  // --- 3. useEffect BARU UNTUK MENGAMBIL DATA DIVISI & DEPARTEMEN ---
+  // useEffect untuk Org Summary
   useEffect(() => {
     if (selectedCompany && period.year) {
       setIsLoadingOrgSummary(true);
@@ -178,25 +173,19 @@ export default function OrganizationCulturePage() {
         `/api/charts/employee-engagement?companyId=${selectedCompany}&year=${period.year}`
       )
         .then((res) => {
-          // 1. Periksa apakah respons server OK (status 200-299)
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           return res.json();
         })
         .then((data) => {
-          // 2. (Opsional tapi disarankan) Periksa apakah data memiliki properti yang diharapkan
           if (data && data.chartData) {
             setEngagementData(data);
           } else {
-            // Data valid JSON tapi tidak sesuai format yang diharapkan
             throw new Error("Invalid data format received");
           }
         })
         .catch((err) => {
-          // 3. Blok catch sekarang akan menangani error HTTP dan error parsing
           console.error("Error fetching engagement:", err);
-          setEngagementData(null); // Set ke null jika ada error APAPUN
+          setEngagementData(null);
         })
         .finally(() => setIsLoadingEngagement(false));
     }
@@ -238,14 +227,25 @@ export default function OrganizationCulturePage() {
 
   const enablerCount = enablerRevenueData?.enabler ?? 0;
   const revenueGeneratorCount = enablerRevenueData?.revenueGenerator ?? 0;
-  const totalEmployees = enablerCount + revenueGeneratorCount;
-
+  // Perhitungan rasio enabler (tidak berubah)
+  const totalCategorizedEmployees = enablerCount + revenueGeneratorCount;
   const enablerPercentage =
-    totalEmployees > 0 ? ((enablerCount / totalEmployees) * 100).toFixed(0) : 0;
-  const revenueGeneratorPercentage =
-    totalEmployees > 0
-      ? ((revenueGeneratorCount / totalEmployees) * 100).toFixed(0)
+    totalCategorizedEmployees > 0
+      ? ((enablerCount / totalCategorizedEmployees) * 100).toFixed(0)
       : 0;
+  const revenueGeneratorPercentage =
+    totalCategorizedEmployees > 0
+      ? ((revenueGeneratorCount / totalCategorizedEmployees) * 100).toFixed(0)
+      : 0;
+
+  // --- SOLUSI ERROR TIPE DATA ---
+  // Transformasi data hcmaData agar sesuai dengan yang diharapkan GroupedBarChart
+  const transformedHcmaData = hcmaData
+    ? {
+        ...hcmaData,
+        scoreLabel: hcmaData.scoreInfo?.text ?? "N/A", // <-- Tambahkan '?.' dan fallback
+      }
+    : null;
 
   return (
     <main className="p-8 bg-gray-100 min-h-screen">
@@ -254,17 +254,7 @@ export default function OrganizationCulturePage() {
       </h1>
 
       {/* --- SECTION 1 --- */}
-      {/* --- SECTION 1 --- */}
       <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">
-        {/* <FormationRasioTable
-            title="Employee Formation Rasio"
-            subtitle={period.year.toString()}
-            data={formationRasioData?.data || []}
-            meta={formationRasioData?.meta || { currentPage: 1, totalPages: 1 }}
-            isLoading={isLoadingFormation}
-            onPageChange={setFormationPage}
-          /> */}
-
         <div className="w-full lg:w-3/4">
           <FormationRasioBarChart
             data={formationRasioData}
@@ -280,7 +270,6 @@ export default function OrganizationCulturePage() {
             tooltipAlign="right"
             metrics={[
               {
-                // --- 2. GUNAKAN HASIL KALKULASI DI SINI ---
                 value: isLoadingEnablerRevenue
                   ? "..."
                   : `${enablerPercentage}% : ${revenueGeneratorPercentage}%`,
@@ -345,12 +334,10 @@ export default function OrganizationCulturePage() {
       </div>
 
       {/* --- SECTION 3 --- */}
-      {/* --- SECTION 3 --- */}
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           HC Maturity Assessment
         </h2>
-        {/* UBAH: Dari lg:grid-cols-3 menjadi lg:grid-cols-4 */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
           <div className="lg:col-span-1 flex flex-col gap-6">
             <InfoCard
@@ -362,7 +349,10 @@ export default function OrganizationCulturePage() {
                   value: isLoadingHcma
                     ? "..."
                     : hcmaData?.mainScore?.toFixed(2) || 0,
-                  label: isLoadingHcma ? "" : hcmaData?.scoreLabel || "N/A",
+                  label: isLoadingHcma
+                    ? ""
+                    : hcmaData?.scoreInfo?.text || "N/A",
+                  labelColorClass: hcmaData?.scoreInfo?.colorClass,
                 },
               ]}
             />
@@ -372,19 +362,21 @@ export default function OrganizationCulturePage() {
               labelSize="base"
               metrics={[
                 {
-                  // UBAH BARIS INI
                   value: isLoadingHcma
                     ? "..."
                     : hcmaData?.ifgAverageScore?.toFixed(2) || 0,
-                  label: isLoadingHcma ? "" : hcmaData?.scoreLabel || "N/A",
+                  label: isLoadingHcma
+                    ? ""
+                    : hcmaData?.scoreInfo?.text || "N/A",
+                  labelColorClass: hcmaData?.scoreInfo?.colorClass,
                 },
               ]}
             />
           </div>
-          {/* UBAH: Dari lg:col-span-2 menjadi lg:col-span-3 */}
           <div className="lg:col-span-3">
             <GroupedBarChart
-              data={hcmaData}
+              // Gunakan data yang sudah ditransformasi
+              data={transformedHcmaData}
               isLoading={isLoadingHcma}
               cardClassName="bg-white text-gray-800"
               showSummary={false}

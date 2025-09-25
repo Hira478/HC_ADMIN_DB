@@ -1,3 +1,5 @@
+// File: components/widgets/Demography/EducationChartCard.tsx
+
 "use client";
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
@@ -48,7 +50,25 @@ const EducationChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  const absoluteValues = chartData?.values || [];
+  const totalEmployees = absoluteValues.reduce((sum, value) => sum + value, 0);
+  const percentageValues = absoluteValues.map((value) =>
+    totalEmployees > 0 ? (value / totalEmployees) * 100 : 0
+  );
+
+  const maxPercentage = Math.max(...percentageValues, 0);
+  const yAxisMax = Math.min(100, Math.ceil(maxPercentage / 10) * 10 + 10);
+
   const option = {
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "shadow" },
+      // PERBAIKAN: Ganti 'any' dengan tipe yang lebih spesifik
+      formatter: (params: Array<{ name: string; value: number }>) => {
+        const data = params[0];
+        return `${data.name}<br/>${data.value.toFixed(1)}%`;
+      },
+    },
     grid: { top: "20%", bottom: "20%", left: "10%", right: "5%" },
     xAxis: {
       type: "category",
@@ -63,7 +83,10 @@ const EducationChartCard = () => {
     },
     yAxis: {
       type: "value",
-      show: true,
+      max: yAxisMax,
+      axisLabel: {
+        formatter: "{value}%",
+      },
       splitLine: {
         show: true,
         lineStyle: {
@@ -74,7 +97,7 @@ const EducationChartCard = () => {
     },
     series: [
       {
-        data: chartData?.values || [],
+        data: percentageValues,
         type: "bar",
         barWidth: "50%",
         color: "#4A5568",
@@ -83,6 +106,9 @@ const EducationChartCard = () => {
           position: "top",
           fontSize: 10,
           color: "#1f2937",
+          // PERBAIKAN: Ganti 'any' dengan tipe yang lebih spesifik
+          formatter: (params: { value: number }) =>
+            `${params.value.toFixed(1)}%`,
         },
       },
     ],

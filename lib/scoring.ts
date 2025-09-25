@@ -48,3 +48,28 @@ export function getHcmaScoreLabel(score: number): string {
   // Fallback jika skor tidak valid
   return "N/A";
 }
+
+// UBAH FUNGSI DI BAWAH INI
+/**
+ * Menentukan informasi skor (teks dan warna) untuk HC Maturity Assessment.
+ * @param score Skor numerik dari 1.00 hingga 4.00.
+ * @returns Objek berisi 'text' dan 'colorClass'.
+ */
+export function getHcmaScoreInfo(score: number): {
+  text: string;
+  colorClass: string;
+} {
+  if (score > 3.25) {
+    return { text: "Excellence", colorClass: "text-sky-400" }; // Biru Langit
+  }
+  if (score > 2.5) {
+    return { text: "Good", colorClass: "text-green-400" }; // Hijau
+  }
+  if (score > 1.75) {
+    return { text: "Medium", colorClass: "text-yellow-400" }; // Kuning
+  }
+  if (score >= 1.0) {
+    return { text: "Low", colorClass: "text-red-400" }; // Merah
+  }
+  return { text: "N/A", colorClass: "text-gray-400" }; // Fallback
+}

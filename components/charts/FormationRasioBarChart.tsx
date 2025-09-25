@@ -3,14 +3,13 @@
 
 import React from "react";
 import ReactECharts from "echarts-for-react";
-import type { FormationRasioTableData } from "@/types"; // Gunakan tipe yang sudah ada
+import type { FormationRasioTableData } from "@/types";
 
 interface ChartProps {
   data: FormationRasioTableData | null;
   isLoading: boolean;
 }
 
-// Definisikan kategori untuk pewarnaan dan area
 const enablerFamilies = ["IT", "HC & GA", "Finance", "Compliance"];
 const revenueFamilies = ["Strategy", "Business", "Operation"];
 
@@ -31,11 +30,14 @@ const FormationRasioBarChart: React.FC<ChartProps> = ({ data, isLoading }) => {
     );
   }
 
-  // Proses data untuk ECharts
   const categories = data.data.map((item) => item.jobFamily);
+  const numericValues = data.data.map((item) => parseFloat(item.rasio));
+
+  const maxValue = Math.max(...numericValues);
+  const yAxisMax = Math.ceil(maxValue / 10) * 10 + 10;
+
   const seriesData = data.data.map((item) => ({
-    value: parseFloat(item.rasio), // Ambil angka dari string 'x.x%'
-    // Atur warna bar berdasarkan kategori
+    value: parseFloat(item.rasio),
     itemStyle: {
       color: enablerFamilies.includes(item.jobFamily) ? "#3B82F6" : "#16A34A",
     },
@@ -47,10 +49,6 @@ const FormationRasioBarChart: React.FC<ChartProps> = ({ data, isLoading }) => {
       axisPointer: { type: "shadow" },
       formatter: "{b}<br/>Rasio: {c}%",
     },
-    legend: {
-      data: ["Enabler", "Revenue Generator"],
-      top: 10,
-    },
     grid: {
       left: "3%",
       right: "4%",
@@ -60,16 +58,21 @@ const FormationRasioBarChart: React.FC<ChartProps> = ({ data, isLoading }) => {
     xAxis: {
       type: "category",
       data: categories,
+      boundaryGap: true,
+      axisTick: {
+        alignWithLabel: true,
+      },
     },
     yAxis: {
       type: "value",
+      max: yAxisMax,
       axisLabel: {
         formatter: "{value}%",
       },
     },
     series: [
       {
-        name: "Rasio", // Nama series utama
+        name: "Rasio",
         type: "bar",
         data: seriesData,
         barWidth: "60%",
@@ -79,36 +82,48 @@ const FormationRasioBarChart: React.FC<ChartProps> = ({ data, isLoading }) => {
           formatter: "{c}%",
           color: "#333",
         },
-        // INI BAGIAN KUNCI UNTUK MEMBUAT "VISUAL AREA"
+        // --- TAMBAHKAN KEMBALI BLOK markArea DENGAN WARNA BARU ---
         markArea: {
-          silent: true, // Agar tidak bisa di-klik
-          itemStyle: {
-            color: "rgba(0, 0, 0, 0.05)", // Warna abu-abu transparan
-          },
+          silent: true,
           data: [
             // Area untuk Enabler
             [
-              { name: "Enabler", xAxis: enablerFamilies[0] }, // Mulai dari job family pertama
-              { xAxis: enablerFamilies[enablerFamilies.length - 1] }, // Selesai di job family terakhir
+              {
+                name: "Enabler",
+                xAxis: enablerFamilies[0],
+                itemStyle: {
+                  color: "rgba(59, 130, 246, 0.1)", // Biru transparan
+                },
+              },
+              {
+                xAxis: enablerFamilies[enablerFamilies.length - 1],
+              },
             ],
             // Area untuk Revenue Generator
             [
-              { name: "Revenue Generator", xAxis: revenueFamilies[0] },
-              { xAxis: revenueFamilies[revenueFamilies.length - 1] },
+              {
+                name: "Revenue Generator",
+                xAxis: revenueFamilies[0],
+                itemStyle: {
+                  color: "rgba(22, 163, 74, 0.1)", // Hijau transparan
+                },
+              },
+              {
+                xAxis: revenueFamilies[revenueFamilies.length - 1],
+              },
             ],
           ],
         },
       },
-      // Series dummy untuk legenda
       {
         name: "Enabler",
-        type: "bar",
+        type: "line",
         data: [],
         itemStyle: { color: "#3B82F6" },
       },
       {
         name: "Revenue Generator",
-        type: "bar",
+        type: "line",
         data: [],
         itemStyle: { color: "#16A34A" },
       },
@@ -119,8 +134,6 @@ const FormationRasioBarChart: React.FC<ChartProps> = ({ data, isLoading }) => {
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col h-full">
       <h2 className="text-xl font-semibold mb-4">Employee Formation Rasio</h2>
       <div style={{ height: "400px" }}>
-        {" "}
-        {/* Beri tinggi agar chart terlihat */}
         <ReactECharts option={option} style={{ height: "100%" }} />
       </div>
     </div>

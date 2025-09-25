@@ -1,9 +1,10 @@
+// File: /components/widgets/Demography/EmployeeStatusCard.tsx
+
 "use client";
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
 
-// 1. Definisikan tipe data yang lebih lengkap sesuai respons API
 interface StatusData {
   name: string;
   value: number;
@@ -18,7 +19,6 @@ interface EmployeeStatusState {
 
 const EmployeeStatusCard = () => {
   const { selectedCompany, period } = useFilters();
-  // 2. Gunakan state baru yang bisa menampung chartData dan yoy
   const [data, setData] = useState<EmployeeStatusState | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +42,6 @@ const EmployeeStatusCard = () => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        // 3. Simpan seluruh objek respons dari API ke dalam state
         const apiData: EmployeeStatusState = await response.json();
         setData(apiData);
       } catch (error) {
@@ -76,7 +75,9 @@ const EmployeeStatusCard = () => {
         label: {
           show: true,
           position: "inside",
-          formatter: "{b}\n{c}",
+          // --- PERUBAHAN DI SINI ---
+          // Tampilkan persentase ({d}%) bukan angka absolut ({c})
+          formatter: "{b}\n{d}%",
           fontSize: 14,
           color: "#fff",
           fontWeight: "bold",
@@ -103,7 +104,6 @@ const EmployeeStatusCard = () => {
             textBorderType: "solid",
           },
         },
-        // 4. Arahkan sumber data chart ke `data.chartData`
         data: (data?.chartData || []).map((item) => ({
           ...item,
           itemStyle: {
@@ -134,7 +134,6 @@ const EmployeeStatusCard = () => {
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
       <h3 className="font-bold text-xl text-gray-800 mb-2">Employee Status</h3>
 
-      {/* Tampilan legenda kustom Anda tetap sama */}
       <div className="flex justify-center gap-8 mt-4">
         <div className="flex items-center translate-y-[60px]">
           <span className="h-4 w-4 rounded-full bg-red-700 mr-2"></span>
@@ -146,7 +145,6 @@ const EmployeeStatusCard = () => {
         </div>
       </div>
 
-      {/* Tampilan chart Anda tetap sama */}
       <div className="flex-1 flex items-center justify-center -mt-2">
         <ReactECharts
           option={option}
@@ -157,7 +155,6 @@ const EmployeeStatusCard = () => {
         />
       </div>
 
-      {/* 5. Ganti teks statis dengan data YoY yang dinamis */}
       <div className="text-base text-gray-600 -mt-3 text-center space-y-1 transform -translate-y-1">
         <p className="font-medium">
           Permanent:{" "}

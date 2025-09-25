@@ -6,6 +6,7 @@ import InfoTooltip from "./InfoTooltip";
 interface Metric {
   value: string | number;
   label: string;
+  labelColorClass?: string;
 }
 
 interface InfoCardProps {
@@ -57,10 +58,10 @@ const InfoCard: React.FC<InfoCardProps> = ({
             <p className="text-3xl font-bold">{metric.value}</p>
             {/* 3. Gunakan prop 'labelSize' untuk mengatur kelas font secara dinamis */}
             <p
-              // UBAH: Dari text-gray-400 menjadi text-white
+              // Terapkan kelas warna jika ada, jika tidak gunakan text-white
               className={`whitespace-pre-line ${
                 layout === "vertical" ? "mt-1" : "ml-2"
-              } text-${labelSize} text-white`}
+              } text-${labelSize} ${metric.labelColorClass || "text-white"}`}
             >
               {metric.label}
             </p>

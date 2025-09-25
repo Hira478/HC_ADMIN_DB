@@ -39,8 +39,17 @@ const IndividualChart = ({
       type: "value",
       axisLabel: {
         formatter: (value: number) => {
-          if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
-          if (Math.abs(value) >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+          if (value === 0) return "0";
+          if (Math.abs(value) >= 1e6) {
+            const num = value / 1e6;
+            // Gunakan parseFloat untuk menghilangkan .0 yang tidak perlu
+            return `${parseFloat(num.toFixed(1))}M`;
+          }
+          if (Math.abs(value) >= 1e3) {
+            const num = value / 1000;
+            // Gunakan parseFloat untuk menghilangkan .0 yang tidak perlu
+            return `${parseFloat(num.toFixed(1))}K`;
+          }
           return value;
         },
       },

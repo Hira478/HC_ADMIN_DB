@@ -80,7 +80,10 @@ export interface TurnoverData {
 export interface HcmaData {
   title: string;
   mainScore: number; // Ini adalah Average Score perusahaan
-  scoreLabel: string;
+  scoreInfo: {
+    text: string;
+    colorClass: string;
+  };
   trend: string;
   ifgAverageScore: number; // Ini adalah Average Score Grup IFG
   chartData: {
