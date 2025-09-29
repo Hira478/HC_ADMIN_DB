@@ -3,6 +3,7 @@
 
 import StatCard from "@/components/widgets/StatCard";
 import ProductivityChartCard from "@/components/widgets/ProductivityChartCard";
+import KpiTable from "@/components/tables/KpiTable";
 import GroupedBarChart from "@/components/charts/GroupedBarChart";
 import type {
   ProductivityCardData,
@@ -112,16 +113,22 @@ const ProductivitySection = ({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-4">
             {/* GroupedBarChart sekarang menggunakan data asli dan status loading-nya */}
-            <GroupedBarChart
-              data={kpiData}
-              isLoading={loadingKpi}
-              showSummary={true}
-              cardClassName="bg-white text-gray-800"
-              tooltipText="Perbandingan rata-rata skor KPI tahun ini dengan tahun sebelumnya."
-              summaryUnit="Unit: Percentage"
-              layoutMode="wide"
-              summaryFormat="percentage"
-            />
+            {/* 1. GroupedBarChart di-comment atau dihapus */}
+            {/*
+              <GroupedBarChart
+                data={kpiData}
+                isLoading={loadingKpi}
+                showSummary={true}
+                cardClassName="bg-white text-gray-800"
+                tooltipText="Perbandingan rata-rata skor KPI tahun ini dengan tahun sebelumnya."
+                summaryUnit="Unit: Percentage"
+                layoutMode="wide"
+                summaryFormat="percentage"
+              />
+            */}
+
+            {/* 2. Tambahkan komponen KpiTable yang baru */}
+            <KpiTable />
           </div>
         </div>
       </div>

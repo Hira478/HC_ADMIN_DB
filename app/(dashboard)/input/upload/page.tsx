@@ -71,6 +71,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_turnover.xlsx",
     title: "Data Turnover",
   },
+  quartalKpi: {
+    apiUrl: "/api/uploads/quartal-kpi",
+    templateUrl: "/templates/template_quartal_kpi.xlsx",
+    title: "Data KPI Kuartalan",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 

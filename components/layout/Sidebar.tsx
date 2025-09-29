@@ -90,6 +90,11 @@ const Sidebar = () => {
           icon={<ClipboardList size={20} />}
           title={"Workforce\nPlanning"}
         />
+        <SidebarItem
+          href="/data-center"
+          icon={<ClipboardList size={20} />}
+          title={"Data Center"}
+        />
 
         {user?.role === "SUPER_ADMIN" && (
           <>
