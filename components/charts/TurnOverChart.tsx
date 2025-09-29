@@ -93,9 +93,9 @@ const TurnOverChart: React.FC<TurnOverChartProps> = ({ data, isLoading }) => {
       <div className="w-1/4 flex flex-col justify-center items-center pr-4 border-r border-gray-600">
         {/* 2. Tambahkan div pembungkus baru untuk teks */}
         <div>
-          <p className="text-gray-400 text-sm">Turn Over Ratio</p>
+          <p className="text-white-500 text-md mb-2">Turn Over Ratio</p>
           <p className="text-5xl font-bold my-1">{data?.ytdRatio ?? 0}%</p>
-          <p className="text-sm text-red-400">{data?.change}</p>
+          <p className="text-sm text-green-500">{data?.change}</p>
         </div>
       </div>
 

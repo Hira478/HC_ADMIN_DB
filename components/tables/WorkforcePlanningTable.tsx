@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { CogIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
 // Tipe untuk setiap baris data
@@ -141,7 +140,6 @@ const WorkforcePlanningTable: React.FC<TableProps> = ({
         <h2 className="text-xl font-semibold">
           Manpower Planning vs Headcount
         </h2>
-        <CogIcon className="h-6 w-6 text-gray-500 cursor-pointer" />
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">

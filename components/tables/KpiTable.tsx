@@ -2,9 +2,10 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
-import { useFilters } from "@/contexts/FilterContext"; // Pastikan path ini sesuai dengan proyek Anda
+import { useFilters } from "@/contexts/FilterContext";
+import QuarterScoreCard from "@/components/widgets/QuarterScoreCard";
 
-// --- Tipe Data ---
+// Tipe Data
 interface KpiDetail {
   id: number;
   year: number;
@@ -16,7 +17,7 @@ interface KpiDetail {
 }
 
 interface QuarterlySummary {
-  quarter: string; // "Q1", "Q2", etc.
+  quarter: string;
   score: number;
 }
 
@@ -25,7 +26,7 @@ interface KpiData {
   kpiDetails: KpiDetail[];
 }
 
-// --- Fungsi Helper ---
+// Fungsi Helper
 const calculateAdjustedSkorCapaian = (skor: number): number => {
   if (skor > 1.1) return 1.1;
   if (skor < 0) return 0;
@@ -36,7 +37,7 @@ const formatAsPercentage = (value: number): string => {
   return `${(value * 100).toFixed(1)}%`;
 };
 
-// --- Komponen Paginasi ---
+// Komponen Paginasi
 const Pagination: React.FC<{
   currentPage: number;
   totalPages: number;
@@ -99,14 +100,31 @@ const Pagination: React.FC<{
   );
 };
 
-// --- Komponen Utama ---
+// Komponen Utama
 const KpiTable = () => {
   const { selectedCompany, period } = useFilters();
   const [kpiData, setKpiData] = useState<KpiData | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+
+  const [activeQuarter, setActiveQuarter] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (period.type === "monthly" && period.value) {
+      setActiveQuarter(Math.ceil(period.value / 3));
+    } else if (period.type === "quarterly" && period.value) {
+      setActiveQuarter(period.value);
+    } else {
+      setActiveQuarter(null);
+    }
+  }, [period]);
+
+  const handleQuarterCardClick = (quarterNumber: number) => {
+    // Langsung set kuartal aktif.
+    // Jika nilainya sama, React tidak akan melakukan apa-apa.
+    setActiveQuarter(quarterNumber);
+  };
 
   useEffect(() => {
     if (!selectedCompany || !period?.year) {
@@ -134,32 +152,20 @@ const KpiTable = () => {
         setCurrentPage(1);
       }
     };
-
     fetchData();
-  }, [selectedCompany, period]);
+  }, [selectedCompany, period]); // Dependensi hanya pada `period.year`
 
-  // Tentukan kuartal target berdasarkan filter
-  const targetQuarter = useMemo(() => {
-    if (!period) return null;
-    if (period.type === "monthly" && period.value) {
-      return Math.ceil(period.value / 3);
-    }
-    if (period.type === "quarterly" && period.value) {
-      return period.value;
-    }
-    return null;
-  }, [period]);
+  const panelTitle = useMemo(() => {
+    if (activeQuarter) return `Total Score KPI Q${activeQuarter}`;
+    return "Total Score KPI";
+  }, [activeQuarter]);
 
-  // Buat daftar KPI yang sudah difilter
   const filteredKpiDetails = useMemo(() => {
     const allDetails = kpiData?.kpiDetails || [];
-    if (targetQuarter === null) {
-      return allDetails;
-    }
-    return allDetails.filter((item) => item.quarter === targetQuarter);
-  }, [kpiData, targetQuarter]);
+    if (activeQuarter === null) return allDetails;
+    return allDetails.filter((item) => item.quarter === activeQuarter);
+  }, [kpiData, activeQuarter]);
 
-  // Sesuaikan kalkulasi paginasi dan total skor
   const tableTotalScore = useMemo(() => {
     return filteredKpiDetails.reduce((sum, item) => {
       const adjustedScore = calculateAdjustedSkorCapaian(item.achievementScore);
@@ -175,6 +181,18 @@ const KpiTable = () => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredKpiDetails.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [currentPage, filteredKpiDetails]);
+
+  const placeholderCount = useMemo(() => {
+    const isLastPage = currentPage === totalPages;
+    if (
+      isLastPage &&
+      currentItems.length > 0 &&
+      currentItems.length < ITEMS_PER_PAGE
+    ) {
+      return ITEMS_PER_PAGE - currentItems.length;
+    }
+    return 0;
+  }, [currentItems, currentPage, totalPages]);
 
   const allQuarters = ["Q1", "Q2", "Q3", "Q4"];
 
@@ -194,52 +212,34 @@ const KpiTable = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
-      {/* Kolom Kiri: Panel Skor Kuartal */}
       <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
-          Total Score KPI
-        </h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">{panelTitle}</h3>
         <div className="flex flex-col flex-grow gap-4">
-          {allQuarters.map((quarterName) => {
+          {allQuarters.map((quarterName, index) => {
+            const quarterNumber = index + 1;
             const quarterData = kpiData.quarterlySummary.find(
-              (summary) => summary.quarter === quarterName
+              (s) => s.quarter === quarterName
             );
-
-            if (quarterData) {
-              return (
-                <div
-                  key={quarterData.quarter}
-                  className={`${
-                    quarterData.score > 100
+            return (
+              <QuarterScoreCard
+                key={quarterName}
+                quarter={quarterName}
+                score={quarterData?.score}
+                isPlaceholder={!quarterData}
+                onClick={() => handleQuarterCardClick(quarterNumber)}
+                className={
+                  quarterData
+                    ? quarterData.score > 100
                       ? "bg-gray-200 text-gray-800"
                       : "bg-gray-800 text-white"
-                  } p-4 rounded-xl shadow-md flex-grow flex items-center justify-between`}
-                >
-                  <span className="text-lg font-bold">
-                    {quarterData.quarter}
-                  </span>
-                  <span className="text-2xl font-extrabold tracking-tight">
-                    {quarterData.score.toFixed(1)}%
-                  </span>
-                </div>
-              );
-            } else {
-              return (
-                <div
-                  key={quarterName}
-                  className="bg-gray-100 border-2 border-dashed border-gray-300 text-gray-400 p-4 rounded-xl flex-grow flex items-center justify-center"
-                >
-                  <span className="font-semibold text-center">
-                    {quarterName} - No Data
-                  </span>
-                </div>
-              );
-            }
+                    : ""
+                }
+              />
+            );
           })}
         </div>
       </div>
 
-      {/* Kolom Kanan: Tabel Detail */}
       <div className="lg:col-span-3">
         <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col justify-between">
           {filteredKpiDetails.length > 0 ? (
@@ -287,7 +287,11 @@ const KpiTable = () => {
                             <td className="p-3 text-center text-gray-500">
                               {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                             </td>
-                            <td className="p-3">{item.kpiName}</td>
+                            <td className="p-3 max-w-xs">
+                              <div className="truncate" title={item.kpiName}>
+                                {item.kpiName}
+                              </div>
+                            </td>
                             <td className="p-3">{item.kpiCategory}</td>
                             <td className="p-3 text-right">
                               {formatAsPercentage(item.weight)}
@@ -301,6 +305,19 @@ const KpiTable = () => {
                           </tr>
                         );
                       })}
+                      {placeholderCount > 0 &&
+                        Array.from({ length: placeholderCount }).map(
+                          (_, index) => (
+                            <tr
+                              key={`placeholder-${index}`}
+                              className="border-b border-gray-200"
+                            >
+                              <td colSpan={6} className="p-3 h-[57px]">
+                                &nbsp;
+                              </td>
+                            </tr>
+                          )
+                        )}
                     </tbody>
                   </table>
                 </div>
@@ -315,7 +332,7 @@ const KpiTable = () => {
             </>
           ) : (
             <div className="p-10 text-center bg-yellow-100 text-yellow-800 rounded-lg h-full flex items-center justify-center">
-              There is no KPI data available for the selected filters.
+              Tidak ada data detail KPI untuk periode yang dipilih.
             </div>
           )}
         </div>

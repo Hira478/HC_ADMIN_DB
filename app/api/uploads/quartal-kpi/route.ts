@@ -3,33 +3,26 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// DIUBAH: Interface disesuaikan dengan header Excel ("Tahun")
+// Interface disesuaikan dengan header Excel
 interface QuartalKpiExcelRow {
-  Tahun: number; // Sebelumnya "Year"
+  No?: number; // Tambahkan No agar bisa dilog
+  Tahun: number;
   Perusahaan: string;
   Quartal: string;
   KPI: string;
   Kategori: string;
-  Bobot: string | number; // Bisa string "6%" atau number 0.06
+  Bobot: string | number;
   "Skor Capaian": string | number;
 }
 
-// DIUBAH: Helper function diperbarui untuk menangani angka langsung
+// Helper functions (tidak berubah)
 const parsePercentage = (value: string | number | undefined): number | null => {
-  if (typeof value === "number") {
-    // Jika sudah angka, asumsikan itu adalah format desimal yang benar (misal: 0.06)
-    // dan langsung kembalikan nilainya.
-    return value;
-  }
+  if (typeof value === "number") return value;
   if (typeof value !== "string") return null;
-
-  // Jika string, proses seperti sebelumnya
   const cleanedValue = value.replace(/%/g, "").replace(/,/g, ".").trim();
   const num = parseFloat(cleanedValue);
-
   return isNaN(num) ? null : num / 100;
 };
-
 const parseQuarter = (value: string | undefined): number | null => {
   if (!value || typeof value !== "string") return null;
   const num = parseInt(value.replace(/quartal/i, "").trim());
@@ -61,6 +54,11 @@ export async function POST(request: NextRequest) {
     const sheet = workbook.Sheets[sheetName];
     const rows: QuartalKpiExcelRow[] = xlsx.utils.sheet_to_json(sheet);
 
+    // --- CONSOLE LOG 1: Cek jumlah total baris ---
+    console.log(
+      `[PROSES DIMULAI] Ditemukan ${rows.length} baris di file Excel.`
+    );
+
     const allCompanies = await prisma.company.findMany({
       select: { id: true, name: true },
     });
@@ -68,42 +66,74 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
+    let skippedCount = 0;
+
     const dataToUpsert = rows
-      .map((row) => {
+      .map((row, index) => {
+        const validationErrors: string[] = [];
+
+        // Validasi setiap kolom secara terpisah
         const companyName = row.Perusahaan?.toString().trim().toLowerCase();
         const companyId = companyMap.get(companyName);
+        if (!companyId) {
+          validationErrors.push(
+            `Perusahaan tidak ditemukan: '${row.Perusahaan}'`
+          );
+        }
+
+        if (!row.Tahun || isNaN(Number(row.Tahun))) {
+          validationErrors.push(`Tahun tidak valid: '${row.Tahun}'`);
+        }
 
         const quarter = parseQuarter(row.Quartal);
-        const weight = parsePercentage(row.Bobot);
-        const achievementScore = parsePercentage(row["Skor Capaian"]);
+        if (quarter === null) {
+          validationErrors.push(`Format Kuartal salah: '${row.Quartal}'`);
+        }
 
-        // DIUBAH: Mengakses "row.Tahun" bukan "row.Year"
-        if (
-          !companyId ||
-          !row.Tahun ||
-          !quarter ||
-          !row.KPI ||
-          weight === null ||
-          achievementScore === null
-        ) {
+        if (!row.KPI || String(row.KPI).trim() === "") {
+          validationErrors.push(`Nama KPI kosong`);
+        }
+
+        const weight = parsePercentage(row.Bobot);
+        if (weight === null) {
+          validationErrors.push(`Format Bobot salah: '${row.Bobot}'`);
+        }
+
+        const achievementScore = parsePercentage(row["Skor Capaian"]);
+        if (achievementScore === null) {
+          validationErrors.push(
+            `Format Skor Capaian salah: '${row["Skor Capaian"]}'`
+          );
+        }
+
+        // --- CONSOLE LOG 2: Jika ada error, tampilkan detailnya ---
+        if (validationErrors.length > 0) {
+          skippedCount++;
+          // Menggunakan `index + 2` untuk mencerminkan nomor baris aktual di Excel (asumsi header di baris 1)
           console.warn(
-            "Data tidak lengkap atau tidak valid, baris dilewati:",
-            row
+            `[BARIS DILEWATI] Baris Excel #${index + 2} (No: ${
+              row.No || "N/A"
+            }) Gagal validasi - Alasan: ${validationErrors.join(", ")}.`
           );
           return null;
         }
 
         return {
-          year: Number(row.Tahun), // DIUBAH
-          quarter: quarter,
-          companyId: companyId,
-          kpiName: row.KPI,
+          year: Number(row.Tahun),
+          quarter: quarter!,
+          companyId: companyId!,
+          kpiName: String(row.KPI).trim(),
           kpiCategory: row.Kategori,
-          weight: weight,
-          achievementScore: achievementScore,
+          weight: weight!,
+          achievementScore: achievementScore!,
         };
       })
       .filter((data): data is NonNullable<typeof data> => data !== null);
+
+    // --- CONSOLE LOG 3: Ringkasan hasil proses ---
+    console.log(
+      `[PROSES SELESAI] ${dataToUpsert.length} baris valid akan diimpor. ${skippedCount} baris dilewati.`
+    );
 
     if (dataToUpsert.length === 0) {
       return NextResponse.json(
