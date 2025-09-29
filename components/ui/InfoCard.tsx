@@ -7,6 +7,7 @@ interface Metric {
   value: string | number;
   label: string;
   labelColorClass?: string;
+  indicator?: string;
 }
 
 interface InfoCardProps {
@@ -16,8 +17,9 @@ interface InfoCardProps {
   tooltipText?: string;
   tooltipAlign?: "center" | "left" | "right";
   layout?: "horizontal" | "vertical";
-  // 1. Tambahkan prop baru untuk ukuran font label
   labelSize?: "xs" | "sm" | "base" | "lg";
+  // PERUBAHAN 1: Tambahkan prop boolean baru untuk style khusus ini
+  specialHCMAStyle?: boolean;
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({
@@ -27,8 +29,9 @@ const InfoCard: React.FC<InfoCardProps> = ({
   tooltipText,
   tooltipAlign,
   layout = "horizontal",
-  // 2. Set nilai default ke 'xs' agar tidak merusak tampilan lain
   labelSize = "xs",
+  // Ambil prop baru
+  specialHCMAStyle = false,
 }) => {
   return (
     <div className="bg-[#343A40] p-6 rounded-lg shadow-md text-white flex flex-col flex-1">
@@ -45,26 +48,59 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
       <div className="flex flex-grow items-center justify-start">
         {metrics.map((metric, index) => (
-          <div
-            key={index}
-            className={`flex ${
-              layout === "vertical"
-                ? "flex-col"
-                : alignMode === "start"
-                ? "items-start"
-                : "items-baseline"
-            } mr-8 last:mr-0`}
-          >
-            <p className="text-3xl font-bold">{metric.value}</p>
-            {/* 3. Gunakan prop 'labelSize' untuk mengatur kelas font secara dinamis */}
-            <p
-              // Terapkan kelas warna jika ada, jika tidak gunakan text-white
-              className={`whitespace-pre-line ${
-                layout === "vertical" ? "mt-1" : "ml-2"
-              } text-${labelSize} ${metric.labelColorClass || "text-white"}`}
-            >
-              {metric.label}
-            </p>
+          <div key={index} className="mr-8 last:mr-0">
+            {/* PERUBAHAN 2: Gunakan ternary untuk memilih layout */}
+            {specialHCMAStyle ? (
+              // Layout Khusus untuk HCMA
+              <div className="flex flex-col items-start">
+                <div className="flex items-baseline">
+                  <p className="text-3xl font-bold">{metric.value}</p>
+                  <p
+                    className={`ml-2 whitespace-pre-line text-${labelSize} ${
+                      metric.labelColorClass || "text-white"
+                    }`}
+                  >
+                    {metric.label}
+                  </p>
+                </div>
+                {metric.indicator && (
+                  <p className="text-ms text-gray-400 mt-1 font-medium">
+                    {metric.indicator}
+                  </p>
+                )}
+              </div>
+            ) : (
+              // Layout Normal untuk semua kartu lain
+              <div
+                className={`flex ${
+                  layout === "vertical"
+                    ? "flex-col items-start"
+                    : alignMode === "start"
+                    ? "items-start"
+                    : "items-baseline"
+                }`}
+              >
+                <p className="text-3xl font-bold">{metric.value}</p>
+                <div
+                  className={`flex flex-col ${
+                    layout === "vertical" ? "mt-1" : "ml-2"
+                  }`}
+                >
+                  <p
+                    className={`whitespace-pre-line text-${labelSize} ${
+                      metric.labelColorClass || "text-white"
+                    }`}
+                  >
+                    {metric.label}
+                  </p>
+                  {metric.indicator && (
+                    <p className="text-xs text-gray-400 mt-1 font-light">
+                      {metric.indicator}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

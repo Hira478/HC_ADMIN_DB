@@ -47,8 +47,9 @@ export interface ProductivityCardData {
 
 export interface EmployeeCostCardData {
   total: MetricData;
-  costPerEmployee: MetricData; // <-- Ganti nama dari 'ratio'
-  ratio: MetricData; // <-- Tambahkan properti baru
+  costPerEmployee: MetricData;
+  ratio: MetricData;
+  totalCost?: MetricData; // PERUBAHAN: Tambahkan properti opsional totalCost
 }
 
 // Tipe gabungan untuk semua data demografi yang di-fetch oleh page.tsx

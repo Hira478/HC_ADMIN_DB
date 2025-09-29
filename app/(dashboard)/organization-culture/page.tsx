@@ -342,8 +342,9 @@ export default function OrganizationCulturePage() {
           <div className="lg:col-span-1 flex flex-col gap-6">
             <InfoCard
               title="HC Maturity"
-              tooltipText="Ini Average Score dari 5 dimensi penilaian HC Maturity Assessment."
+              tooltipText="Ini Average Score dari 8 dimensi penilaian HC Maturity Assessment."
               labelSize="base"
+              specialHCMAStyle
               metrics={[
                 {
                   value: isLoadingHcma
@@ -353,13 +354,15 @@ export default function OrganizationCulturePage() {
                     ? ""
                     : hcmaData?.scoreInfo?.text || "N/A",
                   labelColorClass: hcmaData?.scoreInfo?.colorClass,
+                  indicator: "Range score 1 to 4",
                 },
               ]}
             />
             <InfoCard
-              title="HC Maturity IFG Group"
+              title="HC Maturity Consolidation"
               tooltipText="Ini Average Score dari kelompok IFG dalam HC Maturity Assessment."
               labelSize="base"
+              specialHCMAStyle
               metrics={[
                 {
                   value: isLoadingHcma
@@ -369,6 +372,7 @@ export default function OrganizationCulturePage() {
                     ? ""
                     : hcmaData?.scoreInfo?.text || "N/A",
                   labelColorClass: hcmaData?.scoreInfo?.colorClass,
+                  indicator: "Range score 1 to 4",
                 },
               ]}
             />
@@ -381,7 +385,7 @@ export default function OrganizationCulturePage() {
               cardClassName="bg-white text-gray-800"
               showSummary={false}
               yAxisMax={4}
-              tooltipText="Detail skor HC Maturity Assessment berdasarkan 5 dimensi penilaian."
+              tooltipText="Detail skor HC Maturity Assessment berdasarkan 8 dimensi penilaian."
             />
           </div>
         </div>

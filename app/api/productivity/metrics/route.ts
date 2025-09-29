@@ -3,9 +3,8 @@
 import { ProductivityStat } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. IMPORT HELPER KEAMANAN
+import { getCompanyFilter } from "@/lib/prisma-filter";
 
-// Fungsi-fungsi helper (sumProductivity, formatCurrency, dll) tidak perlu diubah
 const sumProductivity = (stats: ProductivityStat[]) =>
   stats.reduce(
     (acc, current) => {
@@ -39,9 +38,6 @@ const formatYoYString = (percentage: number): string => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  // --- 2. HAPUS baris ini, kita tidak akan mengambil companyId dari klien lagi ---
-  // const companyId = parseInt(searchParams.get("companyId") || "0");
-
   const currentYear = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
   );
@@ -63,7 +59,6 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    // --- 3. PANGGIL HELPER KEAMANAN UNTUK MENDAPATKAN FILTER PERUSAHAAN ---
     const companyFilter = await getCompanyFilter(request);
 
     const [
@@ -73,7 +68,6 @@ export async function GET(request: NextRequest) {
       previousYearHeadcount,
     ] = await Promise.all([
       prisma.productivityStat.findMany({
-        // --- 4. GUNAKAN companyFilter DI SEMUA QUERY ---
         where: {
           year: currentYear,
           month: { in: monthsToFetch },
@@ -95,7 +89,6 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    // --- Sisa dari logika Anda tidak perlu diubah, sudah benar ---
     const totalProductivityCurrent = sumProductivity(currentYearProductivity);
     const headcountCurrent = currentYearHeadcount?.totalCount || 0;
 
@@ -135,6 +128,13 @@ export async function GET(request: NextRequest) {
       employeeCostRatioCurrent,
       employeeCostRatioPrevious
     );
+
+    // TAMBAHKAN INI: Kalkulasi YoY untuk Total Cost
+    const yoyTotalCost = calculateYoY(
+      totalProductivityCurrent.totalCost,
+      totalProductivityPrevious.totalCost
+    );
+
     const yoyRevenue = calculateYoY(
       totalProductivityCurrent.revenue,
       totalProductivityPrevious.revenue
@@ -199,6 +199,11 @@ export async function GET(request: NextRequest) {
         ratio: {
           value: `${employeeCostRatioCurrent.toFixed(1)}%`,
           change: formatYoYString(yoyEmployeeCostRatio),
+        },
+        // TAMBAHKAN PROPERTI INI: Kirim data totalCost ke frontend
+        totalCost: {
+          value: formatCurrency(totalProductivityCurrent.totalCost),
+          change: formatYoYString(yoyTotalCost),
         },
       },
     };

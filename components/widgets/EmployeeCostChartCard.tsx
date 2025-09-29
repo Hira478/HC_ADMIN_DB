@@ -2,24 +2,14 @@
 
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
-import { Settings } from "lucide-react";
 import { useFilters } from "@/contexts/FilterContext";
 import CardLoader from "./CardLoader";
 
-interface ChartSeries {
-  name: string;
-  data: number[];
-}
-
 interface EmployeeCostChartData {
-  labels: string[];
-  series: ChartSeries[];
+  months: string[];
+  totalEmployeeCost: number[];
+  totalCost: number[];
 }
-
-const getColorByIndex = (index: number) => {
-  const colors = ["#EF4444", "#3B82F6", "#22C55E", "#F59E0B", "#4F46E5"];
-  return colors[index % colors.length];
-};
 
 const EmployeeCostChartCard = () => {
   const { selectedCompany, period } = useFilters();
@@ -29,15 +19,15 @@ const EmployeeCostChartCard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!selectedCompany || !period) return;
+    // Jangan fetch data jika filter belum siap
+    if (!selectedCompany || !period || !period.value) return;
 
     const fetchData = async () => {
       setLoading(true);
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
-        type: "yearly",
         year: String(period.year),
-        value: "1",
+        month: String(period.value), // Kirim bulan yang dipilih
       });
 
       try {
@@ -57,80 +47,81 @@ const EmployeeCostChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // Satu fungsi formatter yang andal untuk semua kebutuhan
+  const numberFormatter = (value: number | { value: number } | null) => {
+    // ECharts bisa mengirim objek atau angka, ekstrak nilainya
+    const num =
+      typeof value === "object" && value !== null ? value.value : value;
+
+    // Pastikan itu angka sebelum memformat
+    if (typeof num !== "number" || isNaN(num)) {
+      return value;
+    }
+
+    // Format ke string dengan pemisah titik ribuan (standar Indonesia)
+    return num.toLocaleString("id-ID");
+  };
+
   const option = {
     tooltip: {
       trigger: "axis",
-      axisPointer: {
-        type: "line",
-      },
+      axisPointer: { type: "cross" },
+      // Terapkan formatter ke tooltip
+      valueFormatter: numberFormatter,
     },
     legend: {
-      data: chartData?.series.map((s) => s.name) || [],
-      bottom: 10,
-      itemWidth: 15,
-      itemHeight: 10,
+      data: ["Total Employee Cost", "Total Cost"],
+      top: "10%",
     },
-    grid: { left: "3%", right: "4%", bottom: "15%", containLabel: true },
     xAxis: {
       type: "category",
-      boundaryGap: false,
-      data: chartData?.labels || [],
+      data: chartData?.months || [],
     },
     yAxis: {
       type: "value",
-      axisLabel: {
-        formatter: (value: number) => {
-          if (value >= 1e6) return value / 1e6 + "M";
-          if (value >= 1e3) return value / 1e3 + "K";
-          return value;
-        },
-      },
+      // Terapkan formatter ke sumbu Y
+      axisLabel: { formatter: numberFormatter },
     },
-    series:
-      chartData?.series.map((s, idx) => ({
-        name: s.name,
+    series: [
+      {
+        name: "Total Employee Cost",
+        type: "bar",
+        data: chartData?.totalEmployeeCost || [],
+        itemStyle: { color: "#3B82F6" },
+      },
+      {
+        name: "Total Cost",
         type: "line",
-        data: s.data,
-        smooth: false, // 1. Diubah agar garis tidak smooth
-        areaStyle: { opacity: 0.2 }, // 2. Ditambahkan untuk efek area chart
-        symbol: "circle",
-        symbolSize: 6,
-        lineStyle: {
-          width: 2,
-        },
-        itemStyle: {
-          color: getColorByIndex(idx),
-        },
-        emphasis: {
-          focus: "series",
-        },
-      })) || [],
+        smooth: false,
+        data: chartData?.totalCost || [],
+        itemStyle: { color: "#EF4444" },
+      },
+    ],
+    grid: {
+      left: "3%",
+      right: "4%",
+      bottom: "3%",
+      top: "20%",
+      containLabel: true,
+    },
+    title: {
+      text: "Cost Analysis",
+      left: "center",
+      textStyle: { fontSize: 16, fontWeight: "bold" },
+    },
   };
 
   if (loading) return <CardLoader />;
-  if (!chartData)
+  if (!chartData || chartData.totalEmployeeCost.every((v) => v === 0))
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center text-gray-500">
-        No Data.
+      <div className="bg-white p-6 rounded-lg shadow-md h-96 flex items-center justify-center text-gray-500">
+        No Chart Data.
       </div>
     );
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="font-bold text-lg text-gray-800">
-            Employee Cost Breakdown
-          </h3>
-          <p className="text-sm text-gray-500">{period.year}</p>
-        </div>
-        <button className="text-gray-500 hover:text-gray-800">
-          <Settings className="h-5 w-5" />
-        </button>
-      </div>
-      <div className="flex-grow min-h-0">
-        <ReactECharts option={option} style={{ height: "100%" }} />
-      </div>
+    <div className="bg-white p-6 rounded-lg shadow-md h-96 flex flex-col">
+      <ReactECharts option={option} style={{ height: "100%" }} />
     </div>
   );
 };

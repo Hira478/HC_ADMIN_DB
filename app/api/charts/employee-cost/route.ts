@@ -1,79 +1,79 @@
 // File: app/api/charts/employee-cost/route.ts
+
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCompanyFilter } from "@/lib/prisma-filter"; // <-- 1. IMPORT HELPER
+import { getCompanyFilter } from "@/lib/prisma-filter";
+// PERUBAHAN: Hapus import EmployeeCostStat karena tidak dipakai lagi untuk kalkulasi
+import { ProductivityStat } from "@prisma/client";
 
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const getMonthName = (monthNumber: number) => {
+  const date = new Date();
+  date.setMonth(monthNumber - 1);
+  return date.toLocaleString("id-ID", { month: "short" });
+};
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const type = searchParams.get("type") || "monthly";
   const year = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
   );
-  const value = parseInt(
-    searchParams.get("value") || new Date().getMonth() + (1).toString()
+  const monthValue = parseInt(
+    searchParams.get("month") || (new Date().getMonth() + 1).toString()
   );
 
-  let monthsToFetch: number[] = [];
-  if (type === "monthly") monthsToFetch = [value];
-  else if (type === "yearly")
-    monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
-  // ... (logika lain untuk quarterly/semesterly bisa ditambahkan di sini)
-
   try {
-    // 2. GUNAKAN FILTER KEAMANAN
     const companyFilter = await getCompanyFilter(request);
 
-    const costData = await prisma.employeeCostStat.findMany({
-      where: { year, month: { in: monthsToFetch }, ...companyFilter },
+    // PERUBAHAN: Kita tidak perlu lagi mengambil data dari 'EmployeeCostStat'
+    /* const employeeCostStats = await prisma.employeeCostStat.findMany({
+      where: { year, ...companyFilter },
+      orderBy: { month: "asc" },
+    });
+    */
+
+    // Kita hanya butuh data dari 'ProductivityStat' yang sudah berisi total
+    const productivityStats = await prisma.productivityStat.findMany({
+      where: { year, ...companyFilter },
       orderBy: { month: "asc" },
     });
 
-    // --- 3. PERUBAHAN LOGIKA DI SINI ---
-    // Jika data kosong, tetap kirim 200 OK, tapi dengan array data kosong
-    if (costData.length === 0) {
-      return NextResponse.json({
-        labels: [],
-        series: [],
-      });
-    }
+    // PERUBAHAN: Hapus map untuk employeeCostStats
+    // const costMap = new Map(employeeCostStats.map((s: EmployeeCostStat) => [s.month, s]));
+    const prodMap = new Map(
+      productivityStats.map((s: ProductivityStat) => [s.month, s])
+    );
 
-    const response = {
-      labels: costData.map((d) => monthNames[d.month - 1]),
-      series: [
-        { name: "Salary", data: costData.map((d) => d.salary) },
-        { name: "Incentive", data: costData.map((d) => d.incentive) },
-        { name: "Pension", data: costData.map((d) => d.pension) },
-        {
-          name: "Training & Recruitment",
-          data: costData.map((d) => d.trainingRecruitment),
-        },
-        { name: "Others", data: costData.map((d) => d.others) },
-      ],
+    const result = {
+      months: [] as string[],
+      totalEmployeeCost: [] as number[],
+      totalCost: [] as number[],
     };
 
-    return NextResponse.json(response);
+    for (let month = 1; month <= monthValue; month++) {
+      result.months.push(getMonthName(month));
+
+      const prodData = prodMap.get(month);
+
+      // PERUBAHAN KUNCI DI SINI:
+      // Ambil nilai 'totalEmployeeCost' langsung dari prodData, jangan dihitung ulang.
+      const totalEmployeeCostForMonth = prodData
+        ? prodData.totalEmployeeCost
+        : 0;
+
+      const totalCostForMonth = prodData ? prodData.totalCost : 0;
+
+      result.totalEmployeeCost.push(totalEmployeeCostForMonth);
+      result.totalCost.push(totalCostForMonth);
+    }
+
+    return NextResponse.json(result);
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Tidak terautentikasi.") {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
     console.error("API Error in /charts/employee-cost:", error);
     return NextResponse.json(
-      { error: "Gagal mengambil data." },
+      { error: "Gagal mengambil data chart." },
       { status: 500 }
     );
   }
