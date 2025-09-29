@@ -41,6 +41,7 @@ model Company {
   turnoverStats            TurnoverStat[]
   formationRasioGroupedStats FormationRasioGroupedStat[]
   rkapTargets RkapTarget[]
+  quartalKpis QuartalKpi[]
 }
 
 // --- TABEL FAKTA: Menyimpan data agregat per bulan per perusahaan ---
@@ -424,4 +425,20 @@ model RkapTarget {
   company   Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, companyId]) // Setiap perusahaan hanya punya 1 set target RKAP per tahun
+}
+
+model QuartalKpi {
+  id               Int      @id @default(autoincrement())
+  year             Int
+  quarter          Int      // 1, 2, 3, or 4
+  companyId        Int
+
+  kpiName          String   @map("kpi_name")
+  kpiCategory      String   @map("kpi_category")
+  weight           Float    // Bobot, misal: 6% disimpan sebagai 0.06
+  achievementScore Float    @map("achievement_score") // Skor Capaian, misal: 46.8% disimpan sebagai 0.468
+
+  company          Company  @relation(fields: [companyId], references: [id])
+
+  @@unique([year, quarter, companyId, kpiName])
 }

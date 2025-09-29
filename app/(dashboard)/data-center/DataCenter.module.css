@@ -1,0 +1,331 @@
+/* File: app/(dashboard)/data-center/DataCenter.module.css */
+
+.pageContainer {
+  padding: 2rem;
+  background-color: #f9fafb;
+}
+
+.pageHeader {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+}
+
+.pageHeader h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tab.active {
+  background-color: #e0f2fe;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+.tab:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.form {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  position: relative;
+}
+
+.fieldset {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.fieldset legend {
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 0 0.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.inputGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.inputGroup input {
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+}
+
+.inputGroup input.readOnly {
+  background-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.formActions {
+  text-align: right;
+  margin-top: 1rem;
+}
+
+.submitButton {
+  background-color: #0ea5e9;
+  color: white;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.errorBanner {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ... (style yang sudah ada sebelumnya) ... */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.filterGroup label {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filterGroup select {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  min-width: 150px;
+}
+
+.filterGroup select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.companyName {
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0.5rem 0;
+  color: #111827;
+}
+
+.formContainer {
+  position: relative;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.mainActions {
+  padding-top: 1.5rem;
+  margin-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  text-align: right;
+}
+
+.editButton {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background-color: #2563eb;
+}
+
+.formActions {
+  text-align: right;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.cancelButton {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding: 0.75rem 2rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background-color: #d1d5db;
+}
+
+.fieldset:disabled {
+  opacity: 0.7;
+}
+
+/* --- (STYLE BARU) Gaya untuk Mode Read-Only/Disabled --- */
+
+.fieldset:disabled {
+  opacity: 0.75;
+  border-color: #e5e7eb;
+}
+
+.fieldset:disabled legend {
+  color: #9ca3af;
+}
+
+.fieldset:disabled input {
+  background-color: #f3f4f6; /* Warna abu-abu terang */
+  cursor: not-allowed;
+  color: #6b7280;
+}
+
+/* ... (semua style dari atas sampai .companyName tidak berubah) ... */
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
+  /* PERUBAHAN 1: Menambahkan properti ini */
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+/* PERUBAHAN 2: Menambahkan wrapper untuk filter */
+.filterControls {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.filterGroup label {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filterGroup select {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  min-width: 150px;
+}
+
+.filterGroup select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.companyName {
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0.5rem 0;
+  color: #111827;
+}
+
+.formContainer {
+  position: relative;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 0 0.5rem 0.5rem 0.5rem;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+/* PERUBAHAN 3: Menghapus style ini karena sudah tidak digunakan */
+/* .mainActions { ... } */
+
+.editButton {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  height: fit-content; /* Agar tingginya pas */
+}
+
+/* ... (sisa style lainnya tidak berubah) ... */
