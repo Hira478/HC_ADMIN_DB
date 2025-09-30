@@ -204,7 +204,13 @@ const ProductivityChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
-  if (loading) return <CardLoader />;
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md h-[530px]">
+        <div className="h-full w-full bg-gray-200 animate-pulse rounded-md"></div>
+      </div>
+    );
+  }
   if (!chartData)
     return (
       <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center text-gray-500">

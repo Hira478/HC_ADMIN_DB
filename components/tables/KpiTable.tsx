@@ -34,7 +34,13 @@ const calculateAdjustedSkorCapaian = (skor: number): number => {
 };
 
 const formatAsPercentage = (value: number): string => {
-  return `${(value * 100).toFixed(1)}%`;
+  // Selalu format dengan 1 desimal terlebih dahulu, misal: 8 -> "8.0", 13.2 -> "13.2"
+  const formattedString = (value * 100).toFixed(1);
+
+  // Gunakan regex untuk menghapus ".0" HANYA jika ada di akhir string
+  const finalString = formattedString.replace(/\.0$/, "");
+
+  return `${finalString}%`;
 };
 
 // Komponen Paginasi
@@ -211,9 +217,7 @@ const KpiTable = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
       <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
-          {tableTitle.replace("Details", "Score")}
-        </h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">KPI Score</h3>
         <div className="flex flex-col flex-grow gap-4">
           {allQuarters.map((quarterName, index) => {
             const quarterNumber = index + 1;
