@@ -2,33 +2,33 @@
 
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { getHcmaScoreLabel } from "@/lib/scoring";
 import { getHcmaScoreInfo } from "@/lib/scoring";
 
+// 1. HAPUS FUNGSI toTitleCase
+/*
 const toTitleCase = (str: string) => {
   return str
     .replace(/([A-Z])/g, " $1")
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
+*/
 
+// 2. UBAH hcmaIndicators MENJADI ARRAY OF OBJECTS (key & name)
 const hcmaIndicators = [
-  "talentSuccession",
-  "rewardRecognition",
-  "learningDevelopment",
-  "performanceGoal",
-  "capacityStrategy",
-  "behaviourCulture",
-  "humanCapitalIt",
-  "leadership",
+  { key: "talentSuccession", name: "Talent Succession" },
+  { key: "rewardRecognition", name: "Reward Recognition" },
+  { key: "learningDevelopment", name: "Learning Development" },
+  { key: "performanceGoal", name: "Performance Goal" },
+  { key: "capacityStrategy", name: "Capacity Strategy" },
+  { key: "behaviourCulture", name: "Behaviour Culture" },
+  { key: "humanCapitalIt", name: "Human Capital IT" }, // <-- PERBAIKAN DI SINI
+  { key: "leadership", name: "Leadership" },
 ];
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const companyId = parseInt(searchParams.get("companyId") || "0");
-
-  // --- PERUBAHAN UTAMA DI SINI ---
-  // Hapus logika dinamis dan atur tahun secara statis ke 2023
   const staticYear = 2023;
 
   if (!companyId) {
@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Sekarang kita hanya perlu mengambil data untuk satu tahun saja
     const hcmaData = await prisma.hcmaScore.findUnique({
       where: { year_companyId: { year: staticYear, companyId } },
     });
@@ -51,22 +50,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Hitung skor rata-rata untuk tahun 2023
+    // 3. SESUAIKAN KALKULASI totalScore untuk menggunakan `indicator.key`
     const totalScore = hcmaIndicators.reduce(
       (sum, indicator) =>
-        sum + (hcmaData[indicator as keyof typeof hcmaData] as number),
+        sum + (hcmaData[indicator.key as keyof typeof hcmaData] as number),
       0
     );
     const averageScore = totalScore / hcmaIndicators.length;
 
     const scoreInfo = getHcmaScoreInfo(averageScore);
 
-    // Siapkan data untuk chart (hanya ada data tahun ini)
+    // 4. SESUAIKAN PEMBUATAN chartData
     const chartData = {
-      categories: hcmaIndicators.map(toTitleCase),
-      seriesPrevYear: [], // Kosongkan data tahun sebelumnya
+      // Ambil 'name' untuk categories
+      categories: hcmaIndicators.map((indicator) => indicator.name),
+      seriesPrevYear: [],
+      // Ambil data dari 'key' untuk seriesCurrYear
       seriesCurrYear: hcmaIndicators.map(
-        (ind) => hcmaData[ind as keyof typeof hcmaData] as number
+        (indicator) =>
+          hcmaData[indicator.key as keyof typeof hcmaData] as number
       ),
     };
 
@@ -74,10 +76,10 @@ export async function GET(request: NextRequest) {
       title: "HC Maturity Assessment",
       mainScore: parseFloat(averageScore.toFixed(2)),
       scoreInfo: scoreInfo,
-      trend: "", // YoY tidak relevan karena data statis
+      trend: "",
       ifgAverageScore: hcmaData.ifgAverageScore,
       chartData: chartData,
-      prevYear: null, // Tidak ada tahun sebelumnya
+      prevYear: null,
       currYear: staticYear,
     };
 

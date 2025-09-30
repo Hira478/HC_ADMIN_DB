@@ -85,10 +85,7 @@ const OrganizationHealthChart: React.FC<ChartProps> = ({ data, isLoading }) => {
       {!isLoading && data && data.currentYearData.length > 0 && (
         <div className="my-2">
           <span className="text-3xl font-bold text-gray-800">
-            {data.currentYearScore.toLocaleString("id-ID", {
-              minimumFractionDigits: 1,
-              maximumFractionDigits: 1,
-            })}
+            {data.currentYearScore.toFixed(1)}
           </span>
           <span className="ml-2 text-lg text-gray-500">Medium</span>
         </div>
