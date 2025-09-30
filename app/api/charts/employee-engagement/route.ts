@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { EmployeeEngagementStat } from "@prisma/client";
 import { getScoreLabel } from "@/lib/scoring";
 
-// Kita bisa gunakan kembali tipe data ini karena strukturnya sama
 import { CultureMaturityData as GroupedChartData } from "../culture-maturity/route";
 
 import prisma from "@/lib/prisma";
@@ -19,20 +18,42 @@ export async function GET(request: Request) {
   }
 
   const companyIdNum = parseInt(companyId);
-  const currYearNum = parseInt(year);
-  const prevYearNum = currYearNum - 1;
+  const requestedYearNum = parseInt(year);
 
   try {
-    const categories = ["Say", "Stay", "Strive"];
+    // --- LOGIKA FALLBACK DIMULAI ---
+    let effectiveCurrYearNum = requestedYearNum;
 
-    const currYearRecord = await prisma.employeeEngagementStat.findUnique({
-      where: { year_companyId: { year: currYearNum, companyId: companyIdNum } },
+    // 1. Coba ambil data untuk tahun yang diminta
+    let currYearRecord = await prisma.employeeEngagementStat.findUnique({
+      where: {
+        year_companyId: { year: effectiveCurrYearNum, companyId: companyIdNum },
+      },
     });
 
+    // 2. Jika tidak ada, mundur satu tahun (fallback)
+    if (!currYearRecord) {
+      effectiveCurrYearNum = requestedYearNum - 1;
+      currYearRecord = await prisma.employeeEngagementStat.findUnique({
+        where: {
+          year_companyId: {
+            year: effectiveCurrYearNum,
+            companyId: companyIdNum,
+          },
+        },
+      });
+    }
+
+    // 3. Ambil data tahun sebelumnya berdasarkan tahun efektif
+    const effectivePrevYearNum = effectiveCurrYearNum - 1;
     const prevYearRecord = await prisma.employeeEngagementStat.findUnique({
-      where: { year_companyId: { year: prevYearNum, companyId: companyIdNum } },
+      where: {
+        year_companyId: { year: effectivePrevYearNum, companyId: companyIdNum },
+      },
     });
+    // --- LOGIKA FALLBACK SELESAI ---
 
+    const categories = ["Say", "Stay", "Strive"];
     const formatSeries = (record: EmployeeEngagementStat | null) =>
       record ? [record.say, record.stay, record.strive] : [];
 
@@ -60,8 +81,9 @@ export async function GET(request: Request) {
         seriesPrevYear: formatSeries(prevYearRecord),
         seriesCurrYear: formatSeries(currYearRecord),
       },
-      prevYear: prevYearRecord ? prevYearNum : null,
-      currYear: currYearNum,
+      // Gunakan tahun efektif untuk response
+      prevYear: prevYearRecord ? effectivePrevYearNum : null,
+      currYear: effectiveCurrYearNum,
     };
 
     return NextResponse.json(responseData);

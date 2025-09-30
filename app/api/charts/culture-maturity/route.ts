@@ -3,8 +3,8 @@
 import { NextResponse } from "next/server";
 import { getScoreLabel } from "@/lib/scoring";
 import prisma from "@/lib/prisma";
+import { CultureMaturityStat } from "@prisma/client"; // Import tipe
 
-// Tipe data yang akan dikirim ke frontend
 export interface CultureMaturityData {
   title: string;
   mainScore: string;
@@ -29,10 +29,41 @@ export async function GET(request: Request) {
   }
 
   const companyIdNum = parseInt(companyId);
-  const currYearNum = parseInt(year);
-  const prevYearNum = currYearNum - 1;
+  const requestedYearNum = parseInt(year);
 
   try {
+    // --- LOGIKA FALLBACK DIMULAI ---
+    let effectiveCurrYearNum = requestedYearNum;
+
+    // 1. Coba ambil data untuk tahun yang diminta
+    let currYearRecord = await prisma.cultureMaturityStat.findUnique({
+      where: {
+        year_companyId: { year: effectiveCurrYearNum, companyId: companyIdNum },
+      },
+    });
+
+    // 2. Jika tidak ada, mundur satu tahun (fallback)
+    if (!currYearRecord) {
+      effectiveCurrYearNum = requestedYearNum - 1;
+      currYearRecord = await prisma.cultureMaturityStat.findUnique({
+        where: {
+          year_companyId: {
+            year: effectiveCurrYearNum,
+            companyId: companyIdNum,
+          },
+        },
+      });
+    }
+
+    // 3. Ambil data tahun sebelumnya berdasarkan tahun efektif
+    const effectivePrevYearNum = effectiveCurrYearNum - 1;
+    const prevYearRecord = await prisma.cultureMaturityStat.findUnique({
+      where: {
+        year_companyId: { year: effectivePrevYearNum, companyId: companyIdNum },
+      },
+    });
+    // --- LOGIKA FALLBACK SELESAI ---
+
     const categories = [
       "Amanah",
       "Kompeten",
@@ -42,25 +73,7 @@ export async function GET(request: Request) {
       "Kolaboratif",
     ];
 
-    const currYearRecord = await prisma.cultureMaturityStat.findUnique({
-      where: { year_companyId: { year: currYearNum, companyId: companyIdNum } },
-    });
-
-    const prevYearRecord = await prisma.cultureMaturityStat.findUnique({
-      where: { year_companyId: { year: prevYearNum, companyId: companyIdNum } },
-    });
-
-    // Helper function to format data series
-    const formatSeries = (
-      record: {
-        amanah: number;
-        kompeten: number;
-        harmonis: number;
-        loyal: number;
-        adaptif: number;
-        kolaboratif: number;
-      } | null
-    ) =>
+    const formatSeries = (record: CultureMaturityStat | null) =>
       record
         ? [
             record.amanah,
@@ -72,7 +85,6 @@ export async function GET(request: Request) {
           ]
         : [];
 
-    // Hitung persentase perubahan total skor untuk trend
     let trend = "+0% | Year on Year";
     if (currYearRecord && prevYearRecord && prevYearRecord.totalScore > 0) {
       const percentageChange =
@@ -90,15 +102,16 @@ export async function GET(request: Request) {
     const responseData: CultureMaturityData = {
       title: "Culture Maturity",
       mainScore: currYearRecord?.totalScore.toFixed(1) || "N/A",
-      scoreLabel: dynamicScoreLabel, // Anda bisa membuat ini dinamis jika perlu
+      scoreLabel: dynamicScoreLabel,
       trend,
       chartData: {
         categories,
         seriesPrevYear: formatSeries(prevYearRecord),
         seriesCurrYear: formatSeries(currYearRecord),
       },
-      prevYear: prevYearRecord ? prevYearNum : null,
-      currYear: currYearNum,
+      // Gunakan tahun efektif untuk response
+      prevYear: prevYearRecord ? effectivePrevYearNum : null,
+      currYear: effectiveCurrYearNum,
     };
 
     return NextResponse.json(responseData);

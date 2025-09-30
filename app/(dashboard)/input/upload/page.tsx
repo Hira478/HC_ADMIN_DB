@@ -76,6 +76,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_quartal_kpi.xlsx",
     title: "Data KPI Kuartalan",
   },
+  employeeStatus: {
+    apiUrl: "/api/uploads/employee-status",
+    templateUrl: "/templates/template_employee_status.xlsx",
+    title: "Data Status Karyawan",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 

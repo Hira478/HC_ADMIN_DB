@@ -136,7 +136,7 @@ export default function WorkforcePlanningPage() {
   }, [selectedCompany, period]);
 
   return (
-    <main className="p-8 bg-gray-100 min-h-screen">
+    <>
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
         Workforce Planning
       </h1>
@@ -241,6 +241,6 @@ export default function WorkforcePlanningPage() {
           <TurnOverChart data={turnoverData} isLoading={loadingTurnover} />
         </div>
       </div>
-    </main>
+    </>
   );
 }

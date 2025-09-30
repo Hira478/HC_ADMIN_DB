@@ -15,6 +15,30 @@ interface StatCardProps {
   rkapYear?: number;
 }
 
+// --- KOMPONEN KECIL BARU UNTUK MENGATUR PERATAAN ---
+const AlignedInfoLine: React.FC<{ text: string; className?: string }> = ({
+  text,
+  className,
+}) => {
+  // Cek apakah teks dimulai dengan '+' atau '-'
+  const hasSign = text.startsWith("+") || text.startsWith("-");
+
+  // Pisahkan tanda dari sisa teksnya
+  const sign = hasSign ? text.substring(0, 1) : "";
+  const restOfText = hasSign ? text.substring(1) : text;
+
+  return (
+    <div className={`flex ${className}`}>
+      {/* Buat kolom tak terlihat untuk tanda.
+        'w-3' (width: 0.75rem) memberikan ruang yang cukup untuk '+' atau '-'.
+        Kolom ini akan selalu ada, mendorong teks ke kanan secara konsisten.
+      */}
+      <span className="w-3 inline-block text-left">{sign}</span>
+      <span>{restOfText}</span>
+    </div>
+  );
+};
+
 const StatCard: React.FC<StatCardProps> = ({
   title,
   valueUnit,
@@ -59,16 +83,16 @@ const StatCard: React.FC<StatCardProps> = ({
         </p>
       </div>
 
-      {/* --- BAGIAN INFO BAWAH DENGAN STRUKTUR TETAP 2 SLOT --- */}
+      {/* --- BAGIAN INFO BAWAH DENGAN KOMPONEN PERATAAN BARU --- */}
       <div className="mt-auto pt-2 text-xs space-y-2">
         {/* Slot 1: YoY Info */}
         <div>
           {change ? (
-            <span className={`${changeTextColor} font-bold whitespace-nowrap`}>
-              {change}
-            </span>
+            <AlignedInfoLine
+              text={change}
+              className={`${changeTextColor} font-bold whitespace-nowrap`}
+            />
           ) : (
-            // Placeholder agar tinggi tetap terjaga
             <span>&nbsp;</span>
           )}
         </div>
@@ -76,11 +100,11 @@ const StatCard: React.FC<StatCardProps> = ({
         {/* Slot 2: RKAP Info */}
         <div>
           {rkdapInfo ? (
-            <span className={`${subTextColor} font-bold`}>
-              {rkdapInfo} | RKAP {rkapYear}
-            </span>
+            <AlignedInfoLine
+              text={`${rkdapInfo} | RKAP ${rkapYear}`}
+              className={`${subTextColor} font-bold`}
+            />
           ) : (
-            // Placeholder agar tinggi tetap terjaga
             <span>&nbsp;</span>
           )}
         </div>

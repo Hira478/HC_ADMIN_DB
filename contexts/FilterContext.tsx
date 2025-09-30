@@ -59,12 +59,10 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   );
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // --- PERUBAHAN 1: Ubah nilai awal state 'period' ---
   const [period, setPeriod] = useState<Period>({
     type: "monthly",
-    year: 2025, // <-- Ubah ke 2025
-    value: 8, // <-- Ubah ke 8 (Agustus)
+    year: new Date().getFullYear(),
+    value: new Date().getMonth() + 1,
   });
 
   const [user, setUser] = useState<UserSession | null>(null);
@@ -94,7 +92,15 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
           throw new Error("Not authenticated. Redirecting to login.");
         const userData: UserSession = await userRes.json();
         setUser(userData);
-        setSelectedCompany(userData.companyId);
+
+        // --- PERUBAHAN SEMENTARA UNTUK COMPANY ID ---
+        // --- KODE SEMENTARA: Filter default diubah ke Company ID 7 ---
+        setSelectedCompany(7);
+        /*
+          // UNTUK MENGEMBALIKAN: Hapus kode `setSelectedCompany(7)` di atas 
+          // dan hapus komentar baris di bawah ini.
+          setSelectedCompany(userData.companyId);
+        */
 
         const [companyData, periodData] = await Promise.all([
           fetch("/api/companies").then((res) => res.json()),
@@ -105,25 +111,18 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
         setCompanies(companyData);
         setAvailablePeriods(periodData);
 
-        // --- PERUBAHAN 2: Logika baru untuk menentukan periode default ---
-        if (periodData && periodData.length > 0) {
-          const defaultYear = 2025;
-          const defaultMonth = 8; // Agustus
+        // --- PERUBAHAN SEMENTARA UNTUK PERIODE ---
+        // --- KODE SEMENTARA: Filter default diubah ke Juni 2025 ---
+        setPeriod((prev) => ({
+          ...prev,
+          year: 2025,
+          value: 6, // Juni
+        }));
 
-          // Cek apakah default (Agustus 2025) tersedia dalam data dari API
-          const isDefaultAvailable = periodData.some(
-            (p) => p.year === defaultYear && p.month === defaultMonth
-          );
-
-          if (isDefaultAvailable) {
-            // Jika ya, set ke Agustus 2025
-            setPeriod((prev) => ({
-              ...prev,
-              year: defaultYear,
-              value: defaultMonth,
-            }));
-          } else {
-            // Jika tidak, gunakan fallback ke periode terbaru yang tersedia
+        /*
+          // UNTUK MENGEMBALIKAN: Hapus kode `setPeriod` di atas 
+          // dan hapus komentar blok di bawah ini untuk mengaktifkan logika periode terbaru.
+          if (periodData && periodData.length > 0) {
             const latestYear = Math.max(...periodData.map((p) => p.year));
             const periodsInLatestYear = periodData.filter(
               (p) => p.year === latestYear
@@ -137,7 +136,7 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
               value: latestMonth,
             }));
           }
-        }
+        */
       } catch (error) {
         console.error("Initialization Error:", error);
         setUser(null);

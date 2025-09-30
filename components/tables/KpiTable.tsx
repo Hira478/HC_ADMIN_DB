@@ -121,8 +121,6 @@ const KpiTable = () => {
   }, [period]);
 
   const handleQuarterCardClick = (quarterNumber: number) => {
-    // Langsung set kuartal aktif.
-    // Jika nilainya sama, React tidak akan melakukan apa-apa.
     setActiveQuarter(quarterNumber);
   };
 
@@ -153,11 +151,11 @@ const KpiTable = () => {
       }
     };
     fetchData();
-  }, [selectedCompany, period]); // Dependensi hanya pada `period.year`
+  }, [selectedCompany, period]);
 
-  const panelTitle = useMemo(() => {
-    if (activeQuarter) return `Total Score KPI Q${activeQuarter}`;
-    return "Total Score KPI";
+  const tableTitle = useMemo(() => {
+    if (activeQuarter) return `KPI Details Q${activeQuarter}`;
+    return "KPI Details";
   }, [activeQuarter]);
 
   const filteredKpiDetails = useMemo(() => {
@@ -213,7 +211,9 @@ const KpiTable = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
       <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">{panelTitle}</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">
+          {tableTitle.replace("Details", "Score")}
+        </h3>
         <div className="flex flex-col flex-grow gap-4">
           {allQuarters.map((quarterName, index) => {
             const quarterNumber = index + 1;
@@ -246,7 +246,7 @@ const KpiTable = () => {
             <>
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">KPI Details</h3>
+                  <h3 className="text-xl font-bold">{tableTitle}</h3>
                   <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-2">
                     <span className="text-sm font-semibold">Total Score:</span>
                     <span className="text-lg font-bold">
@@ -255,14 +255,19 @@ const KpiTable = () => {
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse table-fixed">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="p-3 font-semibold text-sm w-12 text-center">
+                        {/* --- PERUBAHAN 2: Atur lebar kolom secara eksplisit --- */}
+                        <th className="p-3 font-semibold text-sm w-14 text-center">
                           No.
                         </th>
-                        <th className="p-3 font-semibold text-sm">KPI</th>
-                        <th className="p-3 font-semibold text-sm">Kategori</th>
+                        <th className="p-3 font-semibold text-sm w-[40%]">
+                          KPI
+                        </th>
+                        <th className="p-3 font-semibold text-sm w-[25%]">
+                          Kategori
+                        </th>
                         <th className="p-3 font-semibold text-sm text-right">
                           Bobot
                         </th>
@@ -282,17 +287,25 @@ const KpiTable = () => {
                         return (
                           <tr
                             key={item.id}
-                            className="border-b border-gray-200 hover:bg-gray-50"
+                            className="border-b border-gray-200 hover:bg-gray-50 h-[60px]"
                           >
                             <td className="p-3 text-center text-gray-500">
                               {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                             </td>
-                            <td className="p-3 max-w-xs">
+                            <td className="p-3">
                               <div className="truncate" title={item.kpiName}>
                                 {item.kpiName}
                               </div>
                             </td>
-                            <td className="p-3">{item.kpiCategory}</td>
+                            {/* --- PERUBAHAN 2: Terapkan truncate pada kolom Kategori --- */}
+                            <td className="p-3">
+                              <div
+                                className="truncate"
+                                title={item.kpiCategory}
+                              >
+                                {item.kpiCategory}
+                              </div>
+                            </td>
                             <td className="p-3 text-right">
                               {formatAsPercentage(item.weight)}
                             </td>
@@ -310,9 +323,9 @@ const KpiTable = () => {
                           (_, index) => (
                             <tr
                               key={`placeholder-${index}`}
-                              className="border-b border-gray-200"
+                              className="border-b border-gray-200 h-[60px]"
                             >
-                              <td colSpan={6} className="p-3 h-[57px]">
+                              <td colSpan={6} className="p-3">
                                 &nbsp;
                               </td>
                             </tr>
