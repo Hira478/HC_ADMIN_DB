@@ -270,16 +270,16 @@ const KpiTable = () => {
                           KPI
                         </th>
                         <th className="p-3 font-semibold text-sm w-[25%]">
-                          Kategori
+                          Category
                         </th>
                         <th className="p-3 font-semibold text-sm text-right">
-                          Bobot
+                          Weight
                         </th>
                         <th className="p-3 font-semibold text-sm text-right">
-                          Skor Capaian
+                          Achievement Score
                         </th>
                         <th className="p-3 font-semibold text-sm text-right">
-                          Skor Akhir
+                          Weighted Score
                         </th>
                       </tr>
                     </thead>
