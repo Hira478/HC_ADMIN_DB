@@ -343,6 +343,7 @@ model DivisionStat {
   companyId    Int
   
   divisionName String // Nama Divisi, misal "Sumber Daya Manusia"
+  Kategori     String @default("Umum")
   plannedCount Int    // Man Power Planning untuk divisi ini
   actualCount  Int    // Headcount aktual untuk divisi ini
 

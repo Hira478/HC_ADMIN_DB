@@ -6,8 +6,14 @@ import styles from "./DataCenter.module.css";
 import DemographyForm from "@/components/data-center/DemographyForm";
 import ProductivityForm from "@/components/data-center/ProductivityForm";
 import PlanningForm from "@/components/data-center/PlanningForm";
+import DivisionForm from "@/components/data-center/DivisionForm";
 
-type TabKey = "demography" | "productivity" | "talent" | "planning";
+type TabKey =
+  | "demography"
+  | "productivity"
+  | "talent"
+  | "planning"
+  | "division";
 
 export default function DataCenterPage() {
   const { user, companies, loading: contextLoading } = useFilters();
@@ -76,6 +82,17 @@ export default function DataCenterPage() {
             isEditing={isEditing}
             onSaveSuccess={handleSaveSuccess}
             onCancel={() => setIsEditing(false)}
+          />
+        );
+      case "division":
+        return (
+          <DivisionForm
+            selectedCompany={localCompanyId!}
+            period={{
+              ...localPeriod,
+              type: "monthly",
+              value: localPeriod.month,
+            }}
           />
         );
       default:
@@ -211,6 +228,14 @@ export default function DataCenterPage() {
         </button>
         <button className={styles.tab} disabled>
           Organizational Structure
+        </button>
+        <button
+          onClick={() => setActiveTab("division")}
+          className={`${styles.tab} ${
+            activeTab === "division" ? styles.active : ""
+          }`}
+        >
+          HC per Division
         </button>
       </nav>
 
