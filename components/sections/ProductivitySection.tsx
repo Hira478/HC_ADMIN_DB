@@ -4,7 +4,6 @@
 import StatCard from "@/components/widgets/StatCard";
 import ProductivityChartCard from "@/components/widgets/ProductivityChartCard";
 import KpiTable from "@/components/tables/KpiTable";
-import GroupedBarChart from "@/components/charts/GroupedBarChart";
 import type {
   ProductivityCardData,
   GroupedChartData,
@@ -17,7 +16,6 @@ const calculateRkapAchieved = (actual: number, target: number): string => {
   return `${achievement.toFixed(1)}%`;
 };
 
-// --- Perbarui props yang diterima ---
 const ProductivitySection = ({
   cardData,
   kpiData,
@@ -25,31 +23,48 @@ const ProductivitySection = ({
   loadingKpi,
   rkapData,
 }: {
-  cardData: ProductivityCardData | null; // Terima data card
+  cardData: ProductivityCardData | null;
   rkapData: RkapTargetData | null;
-  kpiData: GroupedChartData | null; // Terima data KPI
-  loadingCards: boolean; // Terima status loading card
-  loadingKpi: boolean; // Terima status loading KPI
+  kpiData: GroupedChartData | null;
+  loadingCards: boolean;
+  loadingKpi: boolean;
 }) => {
-  // HAPUS SEMUA DATA DUMMY
-  // const dummyGroupedChartData: GroupedChartData = { ... };
-
-  // Kondisi loading sekarang lebih spesifik
+  // --- PERUBAHAN 1: Buat Skeleton UI untuk state loading ---
   if (loadingCards) {
     return (
       <section>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Productivity</h2>
-        <div className="text-center p-10">Loading productivity cards...</div>
+        {/* Skeleton untuk 4 StatCard */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-gray-700 p-6 rounded-lg shadow-md h-[152px] animate-pulse"></div>
+          <div className="bg-gray-700 p-6 rounded-lg shadow-md h-[152px] animate-pulse"></div>
+          <div className="bg-gray-200 p-6 rounded-lg shadow-md h-[152px] animate-pulse"></div>
+          <div className="bg-gray-200 p-6 rounded-lg shadow-md h-[152px] animate-pulse"></div>
+        </div>
+        <div className="flex flex-col gap-6 mt-6">
+          {/* Skeleton untuk ProductivityChartCard */}
+          <div className="w-full bg-gray-200 rounded-lg animate-pulse h-[530px]"></div>
+          {/* Skeleton untuk KpiTable */}
+          <div className="w-full bg-gray-200 rounded-lg animate-pulse h-[300px]"></div>
+        </div>
       </section>
     );
   }
 
+  // --- PERUBAHAN 2: Perbaiki tampilan 'No Data' agar tidak resize ---
   if (!cardData) {
     return (
       <section>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Productivity</h2>
-        <div className="text-center p-10 bg-yellow-100 text-yellow-800 rounded-lg">
-          No Productivity Data.
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">Productivity</h1>
+        {/* Tampilkan card dengan nilai default */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard title="Revenue" value="N/A" variant="dark" />
+          <StatCard title="Net Profit" value="N/A" variant="dark" />
+          <StatCard title="Revenue/Employee" value="N/A" variant="light" />
+          <StatCard title="Net Profit/Employee" value="N/A" variant="light" />
+        </div>
+        <div className="mt-6 p-6 bg-white rounded-lg shadow-md h-[530px] flex items-center justify-center text-gray-500">
+          No Chart Data Available.
         </div>
       </section>
     );
@@ -65,7 +80,6 @@ const ProductivitySection = ({
   return (
     <section>
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Productivity</h2>
-      {/* Bagian StatCard menggunakan 'cardData' */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Revenue"
@@ -112,22 +126,6 @@ const ProductivitySection = ({
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-4">
-            {/* GroupedBarChart sekarang menggunakan data asli dan status loading-nya */}
-            {/* 1. GroupedBarChart di-comment atau dihapus */}
-            {/*
-              <GroupedBarChart
-                data={kpiData}
-                isLoading={loadingKpi}
-                showSummary={true}
-                cardClassName="bg-white text-gray-800"
-                tooltipText="Perbandingan rata-rata skor KPI tahun ini dengan tahun sebelumnya."
-                summaryUnit="Unit: Percentage"
-                layoutMode="wide"
-                summaryFormat="percentage"
-              />
-            */}
-
-            {/* 2. Tambahkan komponen KpiTable yang baru */}
             <KpiTable />
           </div>
         </div>
