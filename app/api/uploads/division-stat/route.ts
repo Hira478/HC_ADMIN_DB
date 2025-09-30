@@ -1,21 +1,23 @@
-// File: app/api/uploads/division-stat/route.ts
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
+// Interface untuk mendefinisikan struktur baris dari file Excel
 interface DivisionExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
   "Division Name": string;
+  Kategori: string;
   "Planned Count": number;
   "Actual Count": number;
 }
 
-// "Kamus" untuk menerjemahkan bulan
+// "Kamus" untuk menerjemahkan nama bulan ke angka
 const monthNameToNumber: { [key: string]: number } = {
   januari: 1,
+  january: 1,
   feb: 2,
   februari: 2,
   mar: 3,
@@ -23,6 +25,7 @@ const monthNameToNumber: { [key: string]: number } = {
   apr: 4,
   april: 4,
   mei: 5,
+  may: 5,
   jun: 6,
   juni: 6,
   jul: 7,
@@ -37,6 +40,12 @@ const monthNameToNumber: { [key: string]: number } = {
   november: 11,
   des: 12,
   desember: 12,
+};
+
+// Fungsi pembersih nama perusahaan untuk pencocokan yang lebih baik
+const sanitizeCompanyName = (name: string): string => {
+  if (!name) return "";
+  return name.toString().replace(/\s+/g, " ").trim().toLowerCase();
 };
 
 export async function POST(request: NextRequest) {
@@ -69,12 +78,12 @@ export async function POST(request: NextRequest) {
       select: { id: true, name: true },
     });
     const companyMap = new Map(
-      allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
+      allCompanies.map((c) => [sanitizeCompanyName(c.name), c.id])
     );
 
     const dataToUpsert = rows
       .map((row) => {
-        const companyName = row.Company?.toString().trim().toLowerCase();
+        const companyName = sanitizeCompanyName(row.Company);
         const companyId = companyMap.get(companyName);
         const monthInput = row.Month?.toString().trim().toLowerCase();
         const monthNumber = monthInput
@@ -94,6 +103,7 @@ export async function POST(request: NextRequest) {
           month: monthNumber,
           companyId: companyId,
           divisionName: row["Division Name"],
+          Kategori: row.Kategori || "Umum",
           plannedCount: Number(row["Planned Count"]) || 0,
           actualCount: Number(row["Actual Count"]) || 0,
         };
@@ -107,8 +117,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- LOGIKA BATCH PROCESSING DIMULAI DI SINI ---
-    const batchSize = 200; // Proses 200 baris per transaksi
+    // Batch Processing untuk menangani data dalam jumlah besar
+    const batchSize = 200;
     let totalImported = 0;
 
     for (let i = 0; i < dataToUpsert.length; i += batchSize) {
@@ -126,6 +136,7 @@ export async function POST(request: NextRequest) {
               },
             },
             update: {
+              Kategori: data.Kategori,
               plannedCount: data.plannedCount,
               actualCount: data.actualCount,
             },
@@ -135,7 +146,7 @@ export async function POST(request: NextRequest) {
       );
       totalImported += batch.length;
       console.log(
-        `Batch ${i / batchSize + 1} selesai, ${totalImported} / ${
+        `Batch Divisi ${i / batchSize + 1} selesai, ${totalImported} / ${
           dataToUpsert.length
         } data diproses.`
       );
