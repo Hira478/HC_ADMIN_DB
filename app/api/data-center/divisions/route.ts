@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * PUT handler: Memperbarui 'actualCount' untuk satu divisi (auto-save).
+ * PUT handler: Memperbarui 'actualCount' untuk satu divisi.
  */
 export async function PUT(request: NextRequest) {
   const session = await getSession();
