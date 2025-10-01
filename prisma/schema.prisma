@@ -153,19 +153,19 @@ model ProductivityStat {
 }
 
 model EmployeeCostStat {
-  id                  Int @id @default(autoincrement())
-  month               Int
-  year                Int
+  id              Int   @id @default(autoincrement())
+  month           Int
+  year            Int
+  companyId       Int
   
-  salary              Float
-  incentive           Float
-  pension             Float
-  others              Float
-  trainingRecruitment Float @map("training_recruitment")
+  managementCost  Float @default(0) @map("management_cost")
+  employeeCost    Float @default(0) @map("employee_cost")
+  recruitment     Float @default(0)
+  secondment      Float @default(0)
+  others          Float @default(0)
+  total           Float @default(0) // Kolom Total dari Excel
 
-  companyId Int
-  company   Company @relation(fields: [companyId], references: [id])
-
+  company         Company @relation(fields: [companyId], references: [id])
   @@unique([year, month, companyId])
 }
 

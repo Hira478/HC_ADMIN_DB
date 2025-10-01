@@ -81,6 +81,16 @@ const uploadConfig = {
     templateUrl: "/templates/template_employee_status.xlsx",
     title: "Data Status Karyawan",
   },
+  employeeCost: {
+    apiUrl: "/api/uploads/employee-cost",
+    templateUrl: "/templates/template_employee_cost.xlsx",
+    title: "Data Employee Cost (Baru)",
+  },
+  divDeptCount: {
+    apiUrl: "/api/uploads/divDeptCount",
+    templateUrl: "/templates/template_div_dept.xlsx", // Pastikan template ada di /public/templates/
+    title: "Data Divisi & Departemen",
+  },
   // Anda bisa tambahkan jenis data lain di sini nanti, misal: 'headcount', 'demography', dll.
 };
 

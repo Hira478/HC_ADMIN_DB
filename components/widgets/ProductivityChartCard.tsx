@@ -1,12 +1,9 @@
-// File: components/widgets/ProductivityChartCard.tsx
-
 "use client";
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
-import CardLoader from "./CardLoader";
+import { getSymbolSize } from "echarts/types/src/chart/graph/graphHelper.js";
 
-// Interface untuk data chart (tetap sama)
 interface ProductivityChartData {
   months: string[];
   revenue: number[];
@@ -15,9 +12,17 @@ interface ProductivityChartData {
   netProfitPerEmployee: number[];
 }
 
-// 1. BUAT KOMPONEN BARU UNTUK CHART GABUNGAN (BAR & LINE)
+interface EChartsTooltipParams {
+  axisValue: string;
+  marker: string;
+  seriesName: string;
+  value: number | { value: number };
+}
+
+// --- PERUBAHAN 1: 'CombinedChart' sekarang menjadi komponen KARTU LENGKAP ---
 const CombinedChart = ({
   title,
+  unitText, // Prop baru untuk teks unit
   months,
   barData,
   barName,
@@ -25,89 +30,72 @@ const CombinedChart = ({
   lineName,
 }: {
   title: string;
+  unitText: string;
   months: string[];
   barData: number[];
   barName: string;
   lineData: number[];
   lineName: string;
 }) => {
-  // Fungsi formatter untuk sumbu Y (tetap sama)
+  const numberFormatter = (value: unknown) => {
+    let numToFormat: number;
 
-  const numberFormatter = (value: number | { value: number }) => {
-    // ECharts bisa mengirim objek atau angka, ekstrak nilainya
-    const num =
-      typeof value === "object" && value !== null ? value.value : value;
-
-    // Pastikan itu angka sebelum memformat
-    if (typeof num !== "number" || isNaN(num)) {
+    // Cek dulu apakah value adalah angka
+    if (typeof value === "number") {
+      numToFormat = value;
+    }
+    // Jika bukan, cek apakah ia objek yang punya properti 'value' berupa angka
+    else if (
+      typeof value === "object" &&
+      value !== null &&
+      "value" in value &&
+      typeof (value as { value: unknown }).value === "number"
+    ) {
+      numToFormat = (value as { value: number }).value;
+    }
+    // Jika tidak keduanya, kembalikan nilai asli
+    else {
       return value;
     }
-    // Format ke string dengan pemisah titik ribuan (standar Indonesia)
-    return num.toLocaleString("id-ID");
+
+    if (isNaN(numToFormat)) return value;
+
+    return Math.round(numToFormat).toLocaleString("id-ID");
   };
 
   const option = {
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "cross" },
-      // Gunakan 'formatter' untuk kontrol penuh atas konten tooltip
-      formatter: (
-        params: {
-          axisValue: string;
-          marker: string;
-          seriesName: string;
-          value: number;
-        }[]
-      ) => {
-        // Ambil nama bulan dari data point pertama
+      formatter: (params: EChartsTooltipParams[]) => {
         let tooltipText = `${params[0].axisValue}<br/>`;
-
-        // Loop melalui setiap seri data (bar dan line)
         params.forEach((param) => {
-          const marker = param.marker; // Indikator warna (bulat/kotak)
-          const seriesName = param.seriesName;
-          const value = param.value;
-          // Gunakan numberFormatter kita yang sudah andal
-          const formattedValue = numberFormatter(value);
-
-          tooltipText += `${marker} ${seriesName}: <strong>${formattedValue}</strong><br/>`;
+          tooltipText += `${param.marker} ${
+            param.seriesName
+          }: <strong>${numberFormatter(param.value)}</strong><br/>`;
         });
-
         return tooltipText;
       },
     },
     legend: {
       data: [barName, lineName],
-      top: "10%", // Posisikan legend di bawah judul
+      top: "5%", // Jarak legend dari atas
     },
-    xAxis: {
-      type: "category",
-      data: months,
-    },
-    // Konfigurasi DUA sumbu Y
+    xAxis: { type: "category", data: months },
     yAxis: [
       {
-        // Sumbu Y Kiri untuk Bar Chart (Revenue/Net Profit)
         type: "value",
         name: barName,
         position: "left",
         alignTicks: true,
-        axisLabel: {
-          // 2. Terapkan formatter baru di sini
-          formatter: numberFormatter, // DIUBAH
-        },
+        axisLabel: { formatter: numberFormatter },
       },
       {
-        // Sumbu Y Kanan untuk Line Chart (Revenue/Employee)
         type: "value",
         name: lineName,
         position: "right",
         alignTicks: true,
-        min: "dataMin",
-        axisLabel: {
-          // 3. Terapkan formatter baru di sini juga
-          formatter: numberFormatter, // DIUBAH
-        },
+        axisLabel: { formatter: numberFormatter },
       },
     ],
     series: [
@@ -117,19 +105,8 @@ const CombinedChart = ({
         yAxisIndex: 0,
         data: barData,
         itemStyle: {
-          opacity: 0.85,
-          color: {
-            type: "linear",
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: "#EA0000" }, // Warna atas
-              { offset: 1, color: "#AD0000" }, // Warna bawah
-            ],
-          },
-        }, // 2. Tambahkan label di dalam bar
+          color: "rgba(0, 74, 128, 0.75)",
+        },
       },
       {
         name: lineName,
@@ -137,38 +114,55 @@ const CombinedChart = ({
         yAxisIndex: 1,
         smooth: false,
         data: lineData,
-        itemStyle: {
-          color: "#156082",
+        itemStyle: { color: "#00A9B5" },
+        symbolSize: 8,
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(0, 169, 181, 0.3)" }, // Warna atas (teal transparan)
+              { offset: 1, color: "rgba(0, 169, 181, 0.3)" }, // Warna bawah (sepenuhnya transparan)
+            ],
+          },
         },
-        // 3. Tambahkan label di atas garis
       },
     ],
     grid: {
       left: "3%",
-      right: "4%", // Beri ruang lebih untuk label sumbu Y kanan
+      right: "4%",
       bottom: "3%",
-      top: "20%", // Beri ruang di atas untuk judul dan legend
+      top: "18%",
       containLabel: true,
     },
-    title: {
-      text: title,
-      left: "center",
-      textStyle: {
-        fontSize: 16,
-        fontWeight: "bold",
-      },
-    },
+    // PERUBAHAN 2: Hapus 'title' dari ECharts, karena sudah ada di header JSX
   };
 
   return (
-    <div className="bg-gray-50/50 p-4 rounded-lg border border-gray-200 h-[350px]">
-      {" "}
-      {/* Tinggi card ditambah */}
-      <ReactECharts option={option} style={{ height: "100%", width: "100%" }} />
+    // PERUBAHAN 3: Struktur baru untuk kartu chart
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      {/* Header baru untuk judul dan unit */}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
+        <div className="border border-gray-200 rounded-md px-2 py-1">
+          <p className="text-xs font-semibold text-gray-500">{unitText}</p>
+        </div>
+      </div>
+      {/* Kontainer untuk chart itu sendiri */}
+      <div className="h-[350px]">
+        <ReactECharts
+          option={option}
+          style={{ height: "100%", width: "100%" }}
+        />
+      </div>
     </div>
   );
 };
 
+// --- Komponen Utama ---
 const ProductivityChartCard = () => {
   const { selectedCompany, period } = useFilters();
   const [chartData, setChartData] = useState<ProductivityChartData | null>(
@@ -176,9 +170,8 @@ const ProductivityChartCard = () => {
   );
   const [loading, setLoading] = useState(true);
 
-  // Logika fetch data tidak berubah
   useEffect(() => {
-    if (!selectedCompany || !period) {
+    if (!selectedCompany || !period || !period.value) {
       setLoading(false);
       return;
     }
@@ -187,13 +180,14 @@ const ProductivityChartCard = () => {
       const params = new URLSearchParams({
         companyId: String(selectedCompany),
         year: String(period.year),
+        month: String(period.value),
       });
       try {
         const response = await fetch(
           `/api/charts/productivity?${params.toString()}`
         );
         if (!response.ok) throw new Error("Data not found");
-        const data: ProductivityChartData = await response.json();
+        const data = await response.json();
         setChartData(data);
       } catch {
         setChartData(null);
@@ -204,49 +198,44 @@ const ProductivityChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // PERUBAHAN 4: Skeleton loader sekarang untuk dua kartu terpisah
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-[530px]">
-        <div className="h-full w-full bg-gray-200 animate-pulse rounded-md"></div>
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-gray-200 rounded-lg shadow-md h-[420px] w-full animate-pulse"></div>
+        <div className="bg-gray-200 rounded-lg shadow-md h-[420px] w-full animate-pulse"></div>
       </div>
     );
   }
-  if (!chartData)
+  if (!chartData) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center text-gray-500">
-        No Data.
+      <div className="p-6 bg-yellow-100 text-yellow-800 rounded-lg text-center">
+        No Productivity Chart Data Available.
       </div>
     );
+  }
 
-  // 2. UBAH TAMPILAN UNTUK MERENDER DUA CHART GABUNGAN
+  // PERUBAHAN 5: Tampilan utama sekarang hanya menumpuk dua 'CombinedChart'
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-lg text-gray-800">
-          Productivity Analysis {period.year}
-        </h3>
-      </div>
-      <div className="grid grid-cols-1 gap-6">
-        {/* Chart Pertama: Revenue & Revenue/Employee */}
-        <CombinedChart
-          title="Revenue & Revenue/Employee"
-          months={chartData.months}
-          barData={chartData.revenue}
-          barName="Revenue"
-          lineData={chartData.revenuePerEmployee}
-          lineName="Revenue/Employee"
-        />
-
-        {/* Chart Kedua: Net Profit & Net Profit/Employee */}
-        <CombinedChart
-          title="Net Profit & Net Profit/Employee"
-          months={chartData.months}
-          barData={chartData.netProfit}
-          barName="Net Profit"
-          lineData={chartData.netProfitPerEmployee}
-          lineName="Net Profit/Employee"
-        />
-      </div>
+    <div className="grid grid-cols-1 gap-6">
+      <CombinedChart
+        title="Revenue & Revenue/Employee"
+        unitText="Unit: Million"
+        months={chartData.months}
+        barData={chartData.revenue}
+        barName="Revenue"
+        lineData={chartData.revenuePerEmployee}
+        lineName="Revenue/Employee"
+      />
+      <CombinedChart
+        title="Net Profit & Net Profit/Employee"
+        unitText="Unit: Million"
+        months={chartData.months}
+        barData={chartData.netProfit}
+        barName="Net Profit"
+        lineData={chartData.netProfitPerEmployee}
+        lineName="Net Profit/Employee"
+      />
     </div>
   );
 };

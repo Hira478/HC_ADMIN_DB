@@ -99,7 +99,7 @@ const EmployeeCostChartCard = () => {
         type: "bar",
         // Gunakan data yang sudah diproses
         data: processedEmployeeCost,
-        itemStyle: { color: "#3B82F6" },
+        itemStyle: { color: "#004A80" },
       },
       {
         name: "Total Cost",
@@ -107,7 +107,11 @@ const EmployeeCostChartCard = () => {
         smooth: false,
         // Gunakan data yang sudah diproses
         data: processedTotalCost,
-        itemStyle: { color: "#EF4444" },
+        itemStyle: { color: "#1f2937" },
+        lineStyle: {
+          width: 1, // Sedikit lebih tebal agar jelas
+          type: "dashed",
+        },
       },
     ],
     grid: {
@@ -116,11 +120,6 @@ const EmployeeCostChartCard = () => {
       bottom: "3%",
       top: "20%",
       containLabel: true,
-    },
-    title: {
-      text: "Cost Analysis",
-      left: "center",
-      textStyle: { fontSize: 16, fontWeight: "bold" },
     },
   };
 
@@ -137,8 +136,23 @@ const EmployeeCostChartCard = () => {
     );
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-96 flex flex-col">
-      <ReactECharts option={option} style={{ height: "100%" }} />
+    <div className="bg-white p-6 rounded-lg shadow-md h-[432px] flex flex-col">
+      {/* Header untuk Judul dan Unit */}
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-semibold text-gray-700">
+          Employee Cost vs Total Cost
+        </h3>
+        <div className="border border-gray-200 rounded-md px-2 py-1">
+          <p className="text-xs font-semibold text-gray-500">
+            Unit: Million {/* <-- Sesuaikan unit jika perlu */}
+          </p>
+        </div>
+      </div>
+
+      {/* Wrapper agar chart mengisi sisa ruang */}
+      <div className="flex-grow h-full">
+        <ReactECharts option={option} style={{ height: "100%" }} />
+      </div>
     </div>
   );
 };

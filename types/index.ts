@@ -157,3 +157,14 @@ export interface RkapTargetData {
   netProfit: number;
   totalEmployeeCost: number;
 }
+
+export interface StackedChartData {
+  labels: string[];
+  datasets: {
+    managementCost: number[];
+    employeeCost: number[];
+    recruitment: number[];
+    secondment: number[];
+    others: number[];
+  };
+}

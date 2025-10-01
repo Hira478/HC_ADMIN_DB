@@ -1,9 +1,13 @@
-// File: components/sections/EmployeeCostSection.tsx
 "use client";
 
 import StatCard from "@/components/widgets/StatCard";
 import EmployeeCostChartCard from "@/components/widgets/EmployeeCostChartCard";
-import type { EmployeeCostCardData, RkapTargetData } from "@/types";
+import EmployeeCostStackedChart from "@/components/widgets/EmployeeCostStackedChart";
+import type {
+  EmployeeCostCardData,
+  RkapTargetData,
+  StackedChartData,
+} from "@/types";
 
 const calculateRkapAchieved = (actual: number, target: number): string => {
   if (target === 0) return "-";
@@ -11,16 +15,27 @@ const calculateRkapAchieved = (actual: number, target: number): string => {
   return `${achievement.toFixed(1)}%`;
 };
 
+// Interface ini sudah benar.
+interface EmployeeCostSectionProps {
+  data: EmployeeCostCardData | undefined;
+  loading: boolean;
+  rkapData: RkapTargetData | null;
+  stackedChartData: StackedChartData | null;
+  loadingStackedChart: boolean;
+}
+
+// --- PERBAIKAN DI SINI ---
+// Hapus definisi tipe inline dan gunakan EmployeeCostSectionProps
 const EmployeeCostSection = ({
   data,
   loading,
   rkapData,
-}: {
-  data: EmployeeCostCardData | undefined;
-  loading: boolean;
-  rkapData: RkapTargetData | null;
-}) => {
-  // --- PERUBAHAN 1: Buat Skeleton UI untuk state loading ---
+  stackedChartData,
+  loadingStackedChart,
+}: EmployeeCostSectionProps) => {
+  // <-- GUNAKAN INTERFACE YANG SUDAH DIBUAT
+
+  // Skeleton UI loading (tidak diubah)
   if (loading) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md h-[432px] w-full">
@@ -29,7 +44,7 @@ const EmployeeCostSection = ({
     );
   }
 
-  // --- PERUBAHAN 2: Perbaiki tampilan 'No Data' agar tidak resize ---
+  // Tampilan 'No Data' (tidak diubah)
   if (!data) {
     return (
       <section>
@@ -56,6 +71,7 @@ const EmployeeCostSection = ({
     <section>
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Employee Cost</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ... StatCard components ... */}
         <StatCard
           title="Total Employee Cost"
           value={data.total.value}
@@ -89,7 +105,10 @@ const EmployeeCostSection = ({
           variant="light"
         />
       </div>
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
+        {" "}
+        {/* Tambahkan space-y-6 untuk jarak antar chart */}
+        <EmployeeCostStackedChart />
         <EmployeeCostChartCard />
       </div>
     </section>
