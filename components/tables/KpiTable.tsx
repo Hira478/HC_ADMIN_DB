@@ -34,12 +34,8 @@ const calculateAdjustedSkorCapaian = (skor: number): number => {
 };
 
 const formatAsPercentage = (value: number): string => {
-  // Selalu format dengan 1 desimal terlebih dahulu, misal: 8 -> "8.0", 13.2 -> "13.2"
   const formattedString = (value * 100).toFixed(1);
-
-  // Gunakan regex untuk menghapus ".0" HANYA jika ada di akhir string
   const finalString = formattedString.replace(/\.0$/, "");
-
   return `${finalString}%`;
 };
 
@@ -113,7 +109,6 @@ const KpiTable = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
-
   const [activeQuarter, setActiveQuarter] = useState<number | null>(null);
 
   useEffect(() => {
@@ -215,10 +210,10 @@ const KpiTable = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-sretch">
       <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md flex flex-col">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">KPI Score</h3>
-        <div className="flex flex-col flex-grow gap-4">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">KPI Score</h3>
+        <div className="flex flex-col gap-4 flex-grow">
           {allQuarters.map((quarterName, index) => {
             const quarterNumber = index + 1;
             const quarterData = kpiData.quarterlySummary.find(
@@ -244,16 +239,16 @@ const KpiTable = () => {
         </div>
       </div>
 
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-4">
         <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col justify-between">
           {filteredKpiDetails.length > 0 ? (
             <>
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">{tableTitle}</h3>
-                  <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg flex items-center gap-2">
-                    <span className="text-sm font-semibold">Total Score:</span>
-                    <span className="text-lg font-bold">
+                  <h3 className="text-lg font-bold">{tableTitle}</h3>
+                  <div className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                    <span className="text-xs font-semibold">Total Score:</span>
+                    <span className="text-base font-bold">
                       {formatAsPercentage(tableTotalScore)}
                     </span>
                   </div>
@@ -261,47 +256,36 @@ const KpiTable = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse table-fixed">
                     <thead>
-                      <tr className="bg-gray-100">
-                        {/* --- PERUBAHAN 2: Atur lebar kolom secara eksplisit --- */}
-                        <th className="p-3 font-semibold text-sm w-14 text-center">
-                          No.
-                        </th>
-                        <th className="p-3 font-semibold text-sm w-[40%]">
-                          KPI
-                        </th>
-                        <th className="p-3 font-semibold text-sm w-[25%]">
-                          Category
-                        </th>
-                        <th className="p-3 font-semibold text-sm text-right">
+                      <tr className="bg-gray-100 text-xs">
+                        {/* --- PERUBAHAN DI SINI: Alokasi lebar dan teks header diperbarui --- */}
+                        <th className="p-3 font-semibold w-1/2">KPI</th>
+                        <th className="p-3 font-semibold w-[22%]">Category</th>
+                        <th className="p-3 font-semibold w-[9%] text-right">
                           Weight
                         </th>
-                        <th className="p-3 font-semibold text-sm text-right">
-                          Achievement Score
+                        <th className="p-3 font-semibold w-[9%] text-right">
+                          Ach.
                         </th>
-                        <th className="p-3 font-semibold text-sm text-right">
-                          Weighted Score
+                        <th className="p-3 font-semibold w-[8%] text-right">
+                          Score
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {currentItems.map((item, index) => {
+                      {currentItems.map((item) => {
                         const adjustedSkorCapaian =
                           calculateAdjustedSkorCapaian(item.achievementScore);
                         const skorAkhir = item.weight * adjustedSkorCapaian;
                         return (
                           <tr
                             key={item.id}
-                            className="border-b border-gray-200 hover:bg-gray-50 h-[60px]"
+                            className="border-b border-gray-200 hover:bg-gray-50 h-[60px] text-sm"
                           >
-                            <td className="p-3 text-center text-gray-500">
-                              {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-                            </td>
                             <td className="p-3">
                               <div className="truncate" title={item.kpiName}>
                                 {item.kpiName}
                               </div>
                             </td>
-                            {/* --- PERUBAHAN 2: Terapkan truncate pada kolom Kategori --- */}
                             <td className="p-3">
                               <div
                                 className="truncate"
@@ -329,7 +313,7 @@ const KpiTable = () => {
                               key={`placeholder-${index}`}
                               className="border-b border-gray-200 h-[60px]"
                             >
-                              <td colSpan={6} className="p-3">
+                              <td colSpan={5} className="p-3">
                                 &nbsp;
                               </td>
                             </tr>

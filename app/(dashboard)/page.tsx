@@ -6,7 +6,12 @@ import { useFilters } from "@/contexts/FilterContext";
 import ProductivitySection from "@/components/sections/ProductivitySection";
 import EmployeeCostSection from "@/components/sections/EmployeeCostSection";
 import DemographySection from "@/components/sections/DemographySection";
-import type { DashboardData, GroupedChartData, RkapTargetData } from "@/types"; // <-- Pastikan RkapTargetData di-import
+import type {
+  DashboardData,
+  GroupedChartData,
+  RkapTargetData,
+  StackedChartData,
+} from "@/types"; // <-- Pastikan RkapTargetData di-import
 import { useAutoScrollPage } from "@/hooks/useAutoScrollPage";
 import { Play, Pause } from "lucide-react";
 
@@ -21,6 +26,10 @@ export default function DashboardPage() {
   // State terpisah untuk data KPI Chart
   const [kpiData, setKpiData] = useState<GroupedChartData | null>(null);
   const [isLoadingKpi, setIsLoadingKpi] = useState(true);
+
+  const [stackedChartData, setStackedChartData] =
+    useState<StackedChartData | null>(null); // <-- UBAH INI
+  const [isLoadingStackedChart, setIsLoadingStackedChart] = useState(true);
 
   // --- 1. TAMBAHKAN STATE BARU UNTUK DATA RKAP ---
   const [rkapData, setRkapData] = useState<RkapTargetData | null>(null);
@@ -116,6 +125,31 @@ export default function DashboardPage() {
     fetchRkap();
   }, [selectedCompany, period, isContextLoading]);
 
+  // --- TAMBAHKAN useEffect BARU UNTUK MENGAMBIL DATA CHART BARU ---
+  useEffect(() => {
+    if (isContextLoading || selectedCompany === null) return;
+    const fetchStackedChartData = async () => {
+      setIsLoadingStackedChart(true);
+      try {
+        const params = new URLSearchParams({
+          companyId: String(selectedCompany),
+          year: String(period.year),
+        });
+        const response = await fetch(
+          `/api/charts/employee-cost-breakdown?${params.toString()}`
+        );
+        if (!response.ok) throw new Error("Stacked chart data not found");
+        setStackedChartData(await response.json());
+      } catch (error) {
+        console.error("Fetch error on stacked chart:", error);
+        setStackedChartData(null);
+      } finally {
+        setIsLoadingStackedChart(false);
+      }
+    };
+    fetchStackedChartData();
+  }, [selectedCompany, period.year, isContextLoading]);
+
   const overallLoading = isContextLoading || isLoadingMetrics;
 
   return (
@@ -134,6 +168,8 @@ export default function DashboardPage() {
           data={metricsData?.employeeCost}
           loading={overallLoading}
           rkapData={rkapData}
+          stackedChartData={stackedChartData}
+          loadingStackedChart={isLoadingStackedChart}
         />
         <DemographySection data={undefined} />
       </div>
