@@ -76,7 +76,8 @@ export default function OrganizationCulturePage() {
         month: String(period.value),
       });
 
-      fetch(`/api/charts/formation-rasio?${params.toString()}`)
+      // fetch(`/api/charts/formation-rasio?${params.toString()}`) // URL Asli (nonaktifkan)
+      fetch(`/api/charts/formation-rasio-test?${params.toString()}`) // URL Testing (aktifkan)
         .then((res) => {
           if (!res.ok) {
             throw new Error(`HTTP error! status: ${res.status}`);

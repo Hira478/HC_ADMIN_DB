@@ -6,7 +6,7 @@ import styles from "@/app/(dashboard)/data-center/DataCenter.module.css";
 import type { Period } from "@/contexts/FilterContext";
 import { DivisionStat } from "@prisma/client";
 
-// Simple debounce hook
+// Simple debounce hook untuk menunda pencarian
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function DivisionForm({
 
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms delay
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -63,15 +63,13 @@ export default function DivisionForm({
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  // Reset page to 1 when search term changes
   useEffect(() => {
     setPage(1);
   }, [debouncedSearchTerm]);
 
   const handleActualCountChange = async (id: number, value: string) => {
     const actualCount = parseInt(value) || 0;
-    // Optimistic UI update
+    // Update UI langsung untuk respons instan
     setDivisionData((current) => {
       if (!current) return null;
       return {
@@ -81,21 +79,20 @@ export default function DivisionForm({
         ),
       };
     });
-
-    // Auto-save to backend
+    // Kirim pembaruan ke backend
     await fetch("/api/data-center/divisions", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, actualCount }),
     });
-    // Di aplikasi nyata, tambahkan penanganan error di sini
   };
 
   return (
     <div className={styles.form}>
       <p className={styles.formDescription}>
         Data MPP (Planned) diisi melalui Bulk Upload. Silakan isi Headcount
-        Aktual di tabel di bawah ini. Perubahan akan tersimpan otomatis.
+        Aktual di tabel di bawah ini. Perubahan akan tersimpan otomatis saat
+        Anda keluar dari kolom input.
       </p>
       <div className={styles.tableControls}>
         <input
@@ -139,13 +136,21 @@ export default function DivisionForm({
                 </td>
                 <td>
                   {div.actualCount === div.plannedCount
-                    ? "✅"
+                    ? "✅ Sesuai"
                     : div.actualCount > div.plannedCount
-                    ? "🔺"
-                    : "🔻"}
+                    ? "🔺 Lebih"
+                    : "🔻 Kurang"}
                 </td>
               </tr>
             ))}
+            {divisionData?.data.length === 0 && (
+              <tr>
+                <td colSpan={4}>
+                  No division data found for this period. Please upload the MPP
+                  template.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -155,11 +160,12 @@ export default function DivisionForm({
           Previous
         </button>
         <span>
-          Page {divisionData?.meta.page} of {divisionData?.meta.totalPages}
+          Page {divisionData?.meta.page || 1} of{" "}
+          {divisionData?.meta.totalPages || 1}
         </span>
         <button
           onClick={() => setPage((p) => p + 1)}
-          disabled={page === divisionData?.meta.totalPages}
+          disabled={!divisionData || page === divisionData.meta.totalPages}
         >
           Next
         </button>
