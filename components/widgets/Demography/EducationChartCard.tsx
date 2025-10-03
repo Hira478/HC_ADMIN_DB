@@ -1,5 +1,3 @@
-// File: components/widgets/Demography/EducationChartCard.tsx
-
 "use client";
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
@@ -9,6 +7,9 @@ interface ChartData {
   labels: string[];
   values: number[];
 }
+
+// --- DIUBAH: Definisikan warna utama untuk chart ini ---
+const CHART_COLOR = "rgba(0, 128, 128, 0.9)"; // Teal
 
 const EducationChartCard = () => {
   const { selectedCompany, period } = useFilters();
@@ -63,7 +64,6 @@ const EducationChartCard = () => {
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
-      // PERBAIKAN: Ganti 'any' dengan tipe yang lebih spesifik
       formatter: (params: Array<{ name: string; value: number }>) => {
         const data = params[0];
         return `${data.name}<br/>${data.value.toFixed(1)}%`;
@@ -100,13 +100,13 @@ const EducationChartCard = () => {
         data: percentageValues,
         type: "bar",
         barWidth: "50%",
-        color: "#4A5568",
+        // --- DIUBAH: Gunakan warna yang sudah didefinisikan ---
+        color: CHART_COLOR,
         label: {
           show: true,
           position: "top",
           fontSize: 10,
           color: "#1f2937",
-          // PERBAIKAN: Ganti 'any' dengan tipe yang lebih spesifik
           formatter: (params: { value: number }) =>
             `${params.value.toFixed(1)}%`,
         },

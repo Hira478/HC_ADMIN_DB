@@ -8,6 +8,9 @@ interface ChartData {
   values: number[];
 }
 
+// --- DIUBAH: Definisikan warna utama untuk chart ini ---
+const CHART_COLOR = "rgba(0, 74, 128, 0.9)"; // Biru Navy
+
 const LevelChartCard = () => {
   const { selectedCompany, period } = useFilters();
   const [chartData, setChartData] = useState<ChartData | null>(null);
@@ -48,19 +51,16 @@ const LevelChartCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
-  // --- 1. KALKULASI TOTAL DAN PERSENTASE ---
   const absoluteValues = chartData?.values || [];
   const totalEmployees = absoluteValues.reduce((sum, value) => sum + value, 0);
   const percentageValues = absoluteValues.map((value) =>
     totalEmployees > 0 ? (value / totalEmployees) * 100 : 0
   );
 
-  // Kalkulasi sumbu Y dinamis berdasarkan persentase tertinggi
   const maxPercentage = Math.max(...percentageValues, 0);
   const yAxisMax = Math.min(100, Math.ceil(maxPercentage / 10) * 10 + 10);
 
   const option = {
-    // 2. Tambahkan tooltip untuk menampilkan detail saat hover
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
@@ -83,8 +83,7 @@ const LevelChartCard = () => {
     },
     yAxis: {
       type: "value",
-      max: yAxisMax, // Gunakan batas atas dinamis
-      // 3. Format label sumbu Y untuk menampilkan persen
+      max: yAxisMax,
       axisLabel: {
         formatter: "{value}%",
       },
@@ -95,17 +94,16 @@ const LevelChartCard = () => {
     },
     series: [
       {
-        // 4. Gunakan data persentase
         data: percentageValues,
         type: "bar",
         barWidth: "50%",
-        color: "#4A5568",
+        // --- DIUBAH: Gunakan warna yang sudah didefinisikan ---
+        color: CHART_COLOR,
         label: {
           show: true,
           position: "top",
           fontSize: 10,
           color: "#1f2937",
-          // 5. Format label di atas bar untuk menampilkan persen
           formatter: (params: { value: number }) =>
             `${params.value.toFixed(1)}%`,
         },

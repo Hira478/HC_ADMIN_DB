@@ -1,111 +1,147 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useFilters } from "@/contexts/FilterContext";
 import styles from "./DataCenter.module.css";
-import DemographyForm from "@/components/data-center/DemographyForm";
-import ProductivityForm from "@/components/data-center/ProductivityForm";
-import PlanningForm from "@/components/data-center/PlanningForm";
+
+// Impor komponen form DAN 'Handle' untuk ref
+import DemographyForm, {
+  FormHandle as DemographyFormHandle,
+} from "@/components/data-center/DemographyForm";
+import TalentAcquisitionForm, {
+  FormHandle as TAFormHandle,
+} from "@/components/data-center/TalentAcquisitionForm";
+import TurnOverForm, {
+  FormHandle as TOFormHandle,
+} from "@/components/data-center/TurnOverForm";
 import DivisionForm from "@/components/data-center/DivisionForm";
 
-type TabKey =
-  | "demography"
-  | "productivity"
-  | "talent"
-  | "planning"
-  | "division";
+// Gabungkan semua tipe Handle untuk ref yang dinamis
+type FormHandle = DemographyFormHandle | TAFormHandle | TOFormHandle;
+
+// Tipe data hanya untuk tab yang aktif
+type TabKey = "demography" | "talent-acquisition" | "turn-over" | "division";
 
 export default function DataCenterPage() {
   const { user, companies, loading: contextLoading } = useFilters();
 
   const [activeTab, setActiveTab] = useState<TabKey>("demography");
   const [isEditing, setIsEditing] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [localCompanyId, setLocalCompanyId] = useState<number | null>(null);
   const [localPeriod, setLocalPeriod] = useState(() => {
     const date = new Date();
     return { year: date.getFullYear(), month: date.getMonth() + 1 };
   });
 
+  const formRef = useRef<FormHandle>(null);
+
   useEffect(() => {
     if (user) {
-      // Untuk semua role, defaultnya adalah companyId milik user itu sendiri.
       setLocalCompanyId(user.companyId);
     }
   }, [user]);
 
-  const handleSaveSuccess = () => {
-    setIsEditing(false);
-  };
+  useEffect(() => {
+    setIsFormDirty(false);
+  }, [isEditing, activeTab]);
 
   const renderContent = () => {
-    if (contextLoading) return <div>Memuat data pengguna...</div>;
-    if (!localCompanyId) return <div>Menginisialisasi data perusahaan...</div>;
+    if (contextLoading) return <div>Loading user data...</div>;
+    if (!localCompanyId) return <div>Initializing company data...</div>;
+
+    const standardProps = {
+      selectedCompany: localCompanyId,
+      period: {
+        ...localPeriod,
+        type: "monthly" as const,
+        value: localPeriod.month,
+      },
+      isEditing: isEditing,
+      onSaveSuccess: () => {
+        setIsFormDirty(false);
+        setIsEditing(false);
+      },
+      onCancel: () => setIsEditing(false),
+      onDirtyChange: setIsFormDirty,
+    };
 
     switch (activeTab) {
       case "demography":
         return (
           <DemographyForm
-            selectedCompany={localCompanyId}
-            period={{
-              ...localPeriod,
-              type: "monthly",
-              value: localPeriod.month,
-            }}
-            isEditing={isEditing}
-            onSaveSuccess={handleSaveSuccess}
-            onCancel={() => setIsEditing(false)}
+            ref={formRef as React.Ref<DemographyFormHandle>}
+            {...standardProps}
           />
         );
-      case "productivity":
+      case "talent-acquisition":
         return (
-          <ProductivityForm
-            selectedCompany={localCompanyId}
-            period={{
-              ...localPeriod,
-              type: "monthly",
-              value: localPeriod.month,
-            }}
-            isEditing={isEditing}
-            onSaveSuccess={handleSaveSuccess}
-            onCancel={() => setIsEditing(false)}
+          <TalentAcquisitionForm
+            ref={formRef as React.Ref<TAFormHandle>}
+            {...standardProps}
           />
         );
-      case "planning":
+      case "turn-over":
         return (
-          <PlanningForm
-            selectedCompany={localCompanyId}
-            period={{
-              ...localPeriod,
-              type: "monthly",
-              value: localPeriod.month,
-            }}
-            isEditing={isEditing}
-            onSaveSuccess={handleSaveSuccess}
-            onCancel={() => setIsEditing(false)}
+          <TurnOverForm
+            ref={formRef as React.Ref<TOFormHandle>}
+            {...standardProps}
           />
         );
       case "division":
         return (
           <DivisionForm
-            selectedCompany={localCompanyId!}
+            selectedCompany={localCompanyId}
             period={{
               ...localPeriod,
               type: "monthly",
               value: localPeriod.month,
             }}
+            isEditing={isEditing}
           />
         );
       default:
-        return <div>Tab ini sedang dalam pengembangan.</div>;
+        return <div>This tab is under development.</div>;
     }
   };
 
   const renderFilterBar = () => {
     if (contextLoading) return null;
+
+    const handleSave = async () => {
+      if (formRef.current) {
+        await formRef.current.submit();
+      }
+    };
+
+    const handleDiscard = () => {
+      if (isFormDirty) {
+        if (
+          window.confirm(
+            "You have unsaved changes. Are you sure you want to discard them?"
+          )
+        ) {
+          setIsEditing(false);
+        }
+      } else {
+        setIsEditing(false);
+      }
+    };
+
+    const handleFinishDivisionEditing = () => {
+      if (
+        window.confirm(
+          "Are you sure you want to finish editing? All changes are saved automatically."
+        )
+      ) {
+        setIsEditing(false);
+      }
+    };
+
     return (
       <div className={styles.filterBar}>
+        {/* KODE FILTER BAR DIKEMBALIKAN DI SINI */}
         <div className={styles.filterControls}>
-          {/* PERUBAHAN 1: Filter perusahaan kini HANYA untuk SUPER_ADMIN */}
           {user && user.role === "SUPER_ADMIN" ? (
             <div className={styles.filterGroup}>
               <label htmlFor="company-select">Company</label>
@@ -130,6 +166,26 @@ export default function DataCenterPage() {
           )}
 
           <div className={styles.filterGroup}>
+            <label htmlFor="month-select">Month</label>
+            <select
+              id="month-select"
+              value={localPeriod.month}
+              onChange={(e) =>
+                setLocalPeriod((p) => ({ ...p, month: Number(e.target.value) }))
+              }
+              disabled={isEditing}
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                <option key={m} value={m}>
+                  {new Date(0, m - 1).toLocaleString("en-US", {
+                    month: "long",
+                  })}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.filterGroup}>
             <label htmlFor="year-select">Year</label>
             <select
               id="year-select"
@@ -146,37 +202,39 @@ export default function DataCenterPage() {
               ))}
             </select>
           </div>
-
-          <div className={styles.filterGroup}>
-            <label htmlFor="month-select">Month</label>
-            <select
-              id="month-select"
-              value={localPeriod.month}
-              onChange={(e) =>
-                setLocalPeriod((p) => ({ ...p, month: Number(e.target.value) }))
-              }
-              disabled={isEditing}
-            >
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <option key={m} value={m}>
-                  {new Date(0, m - 1).toLocaleString("id-ID", {
-                    month: "long",
-                  })}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
-        {/* PERUBAHAN 2: Tombol Edit dipindah ke sini */}
         <div className={styles.actionsContainer}>
-          {!isEditing && localCompanyId && (
+          {!isEditing && localCompanyId ? (
             <button
               onClick={() => setIsEditing(true)}
               className={styles.editButton}
             >
               Edit Data
             </button>
-          )}
+          ) : isEditing && localCompanyId ? (
+            <div className={styles.editingActions}>
+              {activeTab !== "division" ? (
+                <>
+                  <button
+                    onClick={handleDiscard}
+                    className={styles.cancelButton}
+                  >
+                    Discard Changes
+                  </button>
+                  <button onClick={handleSave} className={styles.editButton}>
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleFinishDivisionEditing}
+                  className={styles.editButton}
+                >
+                  Finish Editing
+                </button>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -186,11 +244,9 @@ export default function DataCenterPage() {
     <div className={styles.pageContainer}>
       <header className={styles.pageHeader}>
         <h1>Data Input Forms</h1>
-        <p>Choose Filter to fill or edit data.</p>
+        <p>Choose a filter to fill in or edit data.</p>
       </header>
-
       {renderFilterBar()}
-
       <nav className={styles.tabs}>
         <button
           onClick={() => setActiveTab("demography")}
@@ -198,36 +254,7 @@ export default function DataCenterPage() {
             activeTab === "demography" ? styles.active : ""
           }`}
         >
-          Demography
-        </button>
-        {/* PERUBAHAN 3: Hapus atribut 'disabled' */}
-        <button
-          onClick={() => setActiveTab("productivity")}
-          className={`${styles.tab} ${
-            activeTab === "productivity" ? styles.active : ""
-          }`}
-        >
-          Productivity & Cost
-        </button>
-        <button className={styles.tab} disabled>
-          Talent & Performance
-        </button>
-        <button
-          onClick={() => setActiveTab("planning")}
-          className={`${styles.tab} ${
-            activeTab === "planning" ? styles.active : ""
-          }`}
-        >
-          Planning
-        </button>
-        <button className={styles.tab} disabled>
-          RKAP Target
-        </button>
-        <button className={styles.tab} disabled>
-          Culture & Engagement
-        </button>
-        <button className={styles.tab} disabled>
-          Organizational Structure
+          Demographics
         </button>
         <button
           onClick={() => setActiveTab("division")}
@@ -237,12 +264,24 @@ export default function DataCenterPage() {
         >
           HC per Division
         </button>
+        <button
+          onClick={() => setActiveTab("talent-acquisition")}
+          className={`${styles.tab} ${
+            activeTab === "talent-acquisition" ? styles.active : ""
+          }`}
+        >
+          Talent Acquisition
+        </button>
+        <button
+          onClick={() => setActiveTab("turn-over")}
+          className={`${styles.tab} ${
+            activeTab === "turn-over" ? styles.active : ""
+          }`}
+        >
+          Turn Over
+        </button>
       </nav>
-
-      <main className={styles.formContainer}>
-        {renderContent()}
-        {/* Tombol edit sudah tidak ada di sini lagi */}
-      </main>
+      <main className={styles.formContainer}>{renderContent()}</main>
     </div>
   );
 }

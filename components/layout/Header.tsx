@@ -67,7 +67,7 @@ const Header = () => {
   const uniqueYears = Array.from(new Set(availablePeriods.map((p) => p.year)));
   const months = Array.from({ length: 12 }, (_, i) => ({
     value: i + 1,
-    name: new Date(0, i).toLocaleString("id-ID", { month: "long" }),
+    name: new Date(0, i).toLocaleString("en-US", { month: "long" }),
   }));
   const getActiveFilterText = () => {
     const companyName =
@@ -149,7 +149,7 @@ const Header = () => {
 
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Tahun
+                        Year
                       </label>
                       <select
                         value={period.year}
@@ -167,7 +167,7 @@ const Header = () => {
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600">
-                        Bulan
+                        Month
                       </label>
                       <div className="mt-1">
                         <select

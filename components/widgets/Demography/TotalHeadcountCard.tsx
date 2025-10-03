@@ -1,5 +1,3 @@
-// File: /components/widgets/TotalHeadcountCard.tsx
-
 "use client";
 import { Mars, Venus, TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -53,7 +51,14 @@ const TotalHeadcountCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
+  // --- DIUBAH: Logika untuk menentukan warna dan ikon perubahan ---
   const isPositive = data?.change?.startsWith("+");
+  const isNegative = data?.change?.startsWith("-");
+  const changeColor = isPositive
+    ? "text-green-400"
+    : isNegative
+    ? "text-red-400"
+    : "text-gray-400";
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow-md text-white h-full flex flex-col">
@@ -61,11 +66,16 @@ const TotalHeadcountCard = () => {
         <p className="text-gray-400 text-sm">Total Headcount</p>
         <p className="text-4xl font-bold mt-1">
           {loading ? "..." : data?.total.toLocaleString("id-ID") ?? 0}{" "}
-          <span className="text-xl font-normal">Employee</span>
+          <span className="text-xl font-normal">Employees</span>
         </p>
 
+        {/* --- DIUBAH: Tampilan perubahan sekarang dinamis --- */}
         {data?.change && (
-          <p className="text-green-500 text-sm mt-1 flex items-center gap-1">
+          <p
+            className={`${changeColor} text-sm mt-1 flex items-center gap-1 font-medium`}
+          >
+            {isPositive && <TrendingUp size={16} />}
+            {isNegative && <TrendingDown size={16} />}
             {data.change}
           </p>
         )}
@@ -76,13 +86,11 @@ const TotalHeadcountCard = () => {
       <div className="flex justify-between mt-auto">
         {/* --- Bagian Pria --- */}
         <div className="flex flex-col items-center flex-1">
-          {/* UBAH: Background ikon menjadi solid dan lebih cerah */}
-          <div className="p-3 bg-sky-500 rounded-full mb-2">
-            {/* UBAH: Warna ikon menjadi putih untuk kontras maksimal */}
+          {/* DIUBAH: Menggunakan warna biru yang lebih profesional */}
+          <div className="p-3 bg-blue-700 rounded-full mb-2">
             <Mars className="h-8 w-8 text-white" />
           </div>
-          {/* UBAH: Warna angka disesuaikan dengan tema gender */}
-          <p className="text-2xl font-bold text-sky-400">
+          <p className="text-2xl font-bold text-blue-400">
             {loading ? "..." : data?.male.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-sm text-gray-400 mt-1">Male</p>
@@ -90,13 +98,11 @@ const TotalHeadcountCard = () => {
 
         {/* --- Bagian Wanita --- */}
         <div className="flex flex-col items-center flex-1">
-          {/* UBAH: Background ikon menjadi solid dan lebih cerah */}
-          <div className="p-3 bg-pink-500 rounded-full mb-2">
-            {/* UBAH: Warna ikon menjadi putih untuk kontras maksimal */}
+          {/* DIUBAH: Menggunakan warna rose/magenta yang lebih profesional */}
+          <div className="p-3 bg-rose-600 rounded-full mb-2">
             <Venus className="h-8 w-8 text-white" />
           </div>
-          {/* UBAH: Warna angka disesuaikan dengan tema gender */}
-          <p className="text-2xl font-bold text-pink-400">
+          <p className="text-2xl font-bold text-rose-400">
             {loading ? "..." : data?.female.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-sm text-gray-400 mt-1">Female</p>

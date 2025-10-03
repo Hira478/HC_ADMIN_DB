@@ -1,10 +1,10 @@
-// File: components/data-center/DivisionForm.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import styles from "@/app/(dashboard)/data-center/DataCenter.module.css";
 import type { Period } from "@/contexts/FilterContext";
 import { DivisionStat } from "@prisma/client";
+import AppModal from "@/components/ui/AppModal";
 
 // Simple debounce hook untuk menunda pencarian
 const useDebounce = (value: string, delay: number) => {
@@ -20,9 +20,21 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
+const CATEGORIES = [
+  "Business",
+  "Compliance",
+  "Finance",
+  "HC, GA & Sekper",
+  "IT",
+  "Operation",
+  "Strategy",
+  "Uncategorized",
+];
+
 interface DivisionFormProps {
   selectedCompany: number;
   period: Period;
+  isEditing: boolean;
 }
 
 interface DivisionData {
@@ -33,14 +45,21 @@ interface DivisionData {
 export default function DivisionForm({
   selectedCompany,
   period,
+  isEditing,
 }: DivisionFormProps) {
   const [divisionData, setDivisionData] = useState<DivisionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newDivision, setNewDivision] = useState({
+    divisionName: "",
+    plannedCount: 0,
+    Kategori: "Uncategorized",
+  });
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -69,7 +88,6 @@ export default function DivisionForm({
 
   const handleActualCountChange = async (id: number, value: string) => {
     const actualCount = parseInt(value) || 0;
-    // Update UI langsung untuk respons instan
     setDivisionData((current) => {
       if (!current) return null;
       return {
@@ -79,21 +97,82 @@ export default function DivisionForm({
         ),
       };
     });
-    // Kirim pembaruan ke backend
-    await fetch("/api/data-center/divisions", {
+    await fetch(`/api/data-center/divisions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, actualCount }),
     });
   };
 
+  const openAddDivisionModal = () => {
+    setNewDivision({
+      divisionName: "",
+      plannedCount: 0,
+      Kategori: "Uncategorized",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveNewDivision = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDivision.divisionName) {
+      alert("Division Name is required.");
+      return;
+    }
+
+    const payload = {
+      ...newDivision,
+      year: period.year,
+      month: period.value,
+      companyId: selectedCompany,
+      actualCount: 0,
+    };
+
+    const res = await fetch("/api/data-center/divisions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      setIsModalOpen(false);
+      fetchData();
+    } else {
+      alert("Failed to add division.");
+    }
+  };
+
+  const handleDeleteDivision = async (id: number, name: string) => {
+    if (
+      confirm(
+        `Are you sure you want to delete division "${name}" for this period?`
+      )
+    ) {
+      const res = await fetch(`/api/data-center/divisions/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        // Optimistic update: remove from UI immediately
+        setDivisionData((current) =>
+          current
+            ? { ...current, data: current.data.filter((d) => d.id !== id) }
+            : null
+        );
+      } else {
+        alert("Failed to delete division.");
+      }
+    }
+  };
+
   return (
     <div className={styles.form}>
-      <p className={styles.formDescription}>
-        Data MPP (Planned) diisi melalui Bulk Upload. Silakan isi Headcount
-        Aktual di tabel di bawah ini. Perubahan akan tersimpan otomatis saat
-        Anda keluar dari kolom input.
-      </p>
+      {isEditing && (
+        <div className={styles.tableControls}>
+          <button onClick={openAddDivisionModal} className={styles.addButton}>
+            + Add Division
+          </button>
+        </div>
+      )}
       <div className={styles.tableControls}>
         <input
           type="text"
@@ -101,62 +180,138 @@ export default function DivisionForm({
           className={styles.searchInput}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          disabled={!isEditing && divisionData?.data.length === 0}
         />
+        {/* PENAMBAHAN: Indikator total divisi */}
+        <div className={styles.totalIndicator}>
+          Total Divisions: <strong>{divisionData?.meta.total || 0}</strong>
+        </div>
       </div>
-
       {isLoading && (
         <div className={styles.loadingOverlay}>Loading Divisions...</div>
       )}
       {error && <div className={styles.errorBanner}>{error}</div>}
-
       <div className={styles.tableWrapper}>
         <table className={styles.dataTable}>
           <thead>
             <tr>
               <th>Division Name</th>
+              <th>Category</th>
               <th>MPP (Planned)</th>
               <th>Actual Headcount</th>
-              <th>Status</th>
+              {isEditing && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
-            {divisionData?.data.map((div) => (
-              <tr key={div.id}>
-                <td>{div.divisionName}</td>
-                <td>{div.plannedCount}</td>
-                <td>
-                  <input
-                    type="number"
-                    className={styles.tableInput}
-                    defaultValue={div.actualCount}
-                    onBlur={(e) =>
-                      handleActualCountChange(div.id, e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  {div.actualCount === div.plannedCount
-                    ? "✅ Sesuai"
-                    : div.actualCount > div.plannedCount
-                    ? "🔺 Lebih"
-                    : "🔻 Kurang"}
-                </td>
-              </tr>
-            ))}
-            {divisionData?.data.length === 0 && (
+            {divisionData &&
+              divisionData.data.map((div) => (
+                <tr key={div.id}>
+                  <td>{div.divisionName}</td>
+                  <td>{div.Kategori}</td>
+                  <td>{div.plannedCount}</td>
+                  <td>
+                    <input
+                      type="number"
+                      className={styles.tableInput}
+                      defaultValue={div.actualCount}
+                      onBlur={(e) =>
+                        handleActualCountChange(div.id, e.target.value)
+                      }
+                      disabled={!isEditing}
+                    />
+                  </td>
+                  {isEditing && (
+                    <td>
+                      <button
+                        onClick={() =>
+                          handleDeleteDivision(div.id, div.divisionName)
+                        }
+                        className={styles.deleteButton}
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            {divisionData?.data.length === 0 && !isLoading && (
               <tr>
-                <td colSpan={4}>
-                  No division data found for this period. Please upload the MPP
-                  template.
+                <td colSpan={isEditing ? 4 : 3}>
+                  No division data found for this period.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        <AppModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Add New Division"
+        >
+          <form onSubmit={handleSaveNewDivision}>
+            <div className={styles.inputGroup}>
+              <label>Division Name</label>
+              <input
+                type="text"
+                value={newDivision.divisionName}
+                onChange={(e) =>
+                  setNewDivision({
+                    ...newDivision,
+                    divisionName: e.target.value,
+                  })
+                }
+                required
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>MPP (Planned Count)</label>
+              <input
+                type="number"
+                min="0"
+                value={newDivision.plannedCount}
+                onChange={(e) =>
+                  setNewDivision({
+                    ...newDivision,
+                    plannedCount: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <label>Category</label>
+              <select
+                value={newDivision.Kategori}
+                onChange={(e) =>
+                  setNewDivision({ ...newDivision, Kategori: e.target.value })
+                }
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.formActions}>
+              <button
+                type="button"
+                className={styles.cancelButton}
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button type="submit" className={styles.submitButton}>
+                Save Division
+              </button>
+            </div>
+          </form>
+        </AppModal>
       </div>
-
       <div className={styles.pagination}>
-        <button onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1 || isLoading}
+        >
           Previous
         </button>
         <span>
@@ -165,7 +320,9 @@ export default function DivisionForm({
         </span>
         <button
           onClick={() => setPage((p) => p + 1)}
-          disabled={!divisionData || page === divisionData.meta.totalPages}
+          disabled={
+            !divisionData || page === divisionData.meta.totalPages || isLoading
+          }
         >
           Next
         </button>

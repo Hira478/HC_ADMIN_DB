@@ -407,3 +407,65 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/* Style untuk input di dalam tabel saat non-aktif (locked) */
+.tableInput:disabled {
+  background-color: #f3f4f6; /* Warna abu-abu terang */
+  cursor: not-allowed;
+}
+
+/* Tambahkan di akhir file DataCenter.module.css */
+
+.addButton {
+  background-color: #10b981; /* Green */
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.addButton:hover {
+  background-color: #059669;
+}
+
+.deleteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #ef4444; /* Red */
+}
+
+.deleteButton:hover {
+  color: #b91c1c;
+}
+
+.editingActions {
+  display: flex;
+  gap: 0.75rem; /* Memberi jarak antar tombol */
+}
+
+/* Modifikasi style .tableControls */
+.tableControls {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* Agar responsif di layar kecil */
+  gap: 1rem;
+}
+
+/* Tambahkan style baru ini di akhir file */
+.totalIndicator {
+  font-size: 0.9rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.totalIndicator strong {
+  font-size: 1rem;
+  color: #1f2937;
+}
