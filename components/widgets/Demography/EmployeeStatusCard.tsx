@@ -1,5 +1,3 @@
-// File: /components/widgets/Demography/EmployeeStatusCard.tsx
-
 "use client";
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
@@ -16,6 +14,14 @@ interface EmployeeStatusState {
     contract: string;
   };
 }
+
+// --- DIUBAH: Definisikan palet warna di sini agar konsisten ---
+const STATUS_COLORS: { [key: string]: string } = {
+  Permanent: "rgba(0, 74, 128, 0.9)", // Biru Navy (lebih pekat untuk visibilitas)
+  Contract: "rgba(0, 128, 128, 0.9)", // Teal (lebih pekat untuk visibilitas)
+  // Tambahkan warna default jika ada status lain
+  default: "rgba(156, 163, 175, 0.8)",
+};
 
 const EmployeeStatusCard = () => {
   const { selectedCompany, period } = useFilters();
@@ -75,23 +81,14 @@ const EmployeeStatusCard = () => {
         label: {
           show: true,
           position: "inside",
-          // --- PERUBAHAN DI SINI ---
-          // Tampilkan persentase ({d}%) bukan angka absolut ({c})
           formatter: "{b}\n{d}%",
           fontSize: 14,
           color: "#fff",
           fontWeight: "bold",
-          textBorderColor: "#000",
-          textBorderWidth: 2,
-          textBorderType: "solid",
-          textShadowColor: "rgba(0,0,0,0.5)",
-          textShadowBlur: 2,
-          textShadowOffsetX: 1,
-          textShadowOffsetY: 1,
+          textShadowColor: "rgba(0,0,0,0.7)",
+          textShadowBlur: 4,
         },
-        labelLine: {
-          show: false,
-        },
+        labelLine: { show: false },
         emphasis: {
           scale: true,
           scaleSize: 5,
@@ -99,15 +96,13 @@ const EmployeeStatusCard = () => {
             show: true,
             fontSize: 18,
             fontWeight: "bold",
-            textBorderColor: "#000",
-            textBorderWidth: 2,
-            textBorderType: "solid",
           },
         },
+        // --- DIUBAH: Gunakan palet warna yang sudah didefinisikan ---
         data: (data?.chartData || []).map((item) => ({
           ...item,
           itemStyle: {
-            color: item.name === "Permanent" ? "#C53030" : "#4A5568",
+            color: STATUS_COLORS[item.name] || STATUS_COLORS.default,
           },
         })),
       },
@@ -134,13 +129,20 @@ const EmployeeStatusCard = () => {
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
       <h3 className="font-bold text-xl text-gray-800 mb-2">Employee Status</h3>
 
+      {/* --- DIUBAH: Legenda sekarang menggunakan warna dari palet via inline style --- */}
       <div className="flex justify-center gap-8 mt-4">
         <div className="flex items-center translate-y-[60px]">
-          <span className="h-4 w-4 rounded-full bg-red-700 mr-2"></span>
+          <span
+            className="h-4 w-4 rounded-full mr-2"
+            style={{ backgroundColor: STATUS_COLORS.Permanent }}
+          ></span>
           <span className="text-base font-medium">Permanent</span>
         </div>
         <div className="flex items-center translate-y-[60px]">
-          <span className="h-4 w-4 rounded-full bg-gray-700 mr-2"></span>
+          <span
+            className="h-4 w-4 rounded-full mr-2"
+            style={{ backgroundColor: STATUS_COLORS.Contract }}
+          ></span>
           <span className="text-base font-medium">Contract</span>
         </div>
       </div>

@@ -1,6 +1,89 @@
+// File: app/api/data-center/divisions/[id]/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+
+// PUT: Update actualCount (auto-save)
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+    const { actualCount } = await request.json();
+
+    const division = await prisma.divisionStat.findUnique({ where: { id } });
+    if (
+      !division ||
+      (session.role !== "SUPER_ADMIN" &&
+        division.companyId !== session.companyId)
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const updated = await prisma.divisionStat.update({
+      where: { id },
+      data: { actualCount },
+    });
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error(`Error in PUT /api/data-center/divisions/[id]:`, error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Hapus divisi dari bulan berjalan
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    const division = await prisma.divisionStat.findUnique({ where: { id } });
+    if (
+      !division ||
+      (session.role !== "SUPER_ADMIN" &&
+        division.companyId !== session.companyId)
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await prisma.divisionStat.delete({ where: { id } });
+    return NextResponse.json(
+      { message: "Division deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(`Error in DELETE /api/data-center/divisions/[id]:`, error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
 
 // GET: Mengambil data divisi, dengan logika "carry-over", PAGINASI, dan SEARCH
 export async function GET(request: NextRequest) {
@@ -43,7 +126,7 @@ export async function GET(request: NextRequest) {
           month,
           companyId,
           divisionName: d.divisionName,
-          Kategori: d.Kategori, // Kolom Kategori masih ada di DB, kita ikut sertakan
+          Kategori: d.Kategori,
           plannedCount: d.plannedCount,
           actualCount: 0, // Reset actual count
         }));
@@ -126,7 +209,6 @@ export async function POST(request: NextRequest) {
         companyId: targetCompanyId,
         divisionName,
         Kategori,
-        // Kategori diisi default oleh Prisma, jadi tidak perlu disertakan di sini
         plannedCount,
         actualCount,
       },

@@ -1,8 +1,6 @@
-// File: app/api/data-center/demography/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma"; // Pastikan path ke client prisma Anda benar
-import { getSession } from "@/lib/session"; // Pastikan path ke session Anda benar
+import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 // Tipe data untuk payload yang diterima dari frontend
 interface DemographyPayload {
@@ -12,25 +10,32 @@ interface DemographyPayload {
 
   // Data dari setiap model/fieldset
   headcount?: { maleCount: number; femaleCount: number; totalCount: number };
-  employeeStatus?: { permanentCount: number; contractCount: number };
+  employeeStatus?: {
+    permanentCount: number;
+    contractCount: number;
+    totalCount: number;
+  };
   education?: {
     smaSmkCount: number;
     d3Count: number;
     s1Count: number;
     s2Count: number;
     s3Count: number;
+    totalCount: number;
   };
   level?: {
     bod1Count: number;
     bod2Count: number;
     bod3Count: number;
     bod4Count: number;
+    totalCount: number;
   };
   age?: {
     under25Count: number;
     age26to40Count: number;
     age41to50Count: number;
     over50Count: number;
+    totalCount: number;
   };
   lengthOfService?: {
     los_0_5_Count: number;
@@ -40,6 +45,7 @@ interface DemographyPayload {
     los_21_25_Count: number;
     los_25_30_Count: number;
     los_over_30_Count: number;
+    totalCount: number;
   };
 }
 
@@ -62,13 +68,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid filters" }, { status: 400 });
   }
 
-  // Penting: Cek otorisasi user Anper
-  if (session.role === "USER_ANPER" && session.companyId !== companyId) {
+  // Penting: Cek otorisasi user Anper/Holding
+  if (session.role !== "SUPER_ADMIN" && session.companyId !== companyId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
-    // Menggunakan $transaction untuk mengambil semua data secara paralel
     const [headcount, employeeStatus, education, level, age, lengthOfService] =
       await prisma.$transaction([
         prisma.headcount.findUnique({
@@ -108,10 +113,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * Handler untuk POST request.
- * Membuat atau mengupdate (upsert) data demografi.
- */
+// POST function (with corrections)
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -120,17 +122,10 @@ export async function POST(request: NextRequest) {
 
   const body: DemographyPayload = await request.json();
 
-  // LOGIKA ISOLASI DATA (SANGAT PENTING!)
   let targetCompanyId: number;
-  if (session.role === "USER_ANPER") {
-    // Jika user adalah Anper, paksa companyId menjadi milik mereka.
-    // Ini mencegah user Anper mengirim data untuk perusahaan lain.
+  if (session.role === "USER_ANPER" || session.role === "ADMIN_HOLDING") {
     targetCompanyId = session.companyId;
-  } else if (
-    session.role === "ADMIN_HOLDING" ||
-    session.role === "SUPER_ADMIN"
-  ) {
-    // Jika Holding atau Super Admin, percayai companyId dari body request.
+  } else if (session.role === "SUPER_ADMIN") {
     targetCompanyId = body.companyId;
   } else {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -141,65 +136,122 @@ export async function POST(request: NextRequest) {
     year_month_companyId: { year, month, companyId: targetCompanyId },
   };
 
+  // Cleaning data before sending to the database
+
+  // headcount is left as is because its totalCount is in the DB
+  const headcountData = body.headcount || {
+    maleCount: 0,
+    femaleCount: 0,
+    totalCount: 0,
+  };
+
+  // For other data types, remove totalCount and ensure defaults
+  const { totalCount: esTotal, ...employeeStatusPayload } =
+    body.employeeStatus || {};
+  const employeeStatusData = {
+    permanentCount: 0,
+    contractCount: 0,
+    ...employeeStatusPayload,
+  };
+
+  const { totalCount: eduTotal, ...educationPayload } = body.education || {};
+  const educationData = {
+    smaSmkCount: 0,
+    d3Count: 0,
+    s1Count: 0,
+    s2Count: 0,
+    s3Count: 0,
+    ...educationPayload,
+  };
+
+  const { totalCount: levelTotal, ...levelPayload } = body.level || {};
+  const levelData = {
+    bod1Count: 0,
+    bod2Count: 0,
+    bod3Count: 0,
+    bod4Count: 0,
+    ...levelPayload,
+  };
+
+  const { totalCount: ageTotal, ...agePayload } = body.age || {};
+  const ageData = {
+    under25Count: 0,
+    age26to40Count: 0,
+    age41to50Count: 0,
+    over50Count: 0,
+    ...agePayload,
+  };
+
+  const { totalCount: losTotal, ...losPayload } = body.lengthOfService || {};
+  const lengthOfServiceData = {
+    los_0_5_Count: 0,
+    los_6_10_Count: 0,
+    los_11_15_Count: 0,
+    los_16_20_Count: 0,
+    los_21_25_Count: 0,
+    los_25_30_Count: 0,
+    los_over_30_Count: 0,
+    ...losPayload,
+  };
+
   try {
-    // Menggunakan transaction agar semua operasi berhasil atau semua gagal.
     await prisma.$transaction([
-      // Upsert Headcount
       prisma.headcount.upsert({
         where: whereClause,
-        update: { ...body.headcount },
-        create: { year, month, companyId: targetCompanyId, ...body.headcount! },
+        update: headcountData,
+        create: { year, month, companyId: targetCompanyId, ...headcountData },
       }),
-      // Upsert Employee Status
       prisma.employeeStatusStat.upsert({
         where: whereClause,
-        update: { ...body.employeeStatus },
+        update: employeeStatusData,
         create: {
           year,
           month,
           companyId: targetCompanyId,
-          ...body.employeeStatus!,
+          ...employeeStatusData,
         },
       }),
-      // Upsert Education
       prisma.educationStat.upsert({
         where: whereClause,
-        update: { ...body.education },
-        create: { year, month, companyId: targetCompanyId, ...body.education! },
+        update: educationData,
+        create: { year, month, companyId: targetCompanyId, ...educationData },
       }),
-      // Upsert Level
       prisma.levelStat.upsert({
         where: whereClause,
-        update: { ...body.level },
-        create: { year, month, companyId: targetCompanyId, ...body.level! },
+        update: levelData,
+        create: { year, month, companyId: targetCompanyId, ...levelData },
       }),
-      // Upsert Age
       prisma.ageStat.upsert({
         where: whereClause,
-        update: { ...body.age },
-        create: { year, month, companyId: targetCompanyId, ...body.age! },
+        update: ageData,
+        create: { year, month, companyId: targetCompanyId, ...ageData },
       }),
-      // Upsert Length of Service
       prisma.lengthOfServiceStat.upsert({
         where: whereClause,
-        update: { ...body.lengthOfService },
+        update: lengthOfServiceData,
         create: {
           year,
           month,
           companyId: targetCompanyId,
-          ...body.lengthOfService!,
+          ...lengthOfServiceData,
         },
       }),
     ]);
 
     return NextResponse.json(
-      { message: "Data demografi berhasil disimpan." },
+      { message: "Demographic data saved successfully." },
       { status: 200 }
     );
   } catch (error) {
     console.error("Failed to save demography data:", error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: "Failed to save data.", details: error.message },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: "Gagal menyimpan data." },
+      { error: "Failed to save data." },
       { status: 500 }
     );
   }
