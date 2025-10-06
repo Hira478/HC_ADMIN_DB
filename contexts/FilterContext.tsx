@@ -42,6 +42,10 @@ interface FilterContextType {
   selectedCompany: number | null;
   setSelectedCompany: (companyId: number) => void;
   period: Period;
+  statusFilter: "all" | "permanent" | "contract"; // <-- TAMBAHKAN INI
+  setStatusFilter: React.Dispatch<
+    React.SetStateAction<"all" | "permanent" | "contract">
+  >; // <-- TAMBAHKAN INI
   setPeriod: (period: Period) => void;
   loading: boolean;
   user: UserSession | null;
@@ -59,6 +63,9 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   );
   const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "permanent" | "contract"
+  >("all");
   const [period, setPeriod] = useState<Period>({
     type: "monthly",
     year: new Date().getFullYear(),
@@ -175,6 +182,8 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     setSelectedCompany: handleSetSelectedCompany,
     period,
     setPeriod,
+    statusFilter, // <-- TAMBAHKAN INI
+    setStatusFilter,
     loading,
     user,
     logout,

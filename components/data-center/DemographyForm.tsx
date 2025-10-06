@@ -5,122 +5,205 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useMemo,
 } from "react";
 import styles from "@/app/(dashboard)/data-center/DataCenter.module.css";
+import {
+  DemographyManualInputData,
+  DemographyManualInputPayload,
+} from "@/types"; // <-- 1. IMPORT TIPE BARU
 import type { Period } from "@/contexts/FilterContext";
 
-// Tipe props yang diterima dari parent
+// Tipe props yang diterima dari parent (tidak berubah)
 export interface DemographyFormProps {
   selectedCompany: number;
   period: Period;
   isEditing: boolean;
   onSaveSuccess: () => void;
-  onCancel: () => void; // Tetap diterima untuk mereset state saat discard
+  onCancel: () => void;
   onDirtyChange: (isDirty: boolean) => void;
 }
 
-// Tipe handle yang diekspos ke parent melalui ref
 export interface FormHandle {
   submit: () => Promise<void>;
 }
 
-// Tipe Data untuk form ini
-interface DemographyData {
-  headcount: { maleCount: number; femaleCount: number; totalCount: number };
-  employeeStatus: {
-    permanentCount: number;
-    contractCount: number;
-    totalCount: number;
+// Definisikan tipe spesifik untuk setiap bagian
+interface HeadcountState {
+  permanent: { male: number; female: number };
+  contract: { male: number; female: number };
+}
+interface EducationState {
+  permanent: { smaSmk: number; d3: number; s1: number; s2: number; s3: number };
+  contract: { smaSmk: number; d3: number; s1: number; s2: number; s3: number };
+}
+interface LevelState {
+  permanent: { bod1: number; bod2: number; bod3: number; bod4: number };
+  contract: { bod1: number; bod2: number; bod3: number; bod4: number };
+}
+interface AgeState {
+  permanent: {
+    under25: number;
+    age26to40: number;
+    age41to50: number;
+    over50: number;
   };
-  education: {
-    smaSmkCount: number;
-    d3Count: number;
-    s1Count: number;
-    s2Count: number;
-    s3Count: number;
-    totalCount: number;
+  contract: {
+    under25: number;
+    age26to40: number;
+    age41to50: number;
+    over50: number;
   };
-  level: {
-    bod1Count: number;
-    bod2Count: number;
-    bod3Count: number;
-    bod4Count: number;
-    totalCount: number;
+}
+interface LosState {
+  permanent: {
+    los_0_5: number;
+    los_6_10: number;
+    los_11_15: number;
+    los_16_20: number;
+    los_21_25: number;
+    los_25_30: number;
+    los_over_30: number;
   };
-  age: {
-    under25Count: number;
-    age26to40Count: number;
-    age41to50Count: number;
-    over50Count: number;
-    totalCount: number;
-  };
-  lengthOfService: {
-    los_0_5_Count: number;
-    los_6_10_Count: number;
-    los_11_15_Count: number;
-    los_16_20_Count: number;
-    los_21_25_Count: number;
-    los_25_30_Count: number;
-    los_over_30_Count: number;
-    totalCount: number;
+  contract: {
+    los_0_5: number;
+    los_6_10: number;
+    los_11_15: number;
+    los_16_20: number;
+    los_21_25: number;
+    los_25_30: number;
+    los_over_30: number;
   };
 }
 
-// State awal untuk form kosong
-const initialDemographyData: DemographyData = {
-  headcount: { maleCount: 0, femaleCount: 0, totalCount: 0 },
-  employeeStatus: { permanentCount: 0, contractCount: 0, totalCount: 0 },
+interface FormStateData {
+  headcount: HeadcountState;
+  education: EducationState;
+  level: LevelState;
+  age: AgeState;
+  lengthOfService: LosState;
+}
+
+const initialFormState: FormStateData = {
+  headcount: {
+    permanent: { male: 0, female: 0 },
+    contract: { male: 0, female: 0 },
+  },
   education: {
-    smaSmkCount: 0,
-    d3Count: 0,
-    s1Count: 0,
-    s2Count: 0,
-    s3Count: 0,
-    totalCount: 0,
+    permanent: { smaSmk: 0, d3: 0, s1: 0, s2: 0, s3: 0 },
+    contract: { smaSmk: 0, d3: 0, s1: 0, s2: 0, s3: 0 },
   },
   level: {
-    bod1Count: 0,
-    bod2Count: 0,
-    bod3Count: 0,
-    bod4Count: 0,
-    totalCount: 0,
+    permanent: { bod1: 0, bod2: 0, bod3: 0, bod4: 0 },
+    contract: { bod1: 0, bod2: 0, bod3: 0, bod4: 0 },
   },
   age: {
-    under25Count: 0,
-    age26to40Count: 0,
-    age41to50Count: 0,
-    over50Count: 0,
-    totalCount: 0,
+    permanent: { under25: 0, age26to40: 0, age41to50: 0, over50: 0 },
+    contract: { under25: 0, age26to40: 0, age41to50: 0, over50: 0 },
   },
   lengthOfService: {
-    los_0_5_Count: 0,
-    los_6_10_Count: 0,
-    los_11_15_Count: 0,
-    los_16_20_Count: 0,
-    los_21_25_Count: 0,
-    los_25_30_Count: 0,
-    los_over_30_Count: 0,
-    totalCount: 0,
+    permanent: {
+      los_0_5: 0,
+      los_6_10: 0,
+      los_11_15: 0,
+      los_16_20: 0,
+      los_21_25: 0,
+      los_25_30: 0,
+      los_over_30: 0,
+    },
+    contract: {
+      los_0_5: 0,
+      los_6_10: 0,
+      los_11_15: 0,
+      los_16_20: 0,
+      los_21_25: 0,
+      los_25_30: 0,
+      los_over_30: 0,
+    },
   },
 };
 
-const formatLabel = (key: string): string => {
-  if (key.startsWith("los_")) {
-    return key.replace("los_", "").replace("_Count", "").replace(/_/g, "-");
-  }
-  return key
-    .replace(/([A-Z])/g, " $1")
-    .replace("Count", "")
-    .replace("sma Smk", "SMA/SMK")
-    .replace("bod", "BOD-")
-    .replace("under", "< ")
-    .replace("age", "")
-    .replace("to", "-")
-    .replace("over", "> ")
-    .trim();
+// Fungsi helper untuk mengubah data API menjadi state form
+const transformApiDataToFormState = (
+  apiData: DemographyManualInputData
+): FormStateData => {
+  return {
+    headcount: {
+      permanent: {
+        male: apiData.headcount?.malePermanent ?? 0,
+        female: apiData.headcount?.femalePermanent ?? 0,
+      },
+      contract: {
+        male: apiData.headcount?.maleContract ?? 0,
+        female: apiData.headcount?.femaleContract ?? 0,
+      },
+    },
+    education: {
+      permanent: {
+        smaSmk: apiData.education?.smaSmkPermanent ?? 0,
+        d3: apiData.education?.d3Permanent ?? 0,
+        s1: apiData.education?.s1Permanent ?? 0,
+        s2: apiData.education?.s2Permanent ?? 0,
+        s3: apiData.education?.s3Permanent ?? 0,
+      },
+      contract: {
+        smaSmk: apiData.education?.smaSmkContract ?? 0,
+        d3: apiData.education?.d3Contract ?? 0,
+        s1: apiData.education?.s1Contract ?? 0,
+        s2: apiData.education?.s2Contract ?? 0,
+        s3: apiData.education?.s3Contract ?? 0,
+      },
+    },
+    age: {
+      permanent: {
+        under25: apiData.age?.under25Permanent ?? 0,
+        age26to40: apiData.age?.age26to40Permanent ?? 0,
+        age41to50: apiData.age?.age41to50Permanent ?? 0,
+        over50: apiData.age?.over50Permanent ?? 0,
+      },
+      contract: {
+        under25: apiData.age?.under25Contract ?? 0,
+        age26to40: apiData.age?.age26to40Contract ?? 0,
+        age41to50: apiData.age?.age41to50Contract ?? 0,
+        over50: apiData.age?.over50Contract ?? 0,
+      },
+    },
+    level: {
+      permanent: {
+        bod1: apiData.level?.bod1Permanent ?? 0,
+        bod2: apiData.level?.bod2Permanent ?? 0,
+        bod3: apiData.level?.bod3Permanent ?? 0,
+        bod4: apiData.level?.bod4Permanent ?? 0,
+      },
+      contract: {
+        bod1: apiData.level?.bod1Contract ?? 0,
+        bod2: apiData.level?.bod2Contract ?? 0,
+        bod3: apiData.level?.bod3Contract ?? 0,
+        bod4: apiData.level?.bod4Contract ?? 0,
+      },
+    },
+    lengthOfService: {
+      permanent: {
+        los_0_5: apiData.lengthOfService?.los_0_5_Permanent ?? 0,
+        los_6_10: apiData.lengthOfService?.los_6_10_Permanent ?? 0,
+        los_11_15: apiData.lengthOfService?.los_11_15_Permanent ?? 0,
+        los_16_20: apiData.lengthOfService?.los_16_20_Permanent ?? 0,
+        los_21_25: apiData.lengthOfService?.los_21_25_Permanent ?? 0,
+        los_25_30: apiData.lengthOfService?.los_25_30_Permanent ?? 0,
+        los_over_30: apiData.lengthOfService?.los_over_30_Permanent ?? 0,
+      },
+      contract: {
+        los_0_5: apiData.lengthOfService?.los_0_5_Contract ?? 0,
+        los_6_10: apiData.lengthOfService?.los_6_10_Contract ?? 0,
+        los_11_15: apiData.lengthOfService?.los_11_15_Contract ?? 0,
+        los_16_20: apiData.lengthOfService?.los_16_20_Contract ?? 0,
+        los_21_25: apiData.lengthOfService?.los_21_25_Contract ?? 0,
+        los_25_30: apiData.lengthOfService?.los_25_30_Contract ?? 0,
+        los_over_30: apiData.lengthOfService?.los_over_30_Contract ?? 0,
+      },
+    },
+  };
 };
-
-const fieldsToExclude = ["id", "month", "year", "companyId", "totalCount"];
 
 const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
   (
@@ -134,16 +217,18 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
     },
     ref
   ) => {
-    const [formData, setFormData] = useState<DemographyData>(
-      initialDemographyData
+    // ## PERUBAHAN 3: Tambahkan state untuk toggle
+    const [statusType, setStatusType] = useState<"permanent" | "contract">(
+      "permanent"
     );
-    const [originalData, setOriginalData] = useState<DemographyData | null>(
+    const [formData, setFormData] = useState<FormStateData>(initialFormState);
+    const [originalData, setOriginalData] = useState<FormStateData | null>(
       null
     );
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Efek untuk 'dirty check'
+    // Efek untuk 'dirty check' (tidak berubah)
     useEffect(() => {
       if (!originalData || !isEditing) {
         onDirtyChange(false);
@@ -153,7 +238,7 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
       onDirtyChange(isDirty);
     }, [formData, originalData, onDirtyChange, isEditing]);
 
-    // Efek untuk mengambil data dari server
+    // ## PERUBAHAN 4: Efek untuk fetch data dengan logika baru
     useEffect(() => {
       if (!selectedCompany || !period.year || !period.value) return;
       const fetchData = async () => {
@@ -163,25 +248,15 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
           const res = await fetch(
             `/api/data-center/demography?year=${period.year}&month=${period.value}&companyId=${selectedCompany}`
           );
-          if (!res.ok) throw new Error("Failed to fetch demographic data.");
-          const data = await res.json();
-          const loadedData = {
-            headcount: data.headcount || initialDemographyData.headcount,
-            employeeStatus:
-              data.employeeStatus || initialDemographyData.employeeStatus,
-            education: data.education || initialDemographyData.education,
-            level: data.level || initialDemographyData.level,
-            age: data.age || initialDemographyData.age,
-            lengthOfService:
-              data.lengthOfService || initialDemographyData.lengthOfService,
-          };
-          setFormData(loadedData);
-          setOriginalData(loadedData);
+          if (!res.ok) throw new Error("Gagal mengambil data demografi.");
+          const data: DemographyManualInputData = await res.json();
+          const transformedData = transformApiDataToFormState(data);
+          setFormData(transformedData);
+          setOriginalData(transformedData);
         } catch (err) {
-          if (err instanceof Error) setError(err.message);
-          else setError("An unknown error occurred.");
-          setFormData(initialDemographyData);
-          setOriginalData(initialDemographyData);
+          setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+          setFormData(initialFormState);
+          setOriginalData(initialFormState);
         } finally {
           setIsLoading(false);
         }
@@ -189,91 +264,61 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
       fetchData();
     }, [selectedCompany, period.year, period.value]);
 
-    // Efek untuk mereset state jika mode edit dibatalkan dari parent
     useEffect(() => {
       if (!isEditing && originalData) {
         setFormData(originalData);
       }
     }, [isEditing, originalData]);
 
+    // ## PERUBAHAN 5: Handle input change dengan struktur state baru
     const handleInputChange = (
-      category: keyof DemographyData,
+      category: keyof FormStateData,
       field: string,
       value: string
     ) => {
       const numValue = parseInt(value) || 0;
       setFormData((prev) => ({
         ...prev,
-        [category]: { ...prev[category], [field]: numValue },
+        [category]: {
+          ...prev[category],
+          [statusType]: {
+            ...prev[category][statusType],
+            [field]: numValue,
+          },
+        },
       }));
     };
 
-    // Efek untuk kalkulasi total
-    useEffect(() => {
-      setFormData((prev) => {
-        const sumValues = (obj: Record<string, number>) =>
-          Object.entries(obj)
-            .filter(([key]) => key !== "totalCount")
-            .reduce((acc, [, value]) => acc + (value || 0), 0);
-        return {
-          ...prev,
-          headcount: {
-            ...prev.headcount,
-            totalCount: sumValues(prev.headcount),
-          },
-          employeeStatus: {
-            ...prev.employeeStatus,
-            totalCount: sumValues(prev.employeeStatus),
-          },
-          education: {
-            ...prev.education,
-            totalCount: sumValues(prev.education),
-          },
-          level: { ...prev.level, totalCount: sumValues(prev.level) },
-          age: { ...prev.age, totalCount: sumValues(prev.age) },
-          lengthOfService: {
-            ...prev.lengthOfService,
-            totalCount: sumValues(prev.lengthOfService),
-          },
-        };
-      });
-    }, [
-      formData.headcount.maleCount,
-      formData.headcount.femaleCount,
-      formData.employeeStatus.permanentCount,
-      formData.employeeStatus.contractCount,
-      formData.education.smaSmkCount,
-      formData.education.d3Count,
-      formData.education.s1Count,
-      formData.education.s2Count,
-      formData.education.s3Count,
-      formData.level.bod1Count,
-      formData.level.bod2Count,
-      formData.level.bod3Count,
-      formData.level.bod4Count,
-      formData.age.under25Count,
-      formData.age.age26to40Count,
-      formData.age.age41to50Count,
-      formData.age.over50Count,
-      formData.lengthOfService.los_0_5_Count,
-      formData.lengthOfService.los_6_10_Count,
-      formData.lengthOfService.los_11_15_Count,
-      formData.lengthOfService.los_16_20_Count,
-      formData.lengthOfService.los_21_25_Count,
-      formData.lengthOfService.los_25_30_Count,
-      formData.lengthOfService.los_over_30_Count,
-    ]);
+    // ## PERUBAHAN 6: Kalkulasi total yang lebih sederhana (derived state)
+    const totals = useMemo(() => {
+      const sumValues = (obj: { [key: string]: number }) =>
+        Object.values(obj).reduce((acc, v) => acc + (v || 0), 0);
 
-    // Fungsi submit yang akan dipanggil oleh parent
+      const calculatedTotals: { [key: string]: number } = {};
+      for (const category in formData) {
+        const cat = category as keyof FormStateData;
+        calculatedTotals[cat] =
+          sumValues(formData[cat].permanent) +
+          sumValues(formData[cat].contract);
+      }
+      return calculatedTotals;
+    }, [formData]);
+
+    // ## PERUBAHAN 7: Fungsi submit dengan payload baru
     const submitForm = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const payload = {
-          ...formData,
+        const payload: DemographyManualInputPayload = {
           year: period.year,
           month: period.value,
           companyId: selectedCompany,
+          statusType: statusType,
+          headcount: formData.headcount[statusType],
+          education: formData.education[statusType],
+          age: formData.age[statusType],
+          level: formData.level[statusType],
+          lengthOfService: formData.lengthOfService[statusType],
         };
         const res = await fetch("/api/data-center/demography", {
           method: "POST",
@@ -282,28 +327,62 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
         });
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to save data.");
+          throw new Error(errorData.error || "Gagal menyimpan data.");
         }
-        alert("Demographic data has been successfully saved!");
+        alert("Data demografi berhasil disimpan!");
+        // Perbarui originalData dengan data saat ini setelah berhasil menyimpan
         setOriginalData(formData);
         onSaveSuccess();
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-          alert(`Error: ${err.message}`);
-        } else {
-          setError("An unknown error occurred.");
-          alert("An unknown error occurred.");
-        }
+        const errorMessage =
+          err instanceof Error ? err.message : "Terjadi kesalahan.";
+        setError(errorMessage);
+        alert(`Error: ${errorMessage}`);
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Mengekspos fungsi submitForm ke parent melalui ref
-    useImperativeHandle(ref, () => ({
-      submit: submitForm,
-    }));
+    useImperativeHandle(ref, () => ({ submit: submitForm }));
+
+    const renderFieldset = (
+      categoryKey: keyof FormStateData,
+      legend: string
+    ) => {
+      const data = formData[categoryKey][statusType];
+      return (
+        <fieldset className={styles.fieldset} disabled={!isEditing}>
+          <legend>{legend}</legend>
+          {Object.keys(data).map((key) => (
+            <div className={styles.inputGroup} key={key}>
+              <label className="capitalize">
+                {key
+                  .replace(/([A-Z])/g, " $1")
+                  .replace("los", "")
+                  .replace(/_/g, "-")}
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={data[key as keyof typeof data] || 0}
+                onChange={(e) =>
+                  handleInputChange(categoryKey, key, e.target.value)
+                }
+              />
+            </div>
+          ))}
+          <div className={styles.inputGroup}>
+            <label>Total</label>
+            <input
+              type="number"
+              value={totals[categoryKey] || 0}
+              readOnly
+              className={styles.readOnly}
+            />
+          </div>
+        </fieldset>
+      );
+    };
 
     return (
       <div className={styles.form}>
@@ -312,202 +391,42 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
         )}
         {error && <div className={styles.errorBanner}>{error}</div>}
 
-        <fieldset className={styles.fieldset} disabled={!isEditing}>
-          <legend>Headcount</legend>
-          <div className={styles.inputGroup}>
-            <label>Male</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.headcount.maleCount || 0}
-              onChange={(e) =>
-                handleInputChange("headcount", "maleCount", e.target.value)
-              }
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <label>Female</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.headcount.femaleCount || 0}
-              onChange={(e) =>
-                handleInputChange("headcount", "femaleCount", e.target.value)
-              }
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <label>Total</label>
-            <input
-              type="number"
-              value={formData.headcount.totalCount || 0}
-              readOnly
-              className={styles.readOnly}
-            />
-          </div>
-        </fieldset>
+        {/* ## PERUBAHAN 8: Tambahkan UI Toggle */}
+        <div className="mb-4 p-1 bg-gray-200 rounded-lg flex">
+          <button
+            onClick={() => setStatusType("permanent")}
+            className={`flex-1 p-2 rounded-md text-sm font-semibold transition-colors ${
+              statusType === "permanent"
+                ? "bg-white text-blue-700 shadow"
+                : "text-gray-600"
+            }`}
+            disabled={!isEditing}
+          >
+            Permanent
+          </button>
+          <button
+            onClick={() => setStatusType("contract")}
+            className={`flex-1 p-2 rounded-md text-sm font-semibold transition-colors ${
+              statusType === "contract"
+                ? "bg-white text-blue-700 shadow"
+                : "text-gray-600"
+            }`}
+            disabled={!isEditing}
+          >
+            Contract
+          </button>
+        </div>
 
-        <fieldset className={styles.fieldset} disabled={!isEditing}>
-          <legend>Employee Status</legend>
-          <div className={styles.inputGroup}>
-            <label>Permanent</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.employeeStatus.permanentCount || 0}
-              onChange={(e) =>
-                handleInputChange(
-                  "employeeStatus",
-                  "permanentCount",
-                  e.target.value
-                )
-              }
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <label>Contract</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.employeeStatus.contractCount || 0}
-              onChange={(e) =>
-                handleInputChange(
-                  "employeeStatus",
-                  "contractCount",
-                  e.target.value
-                )
-              }
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <label>Total</label>
-            <input
-              type="number"
-              value={formData.employeeStatus.totalCount || 0}
-              readOnly
-              className={styles.readOnly}
-            />
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.fieldset} disabled={!isEditing}>
-          <legend>Education Level</legend>
-          {Object.entries(formData.education)
-            .filter(([key]) => !fieldsToExclude.includes(key))
-            .map(([key, value]) => (
-              <div className={styles.inputGroup} key={key}>
-                <label>{formatLabel(key)}</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={String(value || 0)}
-                  onChange={(e) =>
-                    handleInputChange("education", key, e.target.value)
-                  }
-                />
-              </div>
-            ))}
-          <div className={styles.inputGroup}>
-            <label>Total</label>
-            <input
-              type="number"
-              value={formData.education.totalCount || 0}
-              readOnly
-              className={styles.readOnly}
-            />
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.fieldset} disabled={!isEditing}>
-          <legend>Job Level</legend>
-          {Object.entries(formData.level)
-            .filter(([key]) => !fieldsToExclude.includes(key))
-            .map(([key, value]) => (
-              <div className={styles.inputGroup} key={key}>
-                <label>{formatLabel(key)}</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={String(value || 0)}
-                  onChange={(e) =>
-                    handleInputChange("level", key, e.target.value)
-                  }
-                />
-              </div>
-            ))}
-          <div className={styles.inputGroup}>
-            <label>Total</label>
-            <input
-              type="number"
-              value={formData.level.totalCount || 0}
-              readOnly
-              className={styles.readOnly}
-            />
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.fieldset} disabled={!isEditing}>
-          <legend>Age Range (Years)</legend>
-          {Object.entries(formData.age)
-            .filter(([key]) => !fieldsToExclude.includes(key))
-            .map(([key, value]) => (
-              <div className={styles.inputGroup} key={key}>
-                <label>{formatLabel(key)}</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={String(value || 0)}
-                  onChange={(e) =>
-                    handleInputChange("age", key, e.target.value)
-                  }
-                />
-              </div>
-            ))}
-          <div className={styles.inputGroup}>
-            <label>Total</label>
-            <input
-              type="number"
-              value={formData.age.totalCount || 0}
-              readOnly
-              className={styles.readOnly}
-            />
-          </div>
-        </fieldset>
-
-        <fieldset className={styles.fieldset} disabled={!isEditing}>
-          <legend>Length of Service</legend>
-          {Object.entries(formData.lengthOfService)
-            .filter(([key]) => !fieldsToExclude.includes(key))
-            .map(([key, value]) => (
-              <div className={styles.inputGroup} key={key}>
-                <label>{formatLabel(key)}</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={String(value || 0)}
-                  onChange={(e) =>
-                    handleInputChange("lengthOfService", key, e.target.value)
-                  }
-                />
-              </div>
-            ))}
-          <div className={styles.inputGroup}>
-            <label>Total</label>
-            <input
-              type="number"
-              value={formData.lengthOfService.totalCount || 0}
-              readOnly
-              className={styles.readOnly}
-            />
-          </div>
-        </fieldset>
-
-        {/* Tombol-tombol internal sudah tidak ada di sini */}
+        {renderFieldset("headcount", "Headcount")}
+        {/* ## PERUBAHAN 9: Hapus fieldset Employee Status */}
+        {renderFieldset("education", "Education Level")}
+        {renderFieldset("level", "Job Level")}
+        {renderFieldset("age", "Age Range")}
+        {renderFieldset("lengthOfService", "Length of Service")}
       </div>
     );
   }
 );
 
 DemographyForm.displayName = "DemographyForm";
-
 export default DemographyForm;

@@ -2,17 +2,21 @@
 import { Mars, Venus, TrendingUp, TrendingDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFilters } from "@/contexts/FilterContext";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 
-interface HeadcountData {
+interface HeadcountApiData {
   total: number;
-  male: number;
-  female: number;
+  male: number; // <-- API sekarang menyediakan ini
+  female: number; // <-- API sekarang menyediakan ini
+  permanent: { total: number; male: number; female: number };
+  contract: { total: number; male: number; female: number };
   change?: string;
 }
 
 const TotalHeadcountCard = () => {
-  const { selectedCompany, period } = useFilters();
-  const [data, setData] = useState<HeadcountData | null>(null);
+  // ## 1. AMBIL statusFilter DARI CONTEXT ##
+  const { selectedCompany, period, statusFilter } = useFilters();
+  const [data, setData] = useState<HeadcountApiData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,20 +29,22 @@ const TotalHeadcountCard = () => {
       setLoading(true);
       setData(null);
       try {
+        // ## 2. TAMBAHKAN statusFilter KE PARAMETER API ##
         const params = new URLSearchParams({
           companyId: String(selectedCompany),
           type: period.type,
           year: String(period.year),
           value: String(period.value),
+          status: statusFilter, // <-- Kirim filter ke backend
         });
 
         const response = await fetch(
           `/api/demography/headcount?${params.toString()}`
         );
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const apiData: HeadcountData = await response.json();
+
+        const apiData: HeadcountApiData = await response.json();
         setData(apiData);
       } catch (error) {
         console.error("Fetch error for Headcount:", error);
@@ -49,9 +55,9 @@ const TotalHeadcountCard = () => {
     };
 
     fetchData();
-  }, [selectedCompany, period]);
+    // ## 3. TAMBAHKAN statusFilter KE DEPENDENCY ARRAY ##
+  }, [selectedCompany, period, statusFilter]);
 
-  // --- DIUBAH: Logika untuk menentukan warna dan ikon perubahan ---
   const isPositive = data?.change?.startsWith("+");
   const isNegative = data?.change?.startsWith("-");
   const changeColor = isPositive
@@ -60,16 +66,69 @@ const TotalHeadcountCard = () => {
     ? "text-red-400"
     : "text-gray-400";
 
+  const tooltipContent = data ? (
+    // ... (logika tooltip tidak berubah, tetap menampilkan detail lengkap)
+    <div className="space-y-2 text-xs text-white">
+      <div>
+        <div className="flex justify-between font-semibold">
+          <span>Permanent:</span>
+          <span>{data.permanent.total.toLocaleString("id-ID")}</span>
+        </div>
+        <div className="pl-3 mt-1 space-y-1 text-gray-300 border-l border-gray-600">
+          <div className="flex justify-between">
+            <span>Male:</span>
+            <span>{data.permanent.male.toLocaleString("id-ID")}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Female:</span>
+            <span>{data.permanent.female.toLocaleString("id-ID")}</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div className="flex justify-between font-semibold">
+          <span>Contract:</span>
+          <span>{data.contract.total.toLocaleString("id-ID")}</span>
+        </div>
+        <div className="pl-3 mt-1 space-y-1 text-gray-300 border-l border-gray-600">
+          <div className="flex justify-between">
+            <span>Male:</span>
+            <span>{data.contract.male.toLocaleString("id-ID")}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Female:</span>
+            <span>{data.contract.female.toLocaleString("id-ID")}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  // ## 4. TENTUKAN JUDUL CARD SECARA DINAMIS ##
+  const cardTitle =
+    statusFilter === "permanent"
+      ? "Permanent Headcount"
+      : statusFilter === "contract"
+      ? "Contract Headcount"
+      : "Total Headcount";
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow-md text-white h-full flex flex-col">
       <div>
-        <p className="text-gray-400 text-sm">Total Headcount</p>
+        <div className="flex justify-between items-center">
+          <p className="text-gray-400 text-sm">{cardTitle}</p>
+          {data && tooltipContent && (
+            <InfoTooltip
+              content={tooltipContent}
+              position="top"
+              align="right"
+            />
+          )}
+        </div>
         <p className="text-4xl font-bold mt-1">
           {loading ? "..." : data?.total.toLocaleString("id-ID") ?? 0}{" "}
           <span className="text-xl font-normal">Employees</span>
         </p>
-
-        {/* --- DIUBAH: Tampilan perubahan sekarang dinamis --- */}
         {data?.change && (
           <p
             className={`${changeColor} text-sm mt-1 flex items-center gap-1 font-medium`}
@@ -80,29 +139,24 @@ const TotalHeadcountCard = () => {
           </p>
         )}
       </div>
-
       <div className="border-t border-gray-700 my-4"></div>
-
       <div className="flex justify-between mt-auto">
-        {/* --- Bagian Pria --- */}
         <div className="flex flex-col items-center flex-1">
-          {/* DIUBAH: Menggunakan warna biru yang lebih profesional */}
           <div className="p-3 bg-blue-700 rounded-full mb-2">
             <Mars className="h-8 w-8 text-white" />
           </div>
           <p className="text-2xl font-bold text-blue-400">
+            {/* ## 5. GUNAKAN DATA LANGSUNG DARI API ## */}
             {loading ? "..." : data?.male.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-sm text-gray-400 mt-1">Male</p>
         </div>
-
-        {/* --- Bagian Wanita --- */}
         <div className="flex flex-col items-center flex-1">
-          {/* DIUBAH: Menggunakan warna rose/magenta yang lebih profesional */}
           <div className="p-3 bg-rose-600 rounded-full mb-2">
             <Venus className="h-8 w-8 text-white" />
           </div>
           <p className="text-2xl font-bold text-rose-400">
+            {/* ## 5. GUNAKAN DATA LANGSUNG DARI API ## */}
             {loading ? "..." : data?.female.toLocaleString("id-ID") ?? 0}
           </p>
           <p className="text-sm text-gray-400 mt-1">Female</p>

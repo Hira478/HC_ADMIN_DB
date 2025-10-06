@@ -168,3 +168,91 @@ export interface StackedChartData {
     others: number[];
   };
 }
+
+// --- TIPE UNTUK DEMOGRAFI (SKEMA BARU) ---
+
+// Digunakan oleh komponen Card/Chart di frontend untuk menampilkan data.
+// Ini adalah bentuk data yang dikembalikan oleh API /api/demography/*
+
+export interface HeadcountApiData {
+  total: number;
+  permanent: {
+    total: number;
+    male: number;
+    female: number;
+  };
+  contract: {
+    total: number;
+    male: number;
+    female: number;
+  };
+  change?: string;
+}
+
+// Tipe data umum untuk semua chart demografi (Age, Education, Level, LoS)
+interface DemographyChartDataset {
+  label: string;
+  values: number[];
+}
+
+export interface DemographyChartApiData {
+  labels: string[];
+  permanent: DemographyChartDataset;
+  contract: DemographyChartDataset;
+  total: DemographyChartDataset;
+}
+
+// --- TIPE UNTUK FORM INPUT MANUAL DEMOGRAFI ---
+
+// Tipe untuk payload yang dikirim dari form input manual
+// ke API POST /api/demography/manual-input
+export interface DemographyManualInputPayload {
+  year: number;
+  month: number;
+  companyId: number;
+  statusType: "permanent" | "contract";
+
+  headcount?: { male: number; female: number };
+  education?: {
+    smaSmk: number;
+    d3: number;
+    s1: number;
+    s2: number;
+    s3: number;
+  };
+  level?: { bod1: number; bod2: number; bod3: number; bod4: number };
+  age?: {
+    under25: number;
+    age26to40: number;
+    age41to50: number;
+    over50: number;
+  };
+  lengthOfService?: {
+    los_0_5: number;
+    los_6_10: number;
+    los_11_15: number;
+    los_16_20: number;
+    los_21_25: number;
+    los_25_30: number;
+    los_over_30: number;
+  };
+}
+
+// Tipe untuk data yang diterima dari API GET /api/demography/manual-input
+// Ini akan berisi data mentah dari database untuk mengisi form.
+// Pastikan Anda sudah menjalankan `npx prisma generate`
+import type {
+  Headcount,
+  EducationStat,
+  LevelStat,
+  AgeStat,
+  LengthOfServiceStat,
+} from "@prisma/client";
+
+export interface DemographyManualInputData {
+  headcount: Headcount | null;
+  education: EducationStat | null;
+  level: LevelStat | null;
+  age: AgeStat | null;
+  lengthOfService: LengthOfServiceStat | null;
+}

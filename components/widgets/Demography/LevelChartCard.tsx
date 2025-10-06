@@ -2,26 +2,33 @@
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
+import { EChartsOption } from "echarts";
 
-interface ChartData {
+interface LevelApiData {
   labels: string[];
-  values: number[];
+  permanent: { label: string; values: number[] };
+  contract: { label: string; values: number[] };
+  total: { label: string; values: number[] };
 }
 
-// --- DIUBAH: Definisikan warna utama untuk chart ini ---
-const CHART_COLOR = "rgba(0, 74, 128, 0.9)"; // Biru Navy
+// ## 1. TAMBAHKAN WARNA 'TOTAL' ##
+const COLORS = {
+  permanent: "#1e3a8a", // Biru Navy lebih gelap
+  contract: "#60a5fa", // Biru lebih terang
+  total: "#172554", // Warna solid untuk mode 'all'
+};
 
 const LevelChartCard = () => {
-  const { selectedCompany, period } = useFilters();
-  const [chartData, setChartData] = useState<ChartData | null>(null);
+  const { selectedCompany, period, statusFilter } = useFilters();
+  const [chartData, setChartData] = useState<LevelApiData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (selectedCompany === null || !period) {
+    // ... Logika fetch data tidak berubah ...
+    if (!selectedCompany || !period) {
       setLoading(false);
       return;
     }
-
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -30,86 +37,168 @@ const LevelChartCard = () => {
           type: period.type,
           year: String(period.year),
           value: String(period.value),
+          status: statusFilter,
         });
-
         const response = await fetch(
           `/api/demography/level?${params.toString()}`
         );
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data: LevelApiData = await response.json();
         setChartData(data);
       } catch (error) {
         console.error("Fetch error in LevelChartCard:", error);
-        setChartData({ labels: [], values: [] });
+        setChartData({
+          labels: [],
+          permanent: { label: "Permanent", values: [] },
+          contract: { label: "Contract", values: [] },
+          total: { label: "Total", values: [] },
+        });
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [selectedCompany, period]);
+  }, [selectedCompany, period, statusFilter]);
 
-  const absoluteValues = chartData?.values || [];
-  const totalEmployees = absoluteValues.reduce((sum, value) => sum + value, 0);
-  const percentageValues = absoluteValues.map((value) =>
-    totalEmployees > 0 ? (value / totalEmployees) * 100 : 0
+  // ... (Logika kalkulasi percentage tidak berubah) ...
+  const permanentValues = chartData?.permanent.values || [];
+  const contractValues = chartData?.contract.values || [];
+  const totalValues = chartData?.total.values || [];
+  const grandTotal =
+    permanentValues.reduce((a, b) => a + b, 0) +
+    contractValues.reduce((a, b) => a + b, 0);
+  const permanentPercentage = permanentValues.map((v) =>
+    grandTotal > 0 ? (v / grandTotal) * 100 : 0
   );
+  const contractPercentage = contractValues.map((v) =>
+    grandTotal > 0 ? (v / grandTotal) * 100 : 0
+  );
+  const totalPercentage = totalValues.map((v) =>
+    grandTotal > 0 ? (v / grandTotal) * 100 : 0
+  );
+  const yAxisMax = Math.ceil(Math.max(...totalPercentage, 0) / 10) * 10 + 10;
 
-  const maxPercentage = Math.max(...percentageValues, 0);
-  const yAxisMax = Math.min(100, Math.ceil(maxPercentage / 10) * 10 + 10);
-
-  const option = {
+  const option: EChartsOption = {
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "shadow" },
-      formatter: (params: Array<{ name: string; value: number }>) => {
-        const data = params[0];
-        return `${data.name}<br/>Persentase: ${data.value.toFixed(1)}%`;
+      // ## 2. PERBARUI LOGIKA TOOLTIP ##
+      formatter: (params) => {
+        const paramArray = params as {
+          seriesName: string;
+          name: string;
+          dataIndex: number;
+          marker: string;
+        }[];
+        if (!paramArray || paramArray.length === 0) return "";
+        const dataIndex = paramArray[0].dataIndex;
+        const categoryName = paramArray[0].name;
+
+        let tooltipContent = `<strong>${categoryName}</strong><br/>`;
+
+        if (statusFilter === "all") {
+          const permValue = permanentValues[dataIndex] || 0;
+          const contValue = contractValues[dataIndex] || 0;
+          const totalValue = totalValues[dataIndex] || 0;
+          const permPercent = permanentPercentage[dataIndex] || 0;
+          const contPercent = contractPercentage[dataIndex] || 0;
+
+          if (permValue > 0)
+            tooltipContent += `<div style="display:flex; align-items:center; margin-top: 5px;">${
+              paramArray[0].marker
+            }<span style="margin-left:5px;">Permanent: ${permValue} (${permPercent.toFixed(
+              1
+            )}%)</span></div>`;
+          if (contValue > 0)
+            tooltipContent += `<div style="display:flex; align-items:center;">${
+              paramArray[1].marker
+            }<span style="margin-left:5px;">Contract: ${contValue} (${contPercent.toFixed(
+              1
+            )}%)</span></div>`;
+          if (totalValue > 0)
+            tooltipContent += `<hr style="margin: 5px 0;"/><strong>Total: ${totalValue}</strong>`;
+        } else {
+          const value = totalValues[dataIndex] || 0;
+          const percent = totalPercentage[dataIndex] || 0;
+          if (value > 0)
+            tooltipContent += `<div style="display:flex; align-items:center; margin-top: 5px;">${
+              paramArray[0].marker
+            }<span style="margin-left:5px;">${statusFilter}: ${value} (${percent.toFixed(
+              1
+            )}%)</span></div>`;
+        }
+        return tooltipContent;
       },
     },
-    grid: { top: "20%", bottom: "20%", left: "10%", right: "5%" },
+    grid: {
+      top: "10%",
+      bottom: "5%",
+      left: "5%",
+      right: "5%",
+      containLabel: true,
+    },
     xAxis: {
       type: "category",
       data: chartData?.labels || [],
-      axisTick: { show: false },
-      axisLabel: {
-        fontSize: 10,
-        interval: 0,
-        color: "#6b7280",
-        rotate: 30,
-      },
+      axisLabel: { fontSize: 11, interval: 0 },
     },
     yAxis: {
       type: "value",
-      max: yAxisMax,
-      axisLabel: {
-        formatter: "{value}%",
-      },
-      splitLine: {
-        show: true,
-        lineStyle: { color: "#e0e6f1", type: "dashed" },
-      },
+      max: yAxisMax > 100 ? 100 : yAxisMax,
+      axisLabel: { formatter: "{value}%" },
     },
     series: [
       {
-        data: percentageValues,
+        name: chartData?.permanent.label || "Permanent",
         type: "bar",
+        stack: "total",
         barWidth: "50%",
-        // --- DIUBAH: Gunakan warna yang sudah didefinisikan ---
-        color: CHART_COLOR,
+        data: statusFilter === "contract" ? [] : permanentPercentage,
+        // ## 3. BUAT WARNA KONDISIONAL ##
+        itemStyle: {
+          color: statusFilter === "all" ? COLORS.total : COLORS.permanent,
+          borderRadius: [3, 3, 0, 0],
+        },
+      },
+      {
+        name: chartData?.contract.label || "Contract",
+        type: "bar",
+        stack: "total",
+        barWidth: "50%",
+        data: statusFilter === "permanent" ? [] : contractPercentage,
+        // ## 3. BUAT WARNA KONDISIONAL ##
+        itemStyle: {
+          color: statusFilter === "all" ? COLORS.total : COLORS.contract,
+        },
+      },
+      {
+        name: "Total",
+        type: "bar",
+        stack: "total",
         label: {
           show: true,
           position: "top",
-          fontSize: 10,
-          color: "#1f2937",
-          formatter: (params: { value: number }) =>
-            `${params.value.toFixed(1)}%`,
+          formatter: (params: { dataIndex: number }) => {
+            const totalPercent = totalPercentage[params.dataIndex];
+            return totalPercent > 0 ? `${totalPercent.toFixed(1)}%` : "";
+          },
+          color: "#4b5563",
+          fontSize: 12,
         },
+        data: totalValues.map(() => 0),
+        itemStyle: { color: "transparent" },
+        tooltip: { show: false },
       },
-    ],
+    ] as EChartsOption["series"],
   };
+
+  const cardTitle =
+    statusFilter === "all"
+      ? "Level"
+      : `Level (${
+          statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)
+        })`;
 
   if (loading) {
     return (
@@ -120,9 +209,11 @@ const LevelChartCard = () => {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md h-full">
-      <h3 className="font-bold text-lg text-gray-800 mb-4">Level</h3>
-      <ReactECharts option={option} style={{ height: "calc(100% - 40px)" }} />
+    <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
+      <h3 className="font-bold text-lg text-gray-800 mb-2">{cardTitle}</h3>
+      <div className="flex-1">
+        <ReactECharts option={option} style={{ height: "100%" }} />
+      </div>
     </div>
   );
 };
