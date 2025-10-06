@@ -4,19 +4,19 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// Interface untuk baris Excel, nama properti SESUAIKAN dengan header di file Excel
+// ## PERUBAHAN 1: Sesuaikan interface dengan kolom Excel baru
 interface EducationExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
-  SMA: number;
+  Category: string;
+  "<D3": number; // Using quotes for special characters
   D3: number;
   S1: number;
   S2: number;
   S3: number;
 }
 
-// "Kamus" untuk menerjemahkan bulan
 const monthNameToNumber: { [key: string]: number } = {
   januari: 1,
   feb: 2,
@@ -41,6 +41,23 @@ const monthNameToNumber: { [key: string]: number } = {
   des: 12,
   desember: 12,
 };
+
+// Interface for aggregated data, matching the new DB schema
+interface AggregatedEducationStat {
+  year: number;
+  month: number;
+  companyId: number;
+  smaSmkPermanent: number;
+  smaSmkContract: number;
+  d3Permanent: number;
+  d3Contract: number;
+  s1Permanent: number;
+  s1Contract: number;
+  s2Permanent: number;
+  s2Contract: number;
+  s3Permanent: number;
+  s3Contract: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -75,36 +92,65 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
-    const dataToUpsert = rows
-      .map((row) => {
-        const companyName = row.Company?.toString().trim().toLowerCase();
-        const companyId = companyMap.get(companyName);
-        const monthInput = row.Month?.toString().trim().toLowerCase();
-        const monthNumber = monthInput
-          ? monthNameToNumber[monthInput] || Number(monthInput)
-          : undefined;
+    // ## PERUBAHAN 2: Proses agregasi data dari Excel
+    const aggregationMap = new Map<string, AggregatedEducationStat>();
 
-        if (!companyId || !row.Year || !monthNumber) {
-          console.warn(
-            `Data tidak lengkap atau perusahaan/bulan tidak valid. Baris dilewati:`,
-            row
-          );
-          return null;
-        }
+    for (const row of rows) {
+      const companyName = row.Company?.toString().trim().toLowerCase();
+      const companyId = companyMap.get(companyName);
+      const monthInput = row.Month?.toString().trim().toLowerCase();
+      const monthNumber = monthInput
+        ? monthNameToNumber[monthInput] || Number(monthInput)
+        : undefined;
+      const year = Number(row.Year);
+      const category = row.Category?.trim().toLowerCase();
 
-        return {
-          year: Number(row.Year),
-          month: monthNumber,
-          companyId: companyId,
-          // --- PEMETAAN KOLOM EXCEL KE DATABASE ---
-          smaSmkCount: Number(row.SMA) || 0,
-          d3Count: Number(row.D3) || 0,
-          s1Count: Number(row.S1) || 0,
-          s2Count: Number(row.S2) || 0,
-          s3Count: Number(row.S3) || 0,
-        };
-      })
-      .filter((data): data is NonNullable<typeof data> => data !== null);
+      if (!companyId || !year || !monthNumber || !category) {
+        console.warn(`Baris data tidak lengkap, dilewati:`, row);
+        continue;
+      }
+
+      const key = `${year}-${monthNumber}-${companyId}`;
+      const entry = aggregationMap.get(key) || {
+        year,
+        month: monthNumber,
+        companyId,
+        smaSmkPermanent: 0,
+        smaSmkContract: 0,
+        d3Permanent: 0,
+        d3Contract: 0,
+        s1Permanent: 0,
+        s1Contract: 0,
+        s2Permanent: 0,
+        s2Contract: 0,
+        s3Permanent: 0,
+        s3Contract: 0,
+      };
+
+      const smaSmkCount = Number(row["<D3"]) || 0;
+      const d3Count = Number(row.D3) || 0;
+      const s1Count = Number(row.S1) || 0;
+      const s2Count = Number(row.S2) || 0;
+      const s3Count = Number(row.S3) || 0;
+
+      if (category === "permanent") {
+        entry.smaSmkPermanent += smaSmkCount;
+        entry.d3Permanent += d3Count;
+        entry.s1Permanent += s1Count;
+        entry.s2Permanent += s2Count;
+        entry.s3Permanent += s3Count;
+      } else if (category === "contract") {
+        entry.smaSmkContract += smaSmkCount;
+        entry.d3Contract += d3Count;
+        entry.s1Contract += s1Count;
+        entry.s2Contract += s2Count;
+        entry.s3Contract += s3Count;
+      }
+
+      aggregationMap.set(key, entry);
+    }
+
+    const dataToUpsert = Array.from(aggregationMap.values());
 
     if (dataToUpsert.length === 0) {
       return NextResponse.json(
@@ -113,6 +159,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ## PERUBAHAN 3: Lakukan upsert dengan data dan kolom baru
     await prisma.$transaction(
       dataToUpsert.map((data) =>
         prisma.educationStat.upsert({
@@ -123,20 +170,14 @@ export async function POST(request: NextRequest) {
               companyId: data.companyId,
             },
           },
-          update: {
-            smaSmkCount: data.smaSmkCount,
-            d3Count: data.d3Count,
-            s1Count: data.s1Count,
-            s2Count: data.s2Count,
-            s3Count: data.s3Count,
-          },
+          update: data,
           create: data,
         })
       )
     );
 
     return NextResponse.json({
-      message: `${dataToUpsert.length} baris data edukasi berhasil diimpor.`,
+      message: `${dataToUpsert.length} data demografi edukasi (berdasarkan bulan & perusahaan) berhasil diimpor.`,
     });
   } catch (error) {
     console.error("API Error in /uploads/education:", error);

@@ -4,18 +4,19 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// Interface untuk baris Excel. Gunakan kutip untuk nama properti dengan tanda hubung.
+// ## 1. SESUAIKAN INTERFACE DENGAN HEADER EXCEL BARU ##
 interface LevelExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
+  Category: string; // <-- Kolom baru
   "BOD-1": number;
   "BOD-2": number;
   "BOD-3": number;
   "BOD-4": number;
 }
 
-// "Kamus" untuk menerjemahkan bulan
+// "Kamus" bulan, tidak perlu diubah
 const monthNameToNumber: { [key: string]: number } = {
   januari: 1,
   feb: 2,
@@ -40,6 +41,21 @@ const monthNameToNumber: { [key: string]: number } = {
   des: 12,
   desember: 12,
 };
+
+// Interface untuk data yang sudah diagregasi, sesuai skema DB baru
+interface AggregatedLevelStat {
+  year: number;
+  month: number;
+  companyId: number;
+  bod1Permanent: number;
+  bod1Contract: number;
+  bod2Permanent: number;
+  bod2Contract: number;
+  bod3Permanent: number;
+  bod3Contract: number;
+  bod4Permanent: number;
+  bod4Contract: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,36 +90,60 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
-    const dataToUpsert = rows
-      .map((row) => {
-        const companyName = row.Company?.toString().trim().toLowerCase();
-        const companyId = companyMap.get(companyName);
-        const monthInput = row.Month?.toString().trim().toLowerCase();
-        const monthNumber = monthInput
-          ? monthNameToNumber[monthInput] || Number(monthInput)
-          : undefined;
+    // ## 2. LOGIKA AGREGRASI DATA DARI EXCEL ##
+    const aggregationMap = new Map<string, AggregatedLevelStat>();
 
-        if (!companyId || !row.Year || !monthNumber) {
-          console.warn(
-            `Data tidak lengkap atau perusahaan/bulan tidak valid. Baris dilewati:`,
-            row
-          );
-          return null;
-        }
+    for (const row of rows) {
+      const companyName = row.Company?.toString().trim().toLowerCase();
+      const companyId = companyMap.get(companyName);
+      const monthInput = row.Month?.toString().trim().toLowerCase();
+      const monthNumber = monthInput
+        ? monthNameToNumber[monthInput] || Number(monthInput)
+        : undefined;
+      const year = Number(row.Year);
+      const category = row.Category?.trim().toLowerCase();
 
-        return {
-          year: Number(row.Year),
-          month: monthNumber,
-          companyId: companyId,
-          // --- PEMETAAN KOLOM EXCEL KE DATABASE ---
-          // Gunakan bracket notation ['...'] untuk mengakses properti dengan tanda hubung
-          bod1Count: Number(row["BOD-1"]) || 0,
-          bod2Count: Number(row["BOD-2"]) || 0,
-          bod3Count: Number(row["BOD-3"]) || 0,
-          bod4Count: Number(row["BOD-4"]) || 0,
-        };
-      })
-      .filter((data): data is NonNullable<typeof data> => data !== null);
+      if (!companyId || !year || !monthNumber || !category) {
+        console.warn(`Baris data tidak lengkap, dilewati:`, row);
+        continue;
+      }
+
+      const key = `${year}-${monthNumber}-${companyId}`;
+      const entry = aggregationMap.get(key) || {
+        year,
+        month: monthNumber,
+        companyId,
+        bod1Permanent: 0,
+        bod1Contract: 0,
+        bod2Permanent: 0,
+        bod2Contract: 0,
+        bod3Permanent: 0,
+        bod3Contract: 0,
+        bod4Permanent: 0,
+        bod4Contract: 0,
+      };
+
+      const bod1 = Number(row["BOD-1"]) || 0;
+      const bod2 = Number(row["BOD-2"]) || 0;
+      const bod3 = Number(row["BOD-3"]) || 0;
+      const bod4 = Number(row["BOD-4"]) || 0;
+
+      if (category === "permanent") {
+        entry.bod1Permanent += bod1;
+        entry.bod2Permanent += bod2;
+        entry.bod3Permanent += bod3;
+        entry.bod4Permanent += bod4;
+      } else if (category === "contract") {
+        entry.bod1Contract += bod1;
+        entry.bod2Contract += bod2;
+        entry.bod3Contract += bod3;
+        entry.bod4Contract += bod4;
+      }
+
+      aggregationMap.set(key, entry);
+    }
+
+    const dataToUpsert = Array.from(aggregationMap.values());
 
     if (dataToUpsert.length === 0) {
       return NextResponse.json(
@@ -112,6 +152,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ## 3. LAKUKAN UPSERT DENGAN DATA DAN KOLOM BARU ##
     await prisma.$transaction(
       dataToUpsert.map((data) =>
         prisma.levelStat.upsert({
@@ -122,19 +163,14 @@ export async function POST(request: NextRequest) {
               companyId: data.companyId,
             },
           },
-          update: {
-            bod1Count: data.bod1Count,
-            bod2Count: data.bod2Count,
-            bod3Count: data.bod3Count,
-            bod4Count: data.bod4Count,
-          },
+          update: data,
           create: data,
         })
       )
     );
 
     return NextResponse.json({
-      message: `${dataToUpsert.length} baris data level jabatan berhasil diimpor.`,
+      message: `${dataToUpsert.length} data level jabatan (berdasarkan bulan & perusahaan) berhasil diimpor.`,
     });
   } catch (error) {
     console.error("API Error in /uploads/level:", error);

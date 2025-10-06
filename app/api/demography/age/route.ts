@@ -1,99 +1,109 @@
-import { AgeStat } from "@prisma/client";
+// File: app/api/demography/age/route.ts
 import { NextResponse, NextRequest } from "next/server";
-
 import prisma from "@/lib/prisma";
-
-// Fungsi sumAgeStats tidak lagi diperlukan dan bisa dihapus
-// const sumAgeStats = (stats: AgeStat[]) => { ... };
+import { getCompanyFilter } from "@/lib/prisma-filter";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const companyIdStr = searchParams.get("companyId");
-  const companyId = companyIdStr ? parseInt(companyIdStr, 10) : null;
   const type = searchParams.get("type") || "monthly";
-  const year = parseInt(searchParams.get("year") || "2025");
-  const value = parseInt(searchParams.get("value") || "8");
-
-  if (!companyId || isNaN(companyId)) {
-    return NextResponse.json(
-      { error: "Company ID diperlukan dan harus berupa angka." },
-      { status: 400 }
-    );
-  }
+  const year = parseInt(
+    searchParams.get("year") || new Date().getFullYear().toString()
+  );
+  const value = parseInt(
+    searchParams.get("value") || (new Date().getMonth() + 1).toString()
+  );
+  // ## 1. BACA FILTER STATUS DARI URL ##
+  const status = searchParams.get("status") || "all";
 
   let monthsToFetch: number[] = [];
-  if (type === "monthly") {
-    monthsToFetch = [value];
-  } else if (type === "quarterly") {
-    const quarterMonths = [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9],
-      [10, 11, 12],
-    ];
-    monthsToFetch = quarterMonths[value - 1] || [];
-  } else if (type === "semesterly") {
-    const semesterMonths = [
-      [1, 2, 3, 4, 5, 6],
-      [7, 8, 9, 10, 11, 12],
-    ];
-    monthsToFetch = semesterMonths[value - 1] || [];
-  } else if (type === "yearly") {
+  if (type === "monthly") monthsToFetch = [value];
+  else if (type === "yearly")
     monthsToFetch = Array.from({ length: 12 }, (_, i) => i + 1);
-  }
 
   try {
+    const companyFilter = await getCompanyFilter(request);
+
     const ageDataFromDb = await prisma.ageStat.findMany({
-      where: { companyId, year, month: { in: monthsToFetch } },
-      orderBy: {
-        month: "asc", // Urutkan untuk memastikan data terakhir adalah yang benar
+      where: { year, month: { in: monthsToFetch }, ...companyFilter },
+      select: {
+        month: true,
+        under25Permanent: true,
+        under25Contract: true,
+        age26to40Permanent: true,
+        age26to40Contract: true,
+        age41to50Permanent: true,
+        age41to50Contract: true,
+        over50Permanent: true,
+        over50Contract: true,
       },
+      orderBy: { month: "asc" },
     });
 
-    if (ageDataFromDb.length === 0) {
-      // Jika tidak ada data sama sekali, kembalikan nilai nol
-      return NextResponse.json({
-        labels: [">50", "41-50", "26-40", "<25"],
-        values: [0, 0, 0, 0],
-      });
-    }
-
-    // <<< MULAI PERUBAHAN LOGIKA DI SINI >>>
-    let dataForPeriod: AgeStat | undefined;
-
-    if (type === "monthly") {
-      // Untuk bulanan, langsung ambil data pertama (dan satu-satunya)
-      dataForPeriod = ageDataFromDb[0];
-    } else {
-      // Untuk kuartal/semester/tahunan, cari data bulan terakhir
-      const latestMonth = Math.max(...monthsToFetch);
-      dataForPeriod = ageDataFromDb.find((stat) => stat.month === latestMonth);
-    }
-
-    // Jika data untuk bulan terakhir tidak ditemukan (misal: data Maret belum diinput untuk Q1)
-    if (!dataForPeriod) {
-      return NextResponse.json({
-        labels: [">50", "41-50", "26-40", "<25"],
-        values: [0, 0, 0, 0],
-        message: `Data demografi untuk bulan terakhir (${Math.max(
-          ...monthsToFetch
-        )}) tidak ditemukan.`,
-      });
-    }
-    // <<< AKHIR PERUBAHAN LOGIKA >>>
+    const latestMonthInPeriod = Math.max(...monthsToFetch);
+    const dataForPeriod = ageDataFromDb.find(
+      (stat) => stat.month === latestMonthInPeriod
+    );
 
     const labels = [">50", "41-50", "26-40", "<25"];
-    // <<< GUNAKAN 'dataForPeriod' BUKAN 'aggregatedData' >>>
-    const values = [
-      dataForPeriod.over50Count,
-      dataForPeriod.age41to50Count,
-      dataForPeriod.age26to40Count,
-      dataForPeriod.under25Count,
+
+    if (!dataForPeriod) {
+      const emptyValues = [0, 0, 0, 0];
+      return NextResponse.json({
+        labels,
+        permanent: { label: "Permanent", values: emptyValues },
+        contract: { label: "Contract", values: emptyValues },
+        total: { label: "Total", values: emptyValues },
+      });
+    }
+
+    const over50Permanent = dataForPeriod.over50Permanent ?? 0;
+    const over50Contract = dataForPeriod.over50Contract ?? 0;
+    const age41to50Permanent = dataForPeriod.age41to50Permanent ?? 0;
+    const age41to50Contract = dataForPeriod.age41to50Contract ?? 0;
+    const age26to40Permanent = dataForPeriod.age26to40Permanent ?? 0;
+    const age26to40Contract = dataForPeriod.age26to40Contract ?? 0;
+    const under25Permanent = dataForPeriod.under25Permanent ?? 0;
+    const under25Contract = dataForPeriod.under25Contract ?? 0;
+
+    const permanentValues = [
+      over50Permanent,
+      age41to50Permanent,
+      age26to40Permanent,
+      under25Permanent,
+    ];
+    const contractValues = [
+      over50Contract,
+      age41to50Contract,
+      age26to40Contract,
+      under25Contract,
     ];
 
-    return NextResponse.json({ labels, values });
+    // ## 2. TENTUKAN NILAI 'TOTAL' BERDASARKAN FILTER STATUS ##
+    let totalValues: number[];
+
+    switch (status) {
+      case "permanent":
+        totalValues = permanentValues;
+        break;
+      case "contract":
+        totalValues = contractValues;
+        break;
+      default: // 'all'
+        totalValues = permanentValues.map((val, i) => val + contractValues[i]);
+        break;
+    }
+
+    return NextResponse.json({
+      labels,
+      permanent: { label: "Permanent", values: permanentValues },
+      contract: { label: "Contract", values: contractValues },
+      total: { label: "Total", values: totalValues },
+    });
   } catch (error) {
-    console.error("API Error in /age:", error);
+    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    console.error("API Error in /api/demography/age:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data usia." },
       { status: 500 }

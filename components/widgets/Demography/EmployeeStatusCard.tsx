@@ -2,33 +2,31 @@
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useFilters } from "@/contexts/FilterContext";
+import { EChartsOption } from "echarts";
+import { XCircle } from "lucide-react";
 
-interface StatusData {
-  name: string;
-  value: number;
-}
-interface EmployeeStatusState {
-  chartData: StatusData[];
-  yoy: {
-    permanent: string;
-    contract: string;
-  };
+interface HeadcountApiData {
+  total: number;
+  permanent: { total: number; male: number; female: number };
+  contract: { total: number; male: number; female: number };
+  change?: string;
 }
 
-// --- DIUBAH: Definisikan palet warna di sini agar konsisten ---
 const STATUS_COLORS: { [key: string]: string } = {
-  Permanent: "rgba(0, 74, 128, 0.9)", // Biru Navy (lebih pekat untuk visibilitas)
-  Contract: "rgba(0, 128, 128, 0.9)", // Teal (lebih pekat untuk visibilitas)
-  // Tambahkan warna default jika ada status lain
-  default: "rgba(156, 163, 175, 0.8)",
+  Permanent: "#1e3a8a",
+  Contract: "#0d9488",
+  default: "#9ca3af",
 };
 
 const EmployeeStatusCard = () => {
-  const { selectedCompany, period } = useFilters();
-  const [data, setData] = useState<EmployeeStatusState | null>(null);
+  // ## PERUBAHAN 1: Ambil statusFilter dan setStatusFilter dari context ##
+  const { selectedCompany, period, statusFilter, setStatusFilter } =
+    useFilters();
+  const [data, setData] = useState<HeadcountApiData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // ... (logika fetch data tetap sama)
     if (selectedCompany === null || !period) {
       setLoading(false);
       return;
@@ -43,12 +41,11 @@ const EmployeeStatusCard = () => {
           value: String(period.value),
         });
         const response = await fetch(
-          `/api/demography/status?${params.toString()}`
+          `/api/demography/headcount?${params.toString()}`
         );
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const apiData: EmployeeStatusState = await response.json();
+        const apiData: HeadcountApiData = await response.json();
         setData(apiData);
       } catch (error) {
         console.error("Fetch error for status chart:", error);
@@ -60,47 +57,55 @@ const EmployeeStatusCard = () => {
     fetchData();
   }, [selectedCompany, period]);
 
-  const option = {
-    tooltip: {
-      trigger: "item",
-      formatter: "{a} <br/>{b}: {c} ({d}%)",
-    },
+  // ## PERUBAHAN 2: Buat handler untuk event klik ##
+  const handleChartClick = (params: { name: string }) => {
+    const newFilter = params.name.toLowerCase() as "permanent" | "contract";
+    // Jika mengklik filter yang sudah aktif, reset ke 'all'. Jika tidak, set filter baru.
+    if (statusFilter === newFilter) {
+      setStatusFilter("all");
+    } else {
+      setStatusFilter(newFilter);
+    }
+  };
+
+  const onEvents = {
+    click: handleChartClick,
+  };
+
+  const chartDataForPie = data
+    ? [
+        { name: "Permanent", value: data.permanent.total },
+        { name: "Contract", value: data.contract.total },
+      ]
+    : [];
+
+  const option: EChartsOption = {
+    tooltip: { trigger: "item", formatter: "{a} <br/>{b}: {c} ({d}%)" },
     legend: { show: false },
     series: [
       {
         name: "Employee Status",
         type: "pie",
-        radius: ["30%", "85%"],
-        center: ["50%", "55%"],
+        radius: ["40%", "80%"],
+        center: ["50%", "50%"],
         avoidLabelOverlap: false,
-        itemStyle: {
-          borderRadius: 11,
-          borderColor: "#fff",
-          borderWidth: 7,
-        },
+        itemStyle: { borderRadius: 8, borderColor: "#fff", borderWidth: 5 },
         label: {
           show: true,
           position: "inside",
-          formatter: "{b}\n{d}%",
+          formatter: "{d}%",
           fontSize: 14,
           color: "#fff",
           fontWeight: "bold",
-          textShadowColor: "rgba(0,0,0,0.7)",
-          textShadowBlur: 4,
         },
         labelLine: { show: false },
-        emphasis: {
-          scale: true,
-          scaleSize: 5,
-          label: {
-            show: true,
-            fontSize: 18,
-            fontWeight: "bold",
-          },
-        },
-        // --- DIUBAH: Gunakan palet warna yang sudah didefinisikan ---
-        data: (data?.chartData || []).map((item) => ({
+        emphasis: { scale: true, scaleSize: 8 },
+        // ## PERUBAHAN 3: Tambahkan umpan balik visual pada chart ##
+        selectedMode: "single", // Izinkan hanya satu segmen yang 'terpilih'
+        data: chartDataForPie.map((item) => ({
           ...item,
+          // Set 'selected' jika nama item cocok dengan filter global
+          selected: statusFilter === item.name.toLowerCase(),
           itemStyle: {
             color: STATUS_COLORS[item.name] || STATUS_COLORS.default,
           },
@@ -117,54 +122,66 @@ const EmployeeStatusCard = () => {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md h-full flex items-center justify-center">
-        No Data.
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md h-full flex flex-col">
-      <h3 className="font-bold text-xl text-gray-800 mb-2">Employee Status</h3>
-
-      {/* --- DIUBAH: Legenda sekarang menggunakan warna dari palet via inline style --- */}
-      <div className="flex justify-center gap-8 mt-4">
-        <div className="flex items-center translate-y-[60px]">
-          <span
-            className="h-4 w-4 rounded-full mr-2"
-            style={{ backgroundColor: STATUS_COLORS.Permanent }}
-          ></span>
-          <span className="text-base font-medium">Permanent</span>
-        </div>
-        <div className="flex items-center translate-y-[60px]">
-          <span
-            className="h-4 w-4 rounded-full mr-2"
-            style={{ backgroundColor: STATUS_COLORS.Contract }}
-          ></span>
-          <span className="text-base font-medium">Contract</span>
-        </div>
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="font-bold text-xl text-gray-800">Employee Status</h3>
+        {/* ## PERUBAHAN 4: Tambahkan tombol reset filter ## */}
+        {statusFilter !== "all" && (
+          <button
+            onClick={() => setStatusFilter("all")}
+            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+          >
+            <XCircle size={14} />
+            Reset Filter
+          </button>
+        )}
       </div>
-
-      <div className="flex-1 flex items-center justify-center -mt-2">
+      <div className="flex-1 flex items-center justify-center">
+        {/* ## PERUBAHAN 5: Hubungkan event handler ke chart ## */}
         <ReactECharts
           option={option}
-          style={{
-            height: "320px",
-            width: "100%",
-          }}
+          onEvents={onEvents}
+          style={{ height: "100%", width: "100%", minHeight: "250px" }}
         />
       </div>
-
-      <div className="text-base text-gray-600 -mt-3 text-center space-y-1 transform -translate-y-1">
-        <p className="font-medium">
-          Permanent:{" "}
-          <span className="text-green-600">{data.yoy.permanent}</span>
-        </p>
-        <p className="font-medium">
-          Contract: <span className="text-green-600">{data.yoy.contract}</span>
-        </p>
+      <div className="flex justify-center gap-6 mt-2 border-t pt-4">
+        {chartDataForPie.map((item) => {
+          const isActive = statusFilter === item.name.toLowerCase();
+          return (
+            <div
+              key={item.name}
+              className={`flex flex-col items-center p-2 rounded-lg cursor-pointer ${
+                isActive ? "bg-gray-100" : ""
+              }`}
+              onClick={() => handleChartClick({ name: item.name })}
+            >
+              <div className="flex items-center">
+                <span
+                  className="h-3 w-3 rounded-full mr-2"
+                  style={{ backgroundColor: STATUS_COLORS[item.name] }}
+                ></span>
+                {/* ## PERUBAHAN 6: Umpan balik visual pada legenda kustom ## */}
+                <span
+                  className={`text-sm ${
+                    isActive
+                      ? "font-bold text-gray-800"
+                      : "font-medium text-gray-600"
+                  }`}
+                >
+                  {item.name}
+                </span>
+              </div>
+              <span
+                className={`text-lg font-bold ${
+                  isActive ? "text-gray-900" : "text-gray-800"
+                }`}
+              >
+                {item.value.toLocaleString("id-ID")}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

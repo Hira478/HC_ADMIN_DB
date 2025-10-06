@@ -4,17 +4,17 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// Interface untuk baris Excel, properti bisa string atau number
+// ## PERUBAHAN 1: Sesuaikan interface dengan kolom Excel baru
 interface HeadcountExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
+  Category: string; // <-- Kolom baru yang krusial
   Male: number;
   Female: number;
-  // Kolom 'Total' dari Excel akan kita abaikan dan hitung ulang
 }
 
-// "Kamus" untuk menerjemahkan bulan
+// "Kamus" bulan, tidak perlu diubah
 const monthNameToNumber: { [key: string]: number } = {
   januari: 1,
   feb: 2,
@@ -39,6 +39,18 @@ const monthNameToNumber: { [key: string]: number } = {
   des: 12,
   desember: 12,
 };
+
+// Interface untuk data yang sudah diagregasi
+interface AggregatedHeadcount {
+  year: number;
+  month: number;
+  companyId: number;
+  malePermanent: number;
+  maleContract: number;
+  femalePermanent: number;
+  femaleContract: number;
+  totalCount: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,47 +85,75 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
-    const dataToUpsert = rows
-      .map((row) => {
-        const companyName = row.Company?.toString().trim().toLowerCase();
-        const companyId = companyMap.get(companyName);
+    // ## PERUBAHAN 2: Proses agregasi data dari Excel
+    const aggregationMap = new Map<string, AggregatedHeadcount>();
 
-        const monthInput = row.Month?.toString().trim().toLowerCase();
-        const monthNumber = monthInput
-          ? monthNameToNumber[monthInput] || Number(monthInput)
-          : undefined;
+    for (const row of rows) {
+      const companyName = row.Company?.toString().trim().toLowerCase();
+      const companyId = companyMap.get(companyName);
 
-        if (!companyId || !row.Year || !monthNumber) {
-          console.warn(
-            `Data tidak lengkap atau perusahaan/bulan tidak valid. Baris dilewati:`,
-            row
-          );
-          return null;
-        }
+      const monthInput = row.Month?.toString().trim().toLowerCase();
+      const monthNumber = monthInput
+        ? monthNameToNumber[monthInput] || Number(monthInput)
+        : undefined;
 
-        const maleCount = Number(row.Male) || 0;
-        const femaleCount = Number(row.Female) || 0;
-        // Hitung ulang total untuk memastikan integritas data
-        const totalCount = maleCount + femaleCount;
+      const year = Number(row.Year);
+      const category = row.Category?.trim().toLowerCase();
 
-        return {
-          year: Number(row.Year),
-          month: monthNumber,
-          companyId,
-          maleCount,
-          femaleCount,
-          totalCount,
-        };
-      })
-      .filter((data): data is NonNullable<typeof data> => data !== null);
+      if (!companyId || !year || !monthNumber || !category) {
+        console.warn(`Baris data tidak lengkap, dilewati:`, row);
+        continue; // Lanjut ke baris berikutnya
+      }
+
+      // Buat kunci unik untuk setiap entri database
+      const key = `${year}-${monthNumber}-${companyId}`;
+
+      // Ambil data yang sudah ada atau buat objek baru
+      const entry = aggregationMap.get(key) || {
+        year,
+        month: monthNumber,
+        companyId,
+        malePermanent: 0,
+        maleContract: 0,
+        femalePermanent: 0,
+        femaleContract: 0,
+        totalCount: 0,
+      };
+
+      const maleCount = Number(row.Male) || 0;
+      const femaleCount = Number(row.Female) || 0;
+
+      // Akumulasi data berdasarkan kategori
+      if (category === "permanent") {
+        entry.malePermanent += maleCount;
+        entry.femalePermanent += femaleCount;
+      } else if (category === "contract") {
+        // Anda bisa tambahkan kategori lain jika perlu
+        entry.maleContract += maleCount;
+        entry.femaleContract += femaleCount;
+      }
+
+      aggregationMap.set(key, entry);
+    }
+
+    // Ubah map menjadi array dan hitung totalCount
+    const dataToUpsert = Array.from(aggregationMap.values()).map((data) => {
+      data.totalCount =
+        data.malePermanent +
+        data.maleContract +
+        data.femalePermanent +
+        data.femaleContract;
+      return data;
+    });
 
     if (dataToUpsert.length === 0) {
       return NextResponse.json(
-        { error: "Tidak ada data valid yang bisa diimpor dari file." },
+        { error: "Tidak ada data valid yang bisa diimpor." },
         { status: 400 }
       );
     }
 
+    // ## PERUBAHAN 3: Lakukan upsert dengan data dan kolom baru
     await prisma.$transaction(
       dataToUpsert.map((data) =>
         prisma.headcount.upsert({
@@ -125,8 +165,10 @@ export async function POST(request: NextRequest) {
             },
           },
           update: {
-            maleCount: data.maleCount,
-            femaleCount: data.femaleCount,
+            malePermanent: data.malePermanent,
+            maleContract: data.maleContract,
+            femalePermanent: data.femalePermanent,
+            femaleContract: data.femaleContract,
             totalCount: data.totalCount,
           },
           create: data,
@@ -135,7 +177,7 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      message: `${dataToUpsert.length} baris data headcount berhasil diimpor.`,
+      message: `${dataToUpsert.length} data headcount (berdasarkan bulan & perusahaan) berhasil diimpor.`,
     });
   } catch (error) {
     console.error("API Error in /uploads/headcount:", error);

@@ -4,19 +4,18 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// Interface untuk baris Excel.
-// Gunakan kutip untuk nama properti yang mengandung spasi atau karakter spesial.
+// ## PERUBAHAN 1: Sesuaikan interface dengan kolom Excel baru
 interface AgeExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
-  "<25 Years Old": number;
-  "26-40 Years Old": number;
+  Category: string;
+  "<=30 Years Old": number;
+  "31-40 Years Old": number;
   "41-50 Years Old": number;
-  ">50 Years Old": number;
+  "51-60 Years Old": number;
 }
 
-// "Kamus" untuk menerjemahkan bulan
 const monthNameToNumber: { [key: string]: number } = {
   januari: 1,
   feb: 2,
@@ -41,6 +40,21 @@ const monthNameToNumber: { [key: string]: number } = {
   des: 12,
   desember: 12,
 };
+
+// Interface for aggregated data, matching the new DB schema
+interface AggregatedAgeStat {
+  year: number;
+  month: number;
+  companyId: number;
+  under25Permanent: number;
+  under25Contract: number;
+  age26to40Permanent: number;
+  age26to40Contract: number;
+  age41to50Permanent: number;
+  age41to50Contract: number;
+  over50Permanent: number;
+  over50Contract: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,36 +87,61 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
-    const dataToUpsert = rows
-      .map((row) => {
-        const companyName = row.Company?.toString().trim().toLowerCase();
-        const companyId = companyMap.get(companyName);
-        const monthInput = row.Month?.toString().trim().toLowerCase();
-        const monthNumber = monthInput
-          ? monthNameToNumber[monthInput] || Number(monthInput)
-          : undefined;
+    // ## PERUBAHAN 2: Proses agregasi data dari Excel
+    const aggregationMap = new Map<string, AggregatedAgeStat>();
 
-        if (!companyId || !row.Year || !monthNumber) {
-          console.warn(
-            `Data tidak lengkap atau perusahaan/bulan tidak valid. Baris dilewati:`,
-            row
-          );
-          return null;
-        }
+    for (const row of rows) {
+      const companyName = row.Company?.toString().trim().toLowerCase();
+      const companyId = companyMap.get(companyName);
+      const monthInput = row.Month?.toString().trim().toLowerCase();
+      const monthNumber = monthInput
+        ? monthNameToNumber[monthInput] || Number(monthInput)
+        : undefined;
+      const year = Number(row.Year);
+      const category = row.Category?.trim().toLowerCase();
 
-        return {
-          year: Number(row.Year),
-          month: monthNumber,
-          companyId: companyId,
-          // --- PEMETAAN KOLOM EXCEL KE DATABASE ---
-          // Gunakan bracket notation ['...'] untuk mengakses properti dengan spasi/simbol
-          under25Count: Number(row["<25 Years Old"]) || 0,
-          age26to40Count: Number(row["26-40 Years Old"]) || 0,
-          age41to50Count: Number(row["41-50 Years Old"]) || 0,
-          over50Count: Number(row[">50 Years Old"]) || 0,
-        };
-      })
-      .filter((data): data is NonNullable<typeof data> => data !== null);
+      if (!companyId || !year || !monthNumber || !category) {
+        console.warn(`Baris data tidak lengkap, dilewati:`, row);
+        continue;
+      }
+
+      const key = `${year}-${monthNumber}-${companyId}`;
+      const entry = aggregationMap.get(key) || {
+        year,
+        month: monthNumber,
+        companyId,
+        under25Permanent: 0,
+        under25Contract: 0,
+        age26to40Permanent: 0,
+        age26to40Contract: 0,
+        age41to50Permanent: 0,
+        age41to50Contract: 0,
+        over50Permanent: 0,
+        over50Contract: 0,
+      };
+
+      // Map Excel columns to corresponding fields in the entry object
+      const under30 = Number(row["<=30 Years Old"]) || 0;
+      const age31to40 = Number(row["31-40 Years Old"]) || 0;
+      const age41to50 = Number(row["41-50 Years Old"]) || 0;
+      const age51to60 = Number(row["51-60 Years Old"]) || 0;
+
+      if (category === "permanent") {
+        entry.under25Permanent += under30;
+        entry.age26to40Permanent += age31to40;
+        entry.age41to50Permanent += age41to50;
+        entry.over50Permanent += age51to60;
+      } else if (category === "contract") {
+        entry.under25Contract += under30;
+        entry.age26to40Contract += age31to40;
+        entry.age41to50Contract += age41to50;
+        entry.over50Contract += age51to60;
+      }
+
+      aggregationMap.set(key, entry);
+    }
+
+    const dataToUpsert = Array.from(aggregationMap.values());
 
     if (dataToUpsert.length === 0) {
       return NextResponse.json(
@@ -111,6 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ## PERUBAHAN 3: Lakukan upsert dengan data dan kolom baru
     await prisma.$transaction(
       dataToUpsert.map((data) =>
         prisma.ageStat.upsert({
@@ -121,19 +161,14 @@ export async function POST(request: NextRequest) {
               companyId: data.companyId,
             },
           },
-          update: {
-            under25Count: data.under25Count,
-            age26to40Count: data.age26to40Count,
-            age41to50Count: data.age41to50Count,
-            over50Count: data.over50Count,
-          },
+          update: data, // update and create now use the same data structure
           create: data,
         })
       )
     );
 
     return NextResponse.json({
-      message: `${dataToUpsert.length} baris data usia berhasil diimpor.`,
+      message: `${dataToUpsert.length} data demografi usia (berdasarkan bulan & perusahaan) berhasil diimpor.`,
     });
   } catch (error) {
     console.error("API Error in /uploads/age:", error);
