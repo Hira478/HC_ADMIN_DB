@@ -39,7 +39,16 @@ interface DivisionFormProps {
 
 interface DivisionData {
   data: DivisionStat[];
-  meta: { total: number; page: number; totalPages: number };
+  meta: {
+    total: number;
+    page: number;
+    totalPages: number;
+    totalActualHeadcount: number;
+  };
+}
+
+interface HeadcountData {
+  total: number;
 }
 
 export default function DivisionForm({
@@ -183,8 +192,18 @@ export default function DivisionForm({
           disabled={!isEditing && divisionData?.data.length === 0}
         />
         {/* PENAMBAHAN: Indikator total divisi */}
-        <div className={styles.totalIndicator}>
-          Total Divisions: <strong>{divisionData?.meta.total || 0}</strong>
+        <div className="flex items-center gap-6 ml-auto">
+          <div className={styles.totalIndicator}>
+            Total Divisions: <strong>{divisionData?.meta.total || 0}</strong>
+          </div>
+          <div className={styles.totalIndicator}>
+            Total Headcount:
+            <strong>
+              {divisionData?.meta.totalActualHeadcount.toLocaleString(
+                "id-ID"
+              ) || 0}
+            </strong>
+          </div>
         </div>
       </div>
       {isLoading && (

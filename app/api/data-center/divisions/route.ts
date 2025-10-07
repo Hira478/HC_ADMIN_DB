@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const month = parseInt(searchParams.get("month") || "");
   const search = searchParams.get("search") || "";
   const page = parseInt(searchParams.get("page") || "1");
-  const take = 15; // Jumlah data per halaman
+  const take = 15;
   const skip = (page - 1) * take;
 
   const companyId =
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       where: { year, month, companyId },
     });
 
-    // LOGIKA CARRY-OVER: Jika data bulan ini kosong & bukan Januari
+    // LOGIKA CARRY-OVER (tidak berubah)
     if (initialCount === 0 && month > 1) {
       const prevDivisions = await prisma.divisionStat.findMany({
         where: { year: year, month: month - 1, companyId },
@@ -43,16 +43,15 @@ export async function GET(request: NextRequest) {
           month,
           companyId,
           divisionName: d.divisionName,
-          Kategori: d.Kategori, // Kolom Kategori masih ada di DB, kita ikut sertakan
+          Kategori: d.Kategori,
           plannedCount: d.plannedCount,
-          actualCount: 0, // Reset actual count
+          actualCount: 0,
         }));
         await prisma.divisionStat.createMany({ data: newDivisionData });
       }
     }
 
-    // Ambil data lagi setelah kemungkinan carry-over, sekarang dengan search dan paginasi
-    const whereClause = {
+    const whereClauseForSearch = {
       year,
       month,
       companyId,
@@ -62,23 +61,32 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    const [divisions, total] = await prisma.$transaction([
+    // --- DIUBAH: Tambahkan agregasi untuk menjumlahkan actualCount ---
+    const [divisions, total, totalHeadcountResult] = await prisma.$transaction([
       prisma.divisionStat.findMany({
-        where: whereClause,
+        where: whereClauseForSearch,
         orderBy: { divisionName: "asc" },
         take,
         skip,
       }),
-      prisma.divisionStat.count({ where: whereClause }),
+      prisma.divisionStat.count({ where: whereClauseForSearch }),
+      // Query baru untuk menjumlahkan semua 'actualCount' pada periode ini (tanpa filter search)
+      prisma.divisionStat.aggregate({
+        _sum: { actualCount: true },
+        where: { year, month, companyId },
+      }),
     ]);
 
-    // Mengembalikan data dalam format objek { data, meta }
+    const totalActualHeadcount = totalHeadcountResult._sum.actualCount || 0;
+
+    // --- DIUBAH: Kirim totalActualHeadcount di dalam 'meta' ---
     return NextResponse.json({
       data: divisions,
       meta: {
         total,
         page,
         totalPages: Math.ceil(total / take),
+        totalActualHeadcount, // Kirim data total headcount ke frontend
       },
     });
   } catch (error) {
