@@ -81,6 +81,11 @@ model EducationStat {
   month           Int
   year            Int
   
+  sdPermanent     Int     @default(0) @map("sd_permanent")
+  sdContract      Int     @default(0) @map("sd_contract")
+  smpPermanent    Int     @default(0) @map("smp_permanent")
+  smpContract     Int     @default(0) @map("smp_contract")
+
   // Kolom baru
   smaSmkPermanent Int @default(0) @map("sma_smk_permanent")
   smaSmkContract  Int @default(0) @map("sma_smk_contract")

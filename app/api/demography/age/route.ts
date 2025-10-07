@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       (stat) => stat.month === latestMonthInPeriod
     );
 
-    const labels = [">50", "41-50", "26-40", "<25"];
+    const labels = ["51-60", "41-50", "31-40", "<=30"];
 
     if (!dataForPeriod) {
       const emptyValues = [0, 0, 0, 0];
@@ -65,6 +65,8 @@ export async function GET(request: NextRequest) {
     const under25Permanent = dataForPeriod.under25Permanent ?? 0;
     const under25Contract = dataForPeriod.under25Contract ?? 0;
 
+    // ## PERUBAHAN 2: Susun array values sesuai urutan label baru ##
+    // Urutan: 51-60, 41-50, 31-40, <=30
     const permanentValues = [
       over50Permanent,
       age41to50Permanent,

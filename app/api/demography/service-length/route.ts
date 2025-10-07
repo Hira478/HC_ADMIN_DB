@@ -46,13 +46,13 @@ export async function GET(request: NextRequest) {
     });
 
     const labels = [
-      "0-5 thn",
-      "6-10 thn",
-      "11-15 thn",
-      "16-20 thn",
-      "21-25 thn",
-      "25-30 thn",
-      ">30 thn",
+      "0-5 Years",
+      "6-10 Years",
+      "11-15 Years",
+      "16-20 Years",
+      "21-25 Years",
+      "25-30 Years",
+      ">30 Years",
     ];
     const latestMonthInPeriod = Math.max(...monthsToFetch);
     const dataForPeriod = losDataFromDb.find(

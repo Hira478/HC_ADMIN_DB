@@ -13,6 +13,8 @@ interface DemographyPayload {
   // Data disederhanakan, tanpa akhiran 'Count'
   headcount?: { male: number; female: number };
   education?: {
+    sd: number; // <-- Tambahkan ini
+    smp: number;
     smaSmk: number;
     d3: number;
     s1: number;
@@ -150,20 +152,43 @@ export async function POST(request: NextRequest) {
         where: whereClause,
       });
       const eduPayload = body.education || {
+        sd: 0,
+        smp: 0,
         smaSmk: 0,
         d3: 0,
         s1: 0,
         s2: 0,
         s3: 0,
       };
-      const eduData = { ...existingEdu }; // Salin semua field untuk menjaga nilai yang tidak diubah
+
+      const eduData = {
+        sdPermanent: existingEdu?.sdPermanent ?? 0,
+        smpPermanent: existingEdu?.smpPermanent ?? 0,
+        smaSmkPermanent: existingEdu?.smaSmkPermanent ?? 0,
+        d3Permanent: existingEdu?.d3Permanent ?? 0,
+        s1Permanent: existingEdu?.s1Permanent ?? 0,
+        s2Permanent: existingEdu?.s2Permanent ?? 0,
+        s3Permanent: existingEdu?.s3Permanent ?? 0,
+        sdContract: existingEdu?.sdContract ?? 0,
+        smpContract: existingEdu?.smpContract ?? 0,
+        smaSmkContract: existingEdu?.smaSmkContract ?? 0,
+        d3Contract: existingEdu?.d3Contract ?? 0,
+        s1Contract: existingEdu?.s1Contract ?? 0,
+        s2Contract: existingEdu?.s2Contract ?? 0,
+        s3Contract: existingEdu?.s3Contract ?? 0,
+      };
+
       if (statusType === "permanent") {
+        eduData.sdPermanent = eduPayload.sd;
+        eduData.smpPermanent = eduPayload.smp;
         eduData.smaSmkPermanent = eduPayload.smaSmk;
         eduData.d3Permanent = eduPayload.d3;
         eduData.s1Permanent = eduPayload.s1;
         eduData.s2Permanent = eduPayload.s2;
         eduData.s3Permanent = eduPayload.s3;
       } else {
+        eduData.sdContract = eduPayload.sd;
+        eduData.smpContract = eduPayload.smp;
         eduData.smaSmkContract = eduPayload.smaSmk;
         eduData.d3Contract = eduPayload.d3;
         eduData.s1Contract = eduPayload.s1;

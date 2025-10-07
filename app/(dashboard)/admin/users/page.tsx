@@ -56,12 +56,12 @@ export default function UserManagementPage() {
     setError(null);
     try {
       const response = await fetch("/api/users");
-      if (!response.ok) throw new Error("Gagal memuat data pengguna.");
+      if (!response.ok) throw new Error("Failed to fetch users.");
       const data = await response.json();
       setUsers(data);
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
-      else setError("Terjadi kesalahan.");
+      else setError("There was an error.");
     } finally {
       setIsLoading(false);
     }

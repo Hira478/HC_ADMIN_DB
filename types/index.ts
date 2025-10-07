@@ -214,6 +214,8 @@ export interface DemographyManualInputPayload {
 
   headcount?: { male: number; female: number };
   education?: {
+    sd: number; // <-- Tambahkan ini
+    smp: number;
     smaSmk: number;
     d3: number;
     s1: number;
