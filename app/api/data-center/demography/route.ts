@@ -16,6 +16,8 @@ interface DemographyPayload {
     sd: number; // <-- Tambahkan ini
     smp: number;
     smaSmk: number;
+    d1: number; // <-- Tambahkan ini
+    d2: number;
     d3: number;
     s1: number;
     s2: number;
@@ -155,6 +157,8 @@ export async function POST(request: NextRequest) {
         sd: 0,
         smp: 0,
         smaSmk: 0,
+        d1: 0,
+        d2: 0,
         d3: 0,
         s1: 0,
         s2: 0,
@@ -165,6 +169,8 @@ export async function POST(request: NextRequest) {
         sdPermanent: existingEdu?.sdPermanent ?? 0,
         smpPermanent: existingEdu?.smpPermanent ?? 0,
         smaSmkPermanent: existingEdu?.smaSmkPermanent ?? 0,
+        d1Permanent: existingEdu?.d1Permanent ?? 0,
+        d2Permanent: existingEdu?.d2Permanent ?? 0,
         d3Permanent: existingEdu?.d3Permanent ?? 0,
         s1Permanent: existingEdu?.s1Permanent ?? 0,
         s2Permanent: existingEdu?.s2Permanent ?? 0,
@@ -172,6 +178,8 @@ export async function POST(request: NextRequest) {
         sdContract: existingEdu?.sdContract ?? 0,
         smpContract: existingEdu?.smpContract ?? 0,
         smaSmkContract: existingEdu?.smaSmkContract ?? 0,
+        d1Contract: existingEdu?.d1Contract ?? 0,
+        d2Contract: existingEdu?.d2Contract ?? 0,
         d3Contract: existingEdu?.d3Contract ?? 0,
         s1Contract: existingEdu?.s1Contract ?? 0,
         s2Contract: existingEdu?.s2Contract ?? 0,
@@ -182,6 +190,8 @@ export async function POST(request: NextRequest) {
         eduData.sdPermanent = eduPayload.sd;
         eduData.smpPermanent = eduPayload.smp;
         eduData.smaSmkPermanent = eduPayload.smaSmk;
+        eduData.d1Permanent = eduPayload.d1;
+        eduData.d2Permanent = eduPayload.d2;
         eduData.d3Permanent = eduPayload.d3;
         eduData.s1Permanent = eduPayload.s1;
         eduData.s2Permanent = eduPayload.s2;
@@ -190,6 +200,8 @@ export async function POST(request: NextRequest) {
         eduData.sdContract = eduPayload.sd;
         eduData.smpContract = eduPayload.smp;
         eduData.smaSmkContract = eduPayload.smaSmk;
+        eduData.d1Contract = eduPayload.d1;
+        eduData.d2Contract = eduPayload.d2;
         eduData.d3Contract = eduPayload.d3;
         eduData.s1Contract = eduPayload.s1;
         eduData.s2Contract = eduPayload.s2;

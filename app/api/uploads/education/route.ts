@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// ## 1. PERBARUI INTERFACE: Hapus properti "<D3" ##
+// ## 1. PERBARUI INTERFACE SESUAI KOLOM EXCEL BARU (TERLENGKAP) ##
 interface EducationExcelRow {
   Year: number;
   Month: number | string;
@@ -12,6 +12,9 @@ interface EducationExcelRow {
   Category: string;
   SD: number;
   SMP: number;
+  SMA: number; // <-- Kolom baru (sebelumnya <D3)
+  D1: number; // <-- Kolom baru
+  D2: number; // <-- Kolom baru
   D3: number;
   S1: number;
   S2: number;
@@ -43,7 +46,7 @@ const monthNameToNumber: { [key: string]: number } = {
   desember: 12,
 };
 
-// Interface agregasi tetap sama, karena kolom smaSmk masih ada di DB
+// ## 1. PERBARUI INTERFACE AGREGRASI SESUAI SKEMA DB BARU (TERLENGKAP) ##
 interface AggregatedEducationStat {
   year: number;
   month: number;
@@ -54,6 +57,10 @@ interface AggregatedEducationStat {
   smpContract: number;
   smaSmkPermanent: number;
   smaSmkContract: number;
+  d1Permanent: number;
+  d1Contract: number;
+  d2Permanent: number;
+  d2Contract: number;
   d3Permanent: number;
   d3Contract: number;
   s1Permanent: number;
@@ -124,7 +131,11 @@ export async function POST(request: NextRequest) {
         smpPermanent: 0,
         smpContract: 0,
         smaSmkPermanent: 0,
-        smaSmkContract: 0, // Tetap ada, akan bernilai 0
+        smaSmkContract: 0,
+        d1Permanent: 0,
+        d1Contract: 0,
+        d2Permanent: 0,
+        d2Contract: 0,
         d3Permanent: 0,
         d3Contract: 0,
         s1Permanent: 0,
@@ -135,18 +146,24 @@ export async function POST(request: NextRequest) {
         s3Contract: 0,
       };
 
-      // ## 2. BACA NILAI DARI EXCEL (TANPA <D3) ##
+      // ## 2. BACA SEMUA NILAI DARI KOLOM EXCEL ##
       const sdCount = Number(row.SD) || 0;
       const smpCount = Number(row.SMP) || 0;
+      const smaCount = Number(row.SMA) || 0; // Menggunakan kolom SMA
+      const d1Count = Number(row.D1) || 0;
+      const d2Count = Number(row.D2) || 0;
       const d3Count = Number(row.D3) || 0;
       const s1Count = Number(row.S1) || 0;
       const s2Count = Number(row.S2) || 0;
       const s3Count = Number(row.S3) || 0;
 
-      // ## 3. HAPUS LOGIKA PENAMBAHAN UNTUK smaSmk ##
+      // ## 3. MASUKKAN SEMUA DATA BARU KE DALAM LOGIKA AGREGRASI ##
       if (category === "permanent") {
         entry.sdPermanent += sdCount;
         entry.smpPermanent += smpCount;
+        entry.smaSmkPermanent += smaCount;
+        entry.d1Permanent += d1Count;
+        entry.d2Permanent += d2Count;
         entry.d3Permanent += d3Count;
         entry.s1Permanent += s1Count;
         entry.s2Permanent += s2Count;
@@ -154,6 +171,9 @@ export async function POST(request: NextRequest) {
       } else if (category === "contract") {
         entry.sdContract += sdCount;
         entry.smpContract += smpCount;
+        entry.smaSmkContract += smaCount;
+        entry.d1Contract += d1Count;
+        entry.d2Contract += d2Count;
         entry.d3Contract += d3Count;
         entry.s1Contract += s1Count;
         entry.s2Contract += s2Count;

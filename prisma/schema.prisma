@@ -89,6 +89,10 @@ model EducationStat {
   // Kolom baru
   smaSmkPermanent Int @default(0) @map("sma_smk_permanent")
   smaSmkContract  Int @default(0) @map("sma_smk_contract")
+  d1Permanent     Int @default(0) @map("d1_permanent")
+  d1Contract      Int @default(0) @map("d1_contract")
+  d2Permanent     Int @default(0) @map("d2_permanent")
+  d2Contract      Int @default(0) @map("d2_contract")
   d3Permanent     Int @default(0) @map("d3_permanent")
   d3Contract      Int @default(0) @map("d3_contract")
   s1Permanent     Int @default(0) @map("s1_permanent")

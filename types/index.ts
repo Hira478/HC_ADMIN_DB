@@ -217,6 +217,8 @@ export interface DemographyManualInputPayload {
     sd: number; // <-- Tambahkan ini
     smp: number;
     smaSmk: number;
+    d1: number; // <-- Tambahkan ini
+    d2: number;
     d3: number;
     s1: number;
     s2: number;

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "public"."EducationStat" ADD COLUMN     "d1_contract" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "d1_permanent" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "d2_contract" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "d2_permanent" INTEGER NOT NULL DEFAULT 0;
