@@ -1,4 +1,3 @@
-// contexts/FilterContext.tsx
 "use client";
 
 import React, {
@@ -42,11 +41,11 @@ interface FilterContextType {
   selectedCompany: number | null;
   setSelectedCompany: (companyId: number) => void;
   period: Period;
-  statusFilter: "all" | "permanent" | "contract"; // <-- TAMBAHKAN INI
+  setPeriod: (period: Period) => void;
+  statusFilter: "all" | "permanent" | "contract";
   setStatusFilter: React.Dispatch<
     React.SetStateAction<"all" | "permanent" | "contract">
-  >; // <-- TAMBAHKAN INI
-  setPeriod: (period: Period) => void;
+  >;
   loading: boolean;
   user: UserSession | null;
   logout: () => void;
@@ -91,69 +90,81 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
     const initializeDashboard = async () => {
+      setLoading(true);
       try {
+        // 1. Ambil data user
         const userRes = await fetch("/api/auth/me");
-        if (!userRes.ok)
-          throw new Error("Not authenticated. Redirecting to login.");
+        if (!userRes.ok) throw new Error("Not authenticated.");
         const userData: UserSession = await userRes.json();
         setUser(userData);
 
-        // --- PERUBAHAN SEMENTARA UNTUK COMPANY ID ---
-        // --- KODE SEMENTARA: Filter default diubah ke Company ID 7 ---
-        setSelectedCompany(7);
-        /*
-          // UNTUK MENGEMBALIKAN: Hapus kode `setSelectedCompany(7)` di atas 
-          // dan hapus komentar baris di bawah ini.
-          setSelectedCompany(userData.companyId);
-        */
-
-        const [companyData, periodData] = await Promise.all([
-          fetch("/api/companies").then((res) => res.json()),
-          fetch("/api/filters/available-periods").then(
-            (res) => res.json() as Promise<AvailablePeriod[]>
-          ),
-        ]);
+        // 2. Ambil daftar perusahaan
+        const companyData = await fetch("/api/companies").then((res) =>
+          res.json()
+        );
         setCompanies(companyData);
-        setAvailablePeriods(periodData);
 
-        // --- PERUBAHAN SEMENTARA UNTUK PERIODE ---
-        // --- KODE SEMENTARA: Filter default diubah ke Juni 2025 ---
-        setPeriod((prev) => ({
-          ...prev,
-          year: 2025,
-          value: 6, // Juni
-        }));
+        // 3. Tentukan companyId default
+        let initialCompanyId: number | null = null;
+        if (userData.role === "USER_ANPER") {
+          initialCompanyId = userData.companyId;
+        } else if (companyData.length > 0) {
+          initialCompanyId = companyData[0].id;
+        }
+        setSelectedCompany(initialCompanyId);
 
-        /*
-          // UNTUK MENGEMBALIKAN: Hapus kode `setPeriod` di atas 
-          // dan hapus komentar blok di bawah ini untuk mengaktifkan logika periode terbaru.
-          if (periodData && periodData.length > 0) {
-            const latestYear = Math.max(...periodData.map((p) => p.year));
-            const periodsInLatestYear = periodData.filter(
-              (p) => p.year === latestYear
-            );
-            const latestMonth = Math.max(
-              ...periodsInLatestYear.map((p) => p.month)
-            );
-            setPeriod((prev) => ({
-              ...prev,
-              year: latestYear,
-              value: latestMonth,
-            }));
-          }
-        */
+        // Jika tidak ada companyId, hentikan loading
+        if (!initialCompanyId) {
+          setLoading(false);
+        }
       } catch (error) {
         console.error("Initialization Error:", error);
-        setUser(null);
         router.push("/login");
+      }
+      // setLoading(false) akan dipindah ke useEffect berikutnya
+    };
+    initializeDashboard();
+  }, [router]);
+
+  // useEffect BARU: bereaksi setiap kali selectedCompany berubah
+  useEffect(() => {
+    if (!selectedCompany) return;
+
+    const fetchPeriodsAndSetDefault = async () => {
+      setLoading(true); // Tampilkan loading saat ganti perusahaan
+      try {
+        // 4. Ambil periode yang tersedia UNTUK perusahaan yang dipilih
+        const periodRes = await fetch(
+          `/api/filters/available-periods?companyId=${selectedCompany}`
+        );
+        const periodData: AvailablePeriod[] = await periodRes.json();
+        setAvailablePeriods(periodData);
+
+        // 5. Set periode default ke yang terbaru dari daftar
+        if (periodData.length > 0) {
+          const latest = periodData[0];
+          setPeriod({
+            type: "monthly",
+            year: latest.year,
+            value: latest.month,
+          });
+        } else {
+          // Fallback jika perusahaan ini belum punya data sama sekali
+          setPeriod({
+            type: "monthly",
+            year: new Date().getFullYear(),
+            value: new Date().getMonth() + 1,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch periods for company:", error);
       } finally {
         setLoading(false);
       }
     };
-    initializeDashboard();
-  }, [router]);
+    fetchPeriodsAndSetDefault();
+  }, [selectedCompany]); // <-- "Dengarkan" perubahan pada selectedCompany
 
   const logout = async () => {
     try {
@@ -175,14 +186,14 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = {
+  const value: FilterContextType = {
     companies,
     availablePeriods,
     selectedCompany,
     setSelectedCompany: handleSetSelectedCompany,
     period,
     setPeriod,
-    statusFilter, // <-- TAMBAHKAN INI
+    statusFilter,
     setStatusFilter,
     loading,
     user,

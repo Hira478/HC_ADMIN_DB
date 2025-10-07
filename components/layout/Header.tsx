@@ -57,8 +57,20 @@ const Header = () => {
   const handleCompanyChange = (companyId: number) => {
     setSelectedCompany(companyId);
   };
-  const handleYearChange = (year: number) => {
-    setPeriod({ ...period, year });
+  const handleYearChange = (newYear: number) => {
+    // Cari bulan terbaru yang tersedia untuk tahun yang baru dipilih
+    const monthsForNewYear = availablePeriods
+      .filter((p) => p.year === newYear)
+      .map((p) => p.month);
+
+    if (monthsForNewYear.length > 0) {
+      // Set bulan ke yang paling tinggi (terbaru) di tahun tersebut
+      const latestMonthInNewYear = Math.max(...monthsForNewYear);
+      setPeriod({ ...period, year: newYear, value: latestMonthInNewYear });
+    } else {
+      // Fallback jika tidak ada bulan yang tersedia (seharusnya tidak terjadi)
+      setPeriod({ ...period, year: newYear });
+    }
   };
   const handleValueChange = (newValue: number) => {
     setPeriod({ ...period, value: newValue });

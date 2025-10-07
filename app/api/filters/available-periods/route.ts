@@ -1,35 +1,48 @@
 // File: app/api/filters/available-periods/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
-// Definisikan tipe untuk hasil agar TypeScript tidak error
-type AvailablePeriod = {
-  year: number;
-  month: number;
-};
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // --- LOGIKA BARU: BUAT PERIODE SECARA MANUAL ---
-
-    const availablePeriods: AvailablePeriod[] = [];
-    const startYear = 2024;
-    const endYear = 2025;
-
-    // Lakukan loop dari tahun awal hingga akhir
-    for (let year = startYear; year <= endYear; year++) {
-      // Untuk setiap tahun, tambahkan 12 bulan
-      for (let month = 1; month <= 12; month++) {
-        availablePeriods.push({ year, month });
-      }
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Mengurutkan hasilnya agar tahun terbaru muncul lebih dulu,
-    // ini penting untuk logika 'periode default terbaru' di FilterContext Anda.
-    availablePeriods.sort((a, b) => {
-      if (a.year !== b.year) {
-        return b.year - a.year; // Tahun descending (2025, 2024, 2023)
+    const { searchParams } = new URL(request.url);
+    const companyIdFromQuery = parseInt(searchParams.get("companyId") || "");
+
+    // Tentukan companyId mana yang akan digunakan untuk filter
+    let targetCompanyId: number;
+    if (session.role === "USER_ANPER") {
+      // Jika user anper, paksa gunakan companyId dari sesi mereka
+      targetCompanyId = session.companyId;
+    } else if (
+      session.role === "ADMIN_HOLDING" ||
+      session.role === "SUPER_ADMIN"
+    ) {
+      // Jika admin, gunakan companyId dari query. Jika tidak ada, jangan filter (opsional)
+      // Namun, karena frontend akan selalu mengirimnya, kita utamakan dari query.
+      if (!companyIdFromQuery) {
+        // Seharusnya tidak terjadi, tapi sebagai fallback, kirim array kosong.
+        return NextResponse.json([]);
       }
-      return a.month - b.month; // Bulan ascending (1, 2, 3, ...)
+      targetCompanyId = companyIdFromQuery;
+    } else {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const availablePeriods = await prisma.headcount.findMany({
+      where: {
+        companyId: targetCompanyId, // <-- FILTER BERDASARKAN COMPANY ID
+      },
+      select: {
+        year: true,
+        month: true,
+      },
+      distinct: ["year", "month"],
+      orderBy: [{ year: "desc" }, { month: "desc" }],
     });
 
     return NextResponse.json(availablePeriods);
