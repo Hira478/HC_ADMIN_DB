@@ -80,7 +80,7 @@ const EmployeeStatusCard = () => {
     : [];
 
   const option: EChartsOption = {
-    tooltip: { trigger: "item", formatter: "{a} <br/>{b}: {c} ({d}%)" },
+    tooltip: { trigger: "item", formatter: "{b}: {d}%" },
     legend: { show: false },
     series: [
       {

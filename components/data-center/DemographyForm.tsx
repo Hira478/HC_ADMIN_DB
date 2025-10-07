@@ -35,22 +35,26 @@ interface HeadcountState {
 }
 interface EducationState {
   permanent: {
+    sd: number;
+    smp: number;
     smaSmk: number;
+    d1: number;
+    d2: number;
     d3: number;
     s1: number;
     s2: number;
     s3: number;
-    sd: number;
-    smp: number;
   };
   contract: {
+    sd: number;
+    smp: number;
     smaSmk: number;
+    d1: number;
+    d2: number;
     d3: number;
     s1: number;
     s2: number;
     s3: number;
-    sd: number;
-    smp: number;
   };
 }
 interface LevelState {
@@ -106,8 +110,28 @@ const initialFormState: FormStateData = {
     contract: { male: 0, female: 0 },
   },
   education: {
-    permanent: { sd: 0, smp: 0, smaSmk: 0, d3: 0, s1: 0, s2: 0, s3: 0 },
-    contract: { sd: 0, smp: 0, smaSmk: 0, d3: 0, s1: 0, s2: 0, s3: 0 },
+    permanent: {
+      sd: 0,
+      smp: 0,
+      smaSmk: 0,
+      d1: 0,
+      d2: 0,
+      d3: 0,
+      s1: 0,
+      s2: 0,
+      s3: 0,
+    },
+    contract: {
+      sd: 0,
+      smp: 0,
+      smaSmk: 0,
+      d1: 0,
+      d2: 0,
+      d3: 0,
+      s1: 0,
+      s2: 0,
+      s3: 0,
+    },
   },
   level: {
     permanent: { bod1: 0, bod2: 0, bod3: 0, bod4: 0 },
@@ -159,6 +183,8 @@ const transformApiDataToFormState = (
         sd: apiData.education?.sdPermanent ?? 0,
         smp: apiData.education?.smpPermanent ?? 0,
         smaSmk: apiData.education?.smaSmkPermanent ?? 0,
+        d1: apiData.education?.d1Permanent ?? 0,
+        d2: apiData.education?.d2Permanent ?? 0,
         d3: apiData.education?.d3Permanent ?? 0,
         s1: apiData.education?.s1Permanent ?? 0,
         s2: apiData.education?.s2Permanent ?? 0,
@@ -168,6 +194,8 @@ const transformApiDataToFormState = (
         sd: apiData.education?.sdContract ?? 0,
         smp: apiData.education?.smpContract ?? 0,
         smaSmk: apiData.education?.smaSmkContract ?? 0,
+        d1: apiData.education?.d1Contract ?? 0,
+        d2: apiData.education?.d2Contract ?? 0,
         d3: apiData.education?.d3Contract ?? 0,
         s1: apiData.education?.s1Contract ?? 0,
         s2: apiData.education?.s2Contract ?? 0,

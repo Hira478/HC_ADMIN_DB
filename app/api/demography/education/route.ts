@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   try {
     const companyFilter = await getCompanyFilter(request);
 
-    // Query ke DB tidak berubah, tetap ambil semua data
+    // ## 1. AMBIL SEMUA DATA, TERMASUK D1 & D2 ##
     const eduDataFromDb = await prisma.educationStat.findMany({
       where: { year, month: { in: monthsToFetch }, ...companyFilter },
       select: {
@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
         smpContract: true,
         smaSmkPermanent: true,
         smaSmkContract: true,
+        d1Permanent: true,
+        d1Contract: true,
+        d2Permanent: true,
+        d2Contract: true,
         d3Permanent: true,
         d3Contract: true,
         s1Permanent: true,
@@ -50,11 +54,11 @@ export async function GET(request: NextRequest) {
       (stat) => stat.month === latestMonthInPeriod
     );
 
-    // ## PERUBAHAN 1: Hapus '< D3' dari labels ##
-    const labels = ["SD", "SMP", "D3", "S1", "S2", "S3"];
+    // ## 2. UBAH LABELS UNTUK TAMPILAN CHART ##
+    const labels = ["< D3", "D3", "S1", "S2", "S3"];
 
     if (!dataForPeriod) {
-      const emptyValues = [0, 0, 0, 0, 0, 0]; // Sesuaikan jumlah jadi 6
+      const emptyValues = [0, 0, 0, 0, 0];
       return NextResponse.json({
         labels,
         permanent: { label: "Permanent", values: emptyValues },
@@ -63,34 +67,41 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const sdPermanent = dataForPeriod.sdPermanent ?? 0;
-    const sdContract = dataForPeriod.sdContract ?? 0;
-    const smpPermanent = dataForPeriod.smpPermanent ?? 0;
-    const smpContract = dataForPeriod.smpContract ?? 0;
-    // Data smaSmk tetap diambil dari DB tapi tidak akan dipakai di response
-    // const smaSmkPermanent = dataForPeriod.smaSmkPermanent ?? 0;
-    // const smaSmkContract = dataForPeriod.smaSmkContract ?? 0;
+    // ## 3. LAKUKAN AGREGRASI/PENGGABUNGAN DATA ##
+    const lessThanD3Permanent =
+      (dataForPeriod.sdPermanent ?? 0) +
+      (dataForPeriod.smpPermanent ?? 0) +
+      (dataForPeriod.smaSmkPermanent ?? 0) +
+      (dataForPeriod.d1Permanent ?? 0) +
+      (dataForPeriod.d2Permanent ?? 0);
+    const lessThanD3Contract =
+      (dataForPeriod.sdContract ?? 0) +
+      (dataForPeriod.smpContract ?? 0) +
+      (dataForPeriod.smaSmkContract ?? 0) +
+      (dataForPeriod.d1Contract ?? 0) +
+      (dataForPeriod.d2Contract ?? 0);
+
+    // Data lainnya tetap
     const d3Permanent = dataForPeriod.d3Permanent ?? 0;
     const d3Contract = dataForPeriod.d3Contract ?? 0;
     const s1Permanent = dataForPeriod.s1Permanent ?? 0;
     const s1Contract = dataForPeriod.s1Contract ?? 0;
+    // ... (dst untuk s2, s3)
     const s2Permanent = dataForPeriod.s2Permanent ?? 0;
     const s2Contract = dataForPeriod.s2Contract ?? 0;
     const s3Permanent = dataForPeriod.s3Permanent ?? 0;
     const s3Contract = dataForPeriod.s3Contract ?? 0;
 
-    // ## PERUBAHAN 2: Hapus data smaSmk dari array values ##
+    // ## 4. SUSUN ARRAY VALUES DENGAN DATA GABUNGAN ##
     const permanentValues = [
-      sdPermanent,
-      smpPermanent,
+      lessThanD3Permanent,
       d3Permanent,
       s1Permanent,
       s2Permanent,
       s3Permanent,
     ];
     const contractValues = [
-      sdContract,
-      smpContract,
+      lessThanD3Contract,
       d3Contract,
       s1Contract,
       s2Contract,
@@ -105,7 +116,7 @@ export async function GET(request: NextRequest) {
       case "contract":
         totalValues = contractValues;
         break;
-      default: // 'all'
+      default:
         totalValues = permanentValues.map((val, i) => val + contractValues[i]);
         break;
     }

@@ -90,43 +90,38 @@ const EducationChartCard = () => {
           name: string;
           dataIndex: number;
           marker: string;
+          value: number;
         }[];
-        if (!paramArray || paramArray.length === 0) return "";
-        const dataIndex = paramArray[0].dataIndex;
-        const categoryName = paramArray[0].name;
+        if (!paramArray || paramArray.length === 0 || paramArray[0].value === 0)
+          return ""; // Jangan tampilkan tooltip jika nilainya 0
 
+        const categoryName = paramArray[0].name;
         let tooltipContent = `<strong>${categoryName}</strong><br/>`;
 
         if (statusFilter === "all") {
-          const permValue = permanentValues[dataIndex] || 0;
-          const contValue = contractValues[dataIndex] || 0;
-          const totalValue = totalValues[dataIndex] || 0;
-          const permPercent = permanentPercentage[dataIndex] || 0;
-          const contPercent = contractPercentage[dataIndex] || 0;
+          const permPercent = permanentPercentage[paramArray[0].dataIndex] || 0;
+          const contPercent = contractPercentage[paramArray[0].dataIndex] || 0;
 
-          if (permValue > 0)
+          if (permPercent > 0)
             tooltipContent += `<div style="display:flex; align-items:center; margin-top: 5px;">${
               paramArray[0].marker
-            }<span style="margin-left:5px;">Permanent: ${permValue} (${permPercent.toFixed(
+            }<span style="margin-left:5px;">Permanent: ${permPercent.toFixed(
               1
-            )}%)</span></div>`;
-          if (contValue > 0)
+            )}%</span></div>`;
+          if (contPercent > 0)
             tooltipContent += `<div style="display:flex; align-items:center;">${
               paramArray[1].marker
-            }<span style="margin-left:5px;">Contract: ${contValue} (${contPercent.toFixed(
+            }<span style="margin-left:5px;">Contract: ${contPercent.toFixed(
               1
-            )}%)</span></div>`;
-          if (totalValue > 0)
-            tooltipContent += `<hr style="margin: 5px 0;"/><strong>Total: ${totalValue}</strong>`;
+            )}%</span></div>`;
         } else {
-          const value = totalValues[dataIndex] || 0;
-          const percent = totalPercentage[dataIndex] || 0;
-          if (value > 0)
+          const percent = totalPercentage[paramArray[0].dataIndex] || 0;
+          if (percent > 0)
             tooltipContent += `<div style="display:flex; align-items:center; margin-top: 5px;">${
               paramArray[0].marker
-            }<span style="margin-left:5px;">${statusFilter}: ${value} (${percent.toFixed(
+            }<span style="margin-left:5px;">${statusFilter}: ${percent.toFixed(
               1
-            )}%)</span></div>`;
+            )}%</span></div>`;
         }
         return tooltipContent;
       },
