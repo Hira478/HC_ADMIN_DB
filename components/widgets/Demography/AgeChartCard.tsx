@@ -83,7 +83,7 @@ const AgeChartCard = () => {
     grid: {
       left: "5%",
       right: "5%",
-      top: "10%",
+      top: "5%",
       bottom: "5%",
       containLabel: true,
     },

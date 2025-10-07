@@ -4,13 +4,14 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// ## PERUBAHAN 1: Sesuaikan interface dengan kolom Excel baru
+// ## 1. PERBARUI INTERFACE: Hapus properti "<D3" ##
 interface EducationExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
   Category: string;
-  "<D3": number; // Using quotes for special characters
+  SD: number;
+  SMP: number;
   D3: number;
   S1: number;
   S2: number;
@@ -42,11 +43,15 @@ const monthNameToNumber: { [key: string]: number } = {
   desember: 12,
 };
 
-// Interface for aggregated data, matching the new DB schema
+// Interface agregasi tetap sama, karena kolom smaSmk masih ada di DB
 interface AggregatedEducationStat {
   year: number;
   month: number;
   companyId: number;
+  sdPermanent: number;
+  sdContract: number;
+  smpPermanent: number;
+  smpContract: number;
   smaSmkPermanent: number;
   smaSmkContract: number;
   d3Permanent: number;
@@ -92,7 +97,6 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
-    // ## PERUBAHAN 2: Proses agregasi data dari Excel
     const aggregationMap = new Map<string, AggregatedEducationStat>();
 
     for (const row of rows) {
@@ -115,8 +119,12 @@ export async function POST(request: NextRequest) {
         year,
         month: monthNumber,
         companyId,
+        sdPermanent: 0,
+        sdContract: 0,
+        smpPermanent: 0,
+        smpContract: 0,
         smaSmkPermanent: 0,
-        smaSmkContract: 0,
+        smaSmkContract: 0, // Tetap ada, akan bernilai 0
         d3Permanent: 0,
         d3Contract: 0,
         s1Permanent: 0,
@@ -127,20 +135,25 @@ export async function POST(request: NextRequest) {
         s3Contract: 0,
       };
 
-      const smaSmkCount = Number(row["<D3"]) || 0;
+      // ## 2. BACA NILAI DARI EXCEL (TANPA <D3) ##
+      const sdCount = Number(row.SD) || 0;
+      const smpCount = Number(row.SMP) || 0;
       const d3Count = Number(row.D3) || 0;
       const s1Count = Number(row.S1) || 0;
       const s2Count = Number(row.S2) || 0;
       const s3Count = Number(row.S3) || 0;
 
+      // ## 3. HAPUS LOGIKA PENAMBAHAN UNTUK smaSmk ##
       if (category === "permanent") {
-        entry.smaSmkPermanent += smaSmkCount;
+        entry.sdPermanent += sdCount;
+        entry.smpPermanent += smpCount;
         entry.d3Permanent += d3Count;
         entry.s1Permanent += s1Count;
         entry.s2Permanent += s2Count;
         entry.s3Permanent += s3Count;
       } else if (category === "contract") {
-        entry.smaSmkContract += smaSmkCount;
+        entry.sdContract += sdCount;
+        entry.smpContract += smpCount;
         entry.d3Contract += d3Count;
         entry.s1Contract += s1Count;
         entry.s2Contract += s2Count;
@@ -159,7 +172,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ## PERUBAHAN 3: Lakukan upsert dengan data dan kolom baru
     await prisma.$transaction(
       dataToUpsert.map((data) =>
         prisma.educationStat.upsert({

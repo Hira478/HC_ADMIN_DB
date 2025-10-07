@@ -5,6 +5,7 @@ import { getCompanyFilter } from "@/lib/prisma-filter";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
+  const status = searchParams.get("status") || "all";
   const type = searchParams.get("type") || "monthly";
   const year = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
@@ -12,8 +13,6 @@ export async function GET(request: NextRequest) {
   const value = parseInt(
     searchParams.get("value") || (new Date().getMonth() + 1).toString()
   );
-  // ## 1. BACA FILTER STATUS DARI URL ##
-  const status = searchParams.get("status") || "all";
 
   let monthsToFetch: number[] = [];
   if (type === "monthly") monthsToFetch = [value];
@@ -23,20 +22,25 @@ export async function GET(request: NextRequest) {
   try {
     const companyFilter = await getCompanyFilter(request);
 
+    // Query ke DB tidak berubah, tetap ambil semua data
     const eduDataFromDb = await prisma.educationStat.findMany({
       where: { year, month: { in: monthsToFetch }, ...companyFilter },
       select: {
         month: true,
-        s3Permanent: true,
-        s3Contract: true,
-        s2Permanent: true,
-        s2Contract: true,
-        s1Permanent: true,
-        s1Contract: true,
-        d3Permanent: true,
-        d3Contract: true,
+        sdPermanent: true,
+        sdContract: true,
+        smpPermanent: true,
+        smpContract: true,
         smaSmkPermanent: true,
         smaSmkContract: true,
+        d3Permanent: true,
+        d3Contract: true,
+        s1Permanent: true,
+        s1Contract: true,
+        s2Permanent: true,
+        s2Contract: true,
+        s3Permanent: true,
+        s3Contract: true,
       },
       orderBy: { month: "asc" },
     });
@@ -46,10 +50,11 @@ export async function GET(request: NextRequest) {
       (stat) => stat.month === latestMonthInPeriod
     );
 
-    const labels = ["S3", "S2", "S1", "D3", "< D3"];
+    // ## PERUBAHAN 1: Hapus '< D3' dari labels ##
+    const labels = ["SD", "SMP", "D3", "S1", "S2", "S3"];
 
     if (!dataForPeriod) {
-      const emptyValues = [0, 0, 0, 0, 0];
+      const emptyValues = [0, 0, 0, 0, 0, 0]; // Sesuaikan jumlah jadi 6
       return NextResponse.json({
         labels,
         permanent: { label: "Permanent", values: emptyValues },
@@ -58,35 +63,41 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const s3Permanent = dataForPeriod.s3Permanent ?? 0;
-    const s3Contract = dataForPeriod.s3Contract ?? 0;
-    const s2Permanent = dataForPeriod.s2Permanent ?? 0;
-    const s2Contract = dataForPeriod.s2Contract ?? 0;
-    const s1Permanent = dataForPeriod.s1Permanent ?? 0;
-    const s1Contract = dataForPeriod.s1Contract ?? 0;
+    const sdPermanent = dataForPeriod.sdPermanent ?? 0;
+    const sdContract = dataForPeriod.sdContract ?? 0;
+    const smpPermanent = dataForPeriod.smpPermanent ?? 0;
+    const smpContract = dataForPeriod.smpContract ?? 0;
+    // Data smaSmk tetap diambil dari DB tapi tidak akan dipakai di response
+    // const smaSmkPermanent = dataForPeriod.smaSmkPermanent ?? 0;
+    // const smaSmkContract = dataForPeriod.smaSmkContract ?? 0;
     const d3Permanent = dataForPeriod.d3Permanent ?? 0;
     const d3Contract = dataForPeriod.d3Contract ?? 0;
-    const smaSmkPermanent = dataForPeriod.smaSmkPermanent ?? 0;
-    const smaSmkContract = dataForPeriod.smaSmkContract ?? 0;
+    const s1Permanent = dataForPeriod.s1Permanent ?? 0;
+    const s1Contract = dataForPeriod.s1Contract ?? 0;
+    const s2Permanent = dataForPeriod.s2Permanent ?? 0;
+    const s2Contract = dataForPeriod.s2Contract ?? 0;
+    const s3Permanent = dataForPeriod.s3Permanent ?? 0;
+    const s3Contract = dataForPeriod.s3Contract ?? 0;
 
+    // ## PERUBAHAN 2: Hapus data smaSmk dari array values ##
     const permanentValues = [
-      s3Permanent,
-      s2Permanent,
-      s1Permanent,
+      sdPermanent,
+      smpPermanent,
       d3Permanent,
-      smaSmkPermanent,
+      s1Permanent,
+      s2Permanent,
+      s3Permanent,
     ];
     const contractValues = [
-      s3Contract,
-      s2Contract,
-      s1Contract,
+      sdContract,
+      smpContract,
       d3Contract,
-      smaSmkContract,
+      s1Contract,
+      s2Contract,
+      s3Contract,
     ];
 
-    // ## 2. TENTUKAN NILAI 'TOTAL' BERDASARKAN FILTER STATUS ##
     let totalValues: number[];
-
     switch (status) {
       case "permanent":
         totalValues = permanentValues;
@@ -106,9 +117,6 @@ export async function GET(request: NextRequest) {
       total: { label: "Total", values: totalValues },
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "Tidak terautentikasi.") {
-      return NextResponse.json({ error: error.message }, { status: 401 });
-    }
     console.error("API Error in /api/demography/education:", error);
     return NextResponse.json(
       { error: "Gagal mengambil data pendidikan." },
