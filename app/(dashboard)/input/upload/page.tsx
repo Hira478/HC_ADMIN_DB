@@ -36,6 +36,11 @@ const uploadConfig = {
     templateUrl: "/templates/template_level.xlsx",
     title: "Data Level Jabatan",
   },
+  lengthOfService: {
+    apiUrl: "/api/uploads/service-length",
+    templateUrl: "/templates/template_service_length.xlsx",
+    title: "Data Masa Kerja",
+  },
   employeeEngagement: {
     apiUrl: "/api/uploads/employee-engagement",
     templateUrl: "/templates/template_engagement.xlsx",
