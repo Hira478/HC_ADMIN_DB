@@ -4,20 +4,17 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import * as xlsx from "xlsx";
 
-// ## 1. SESUAIKAN INTERFACE DENGAN HEADER EXCEL ##
-// Perhatikan penggunaan kutip untuk header dengan spasi/simbol
+// ## 1. PERBARUI INTERFACE SESUAI 5 KATEGORI BARU DI EXCEL ##
 interface LosExcelRow {
   Year: number;
   Month: number | string;
   Company: string;
   Category: string;
-  "0-5 Years": number;
-  "6-10 Years": number;
+  "<5 Years": number;
+  "5-10 Years": number;
   "11-15 Years": number;
-  "16-20 years": number;
-  "21-25 Years": number;
-  "26-30 years": number;
-  ">30 Years": number;
+  "16-20 Years": number;
+  ">25 Years": number;
 }
 
 const monthNameToNumber: { [key: string]: number } = {
@@ -45,25 +42,21 @@ const monthNameToNumber: { [key: string]: number } = {
   desember: 12,
 };
 
-// Interface untuk data yang sudah diagregasi
+// ## 2. PERBARUI INTERFACE AGREGRASI SESUAI SKEMA DB BARU ##
 interface AggregatedLosStat {
   year: number;
   month: number;
   companyId: number;
-  los_0_5_Permanent: number;
-  los_0_5_Contract: number;
-  los_6_10_Permanent: number;
-  los_6_10_Contract: number;
-  los_11_15_Permanent: number;
-  los_11_15_Contract: number;
-  los_16_20_Permanent: number;
-  los_16_20_Contract: number;
-  los_21_25_Permanent: number;
-  los_21_25_Contract: number;
-  los_25_30_Permanent: number;
-  los_25_30_Contract: number;
-  los_over_30_Permanent: number;
-  los_over_30_Contract: number;
+  los_under_5_Permanent: number;
+  los_under_5_Contract: number;
+  los_5_to_10_Permanent: number;
+  los_5_to_10_Contract: number;
+  los_11_to_15_Permanent: number;
+  los_11_to_15_Contract: number;
+  los_16_to_20_Permanent: number;
+  los_16_to_20_Contract: number;
+  los_over_25_Permanent: number;
+  los_over_25_Contract: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -97,7 +90,6 @@ export async function POST(request: NextRequest) {
       allCompanies.map((c) => [c.name.trim().toLowerCase(), c.id])
     );
 
-    // ## 2. LOGIKA AGREGRASI DATA DARI EXCEL ##
     const aggregationMap = new Map<string, AggregatedLosStat>();
 
     for (const row of rows) {
@@ -116,50 +108,43 @@ export async function POST(request: NextRequest) {
       }
 
       const key = `${year}-${monthNumber}-${companyId}`;
+      // ## 3. GUNAKAN OBJEK ENTRY BARU ##
       const entry = aggregationMap.get(key) || {
         year,
         month: monthNumber,
         companyId,
-        los_0_5_Permanent: 0,
-        los_0_5_Contract: 0,
-        los_6_10_Permanent: 0,
-        los_6_10_Contract: 0,
-        los_11_15_Permanent: 0,
-        los_11_15_Contract: 0,
-        los_16_20_Permanent: 0,
-        los_16_20_Contract: 0,
-        los_21_25_Permanent: 0,
-        los_21_25_Contract: 0,
-        los_25_30_Permanent: 0,
-        los_25_30_Contract: 0,
-        los_over_30_Permanent: 0,
-        los_over_30_Contract: 0,
+        los_under_5_Permanent: 0,
+        los_under_5_Contract: 0,
+        los_5_to_10_Permanent: 0,
+        los_5_to_10_Contract: 0,
+        los_11_to_15_Permanent: 0,
+        los_11_to_15_Contract: 0,
+        los_16_to_20_Permanent: 0,
+        los_16_to_20_Contract: 0,
+        los_over_25_Permanent: 0,
+        los_over_25_Contract: 0,
       };
 
-      const los0_5 = Number(row["0-5 Years"]) || 0;
-      const los6_10 = Number(row["6-10 Years"]) || 0;
-      const los11_15 = Number(row["11-15 Years"]) || 0;
-      const los16_20 = Number(row["16-20 years"]) || 0;
-      const los21_25 = Number(row["21-25 Years"]) || 0;
-      const los26_30 = Number(row["26-30 years"]) || 0;
-      const losOver30 = Number(row[">30 Years"]) || 0;
+      // ## 4. BACA NILAI DARI KOLOM EXCEL BARU ##
+      const los_under_5 = Number(row["<5 Years"]) || 0;
+      const los_5_to_10 = Number(row["5-10 Years"]) || 0;
+      const los_11_to_15 = Number(row["11-15 Years"]) || 0;
+      const los_16_to_20 = Number(row["16-20 Years"]) || 0;
+      const los_over_25 = Number(row[">25 Years"]) || 0;
 
+      // ## 5. MASUKKAN DATA KE FIELD YANG BENAR ##
       if (category === "permanent") {
-        entry.los_0_5_Permanent += los0_5;
-        entry.los_6_10_Permanent += los6_10;
-        entry.los_11_15_Permanent += los11_15;
-        entry.los_16_20_Permanent += los16_20;
-        entry.los_21_25_Permanent += los21_25;
-        entry.los_25_30_Permanent += los26_30;
-        entry.los_over_30_Permanent += losOver30;
+        entry.los_under_5_Permanent += los_under_5;
+        entry.los_5_to_10_Permanent += los_5_to_10;
+        entry.los_11_to_15_Permanent += los_11_to_15;
+        entry.los_16_to_20_Permanent += los_16_to_20;
+        entry.los_over_25_Permanent += los_over_25;
       } else if (category === "contract") {
-        entry.los_0_5_Contract += los0_5;
-        entry.los_6_10_Contract += los6_10;
-        entry.los_11_15_Contract += los11_15;
-        entry.los_16_20_Contract += los16_20;
-        entry.los_21_25_Contract += los21_25;
-        entry.los_25_30_Contract += los26_30;
-        entry.los_over_30_Contract += losOver30;
+        entry.los_under_5_Contract += los_under_5;
+        entry.los_5_to_10_Contract += los_5_to_10;
+        entry.los_11_to_15_Contract += los_11_to_15;
+        entry.los_16_to_20_Contract += los_16_to_20;
+        entry.los_over_25_Contract += los_over_25;
       }
 
       aggregationMap.set(key, entry);

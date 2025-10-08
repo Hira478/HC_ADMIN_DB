@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
   const value = parseInt(
     searchParams.get("value") || (new Date().getMonth() + 1).toString()
   );
-  // ## 1. BACA FILTER STATUS DARI URL ##
   const status = searchParams.get("status") || "all";
 
   let monthsToFetch: number[] = [];
@@ -23,44 +22,41 @@ export async function GET(request: NextRequest) {
   try {
     const companyFilter = await getCompanyFilter(request);
 
+    // ## 1. UBAH SELECT UNTUK MENGAMBIL KOLOM BARU ##
     const losDataFromDb = await prisma.lengthOfServiceStat.findMany({
       where: { year, month: { in: monthsToFetch }, ...companyFilter },
       select: {
         month: true,
-        los_0_5_Permanent: true,
-        los_0_5_Contract: true,
-        los_6_10_Permanent: true,
-        los_6_10_Contract: true,
-        los_11_15_Permanent: true,
-        los_11_15_Contract: true,
-        los_16_20_Permanent: true,
-        los_16_20_Contract: true,
-        los_21_25_Permanent: true,
-        los_21_25_Contract: true,
-        los_25_30_Permanent: true,
-        los_25_30_Contract: true,
-        los_over_30_Permanent: true,
-        los_over_30_Contract: true,
+        los_under_5_Permanent: true,
+        los_under_5_Contract: true,
+        los_5_to_10_Permanent: true,
+        los_5_to_10_Contract: true,
+        los_11_to_15_Permanent: true,
+        los_11_to_15_Contract: true,
+        los_16_to_20_Permanent: true,
+        los_16_to_20_Contract: true,
+        los_over_25_Permanent: true,
+        los_over_25_Contract: true,
       },
       orderBy: { month: "asc" },
     });
 
+    // ## 2. PERBARUI LABELS SESUAI 5 KATEGORI BARU ##
     const labels = [
-      "0-5 Years",
-      "6-10 Years",
-      "11-15 Years",
-      "16-20 Years",
-      "21-25 Years",
-      "25-30 Years",
-      ">30 Years",
+      "< 5 Years",
+      "5 - 10 Years",
+      "11 - 15 Years",
+      "16 - 20 Years",
+      "> 25 Years",
     ];
+
     const latestMonthInPeriod = Math.max(...monthsToFetch);
     const dataForPeriod = losDataFromDb.find(
       (stat) => stat.month === latestMonthInPeriod
     );
 
     if (!dataForPeriod) {
-      const emptyValues = [0, 0, 0, 0, 0, 0, 0];
+      const emptyValues = [0, 0, 0, 0, 0]; // Sesuaikan jumlah jadi 5
       return NextResponse.json({
         labels,
         permanent: { label: "Permanent", values: emptyValues },
@@ -69,28 +65,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // ## 3. SUSUN ULANG DATA VALUES SESUAI SKEMA & LABEL BARU ##
     const permanentValues = [
-      dataForPeriod.los_0_5_Permanent ?? 0,
-      dataForPeriod.los_6_10_Permanent ?? 0,
-      dataForPeriod.los_11_15_Permanent ?? 0,
-      dataForPeriod.los_16_20_Permanent ?? 0,
-      dataForPeriod.los_21_25_Permanent ?? 0,
-      dataForPeriod.los_25_30_Permanent ?? 0,
-      dataForPeriod.los_over_30_Permanent ?? 0,
+      dataForPeriod.los_under_5_Permanent ?? 0,
+      dataForPeriod.los_5_to_10_Permanent ?? 0,
+      dataForPeriod.los_11_to_15_Permanent ?? 0,
+      dataForPeriod.los_16_to_20_Permanent ?? 0,
+      dataForPeriod.los_over_25_Permanent ?? 0,
     ];
     const contractValues = [
-      dataForPeriod.los_0_5_Contract ?? 0,
-      dataForPeriod.los_6_10_Contract ?? 0,
-      dataForPeriod.los_11_15_Contract ?? 0,
-      dataForPeriod.los_16_20_Contract ?? 0,
-      dataForPeriod.los_21_25_Contract ?? 0,
-      dataForPeriod.los_25_30_Contract ?? 0,
-      dataForPeriod.los_over_30_Contract ?? 0,
+      dataForPeriod.los_under_5_Contract ?? 0,
+      dataForPeriod.los_5_to_10_Contract ?? 0,
+      dataForPeriod.los_11_to_15_Contract ?? 0,
+      dataForPeriod.los_16_to_20_Contract ?? 0,
+      dataForPeriod.los_over_25_Contract ?? 0,
     ];
 
-    // ## 2. TENTUKAN NILAI 'TOTAL' BERDASARKAN FILTER STATUS ##
     let totalValues: number[];
-
     switch (status) {
       case "permanent":
         totalValues = permanentValues;
