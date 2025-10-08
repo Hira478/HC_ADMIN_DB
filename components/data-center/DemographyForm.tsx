@@ -77,22 +77,18 @@ interface AgeState {
 }
 interface LosState {
   permanent: {
-    los_0_5: number;
-    los_6_10: number;
-    los_11_15: number;
-    los_16_20: number;
-    los_21_25: number;
-    los_25_30: number;
-    los_over_30: number;
+    los_under_5: number;
+    los_5_to_10: number;
+    los_11_to_15: number;
+    los_16_to_20: number;
+    los_over_25: number;
   };
   contract: {
-    los_0_5: number;
-    los_6_10: number;
-    los_11_15: number;
-    los_16_20: number;
-    los_21_25: number;
-    los_25_30: number;
-    los_over_30: number;
+    los_under_5: number;
+    los_5_to_10: number;
+    los_11_to_15: number;
+    los_16_to_20: number;
+    los_over_25: number;
   };
 }
 
@@ -143,22 +139,18 @@ const initialFormState: FormStateData = {
   },
   lengthOfService: {
     permanent: {
-      los_0_5: 0,
-      los_6_10: 0,
-      los_11_15: 0,
-      los_16_20: 0,
-      los_21_25: 0,
-      los_25_30: 0,
-      los_over_30: 0,
+      los_under_5: 0,
+      los_5_to_10: 0,
+      los_11_to_15: 0,
+      los_16_to_20: 0,
+      los_over_25: 0,
     },
     contract: {
-      los_0_5: 0,
-      los_6_10: 0,
-      los_11_15: 0,
-      los_16_20: 0,
-      los_21_25: 0,
-      los_25_30: 0,
-      los_over_30: 0,
+      los_under_5: 0,
+      los_5_to_10: 0,
+      los_11_to_15: 0,
+      los_16_to_20: 0,
+      los_over_25: 0,
     },
   },
 };
@@ -230,24 +222,21 @@ const transformApiDataToFormState = (
         bod4: apiData.level?.bod4Contract ?? 0,
       },
     },
+    // Kode Baru
     lengthOfService: {
       permanent: {
-        los_0_5: apiData.lengthOfService?.los_0_5_Permanent ?? 0,
-        los_6_10: apiData.lengthOfService?.los_6_10_Permanent ?? 0,
-        los_11_15: apiData.lengthOfService?.los_11_15_Permanent ?? 0,
-        los_16_20: apiData.lengthOfService?.los_16_20_Permanent ?? 0,
-        los_21_25: apiData.lengthOfService?.los_21_25_Permanent ?? 0,
-        los_25_30: apiData.lengthOfService?.los_25_30_Permanent ?? 0,
-        los_over_30: apiData.lengthOfService?.los_over_30_Permanent ?? 0,
+        los_under_5: apiData.lengthOfService?.los_under_5_Permanent ?? 0,
+        los_5_to_10: apiData.lengthOfService?.los_5_to_10_Permanent ?? 0,
+        los_11_to_15: apiData.lengthOfService?.los_11_to_15_Permanent ?? 0,
+        los_16_to_20: apiData.lengthOfService?.los_16_to_20_Permanent ?? 0,
+        los_over_25: apiData.lengthOfService?.los_over_25_Permanent ?? 0,
       },
       contract: {
-        los_0_5: apiData.lengthOfService?.los_0_5_Contract ?? 0,
-        los_6_10: apiData.lengthOfService?.los_6_10_Contract ?? 0,
-        los_11_15: apiData.lengthOfService?.los_11_15_Contract ?? 0,
-        los_16_20: apiData.lengthOfService?.los_16_20_Contract ?? 0,
-        los_21_25: apiData.lengthOfService?.los_21_25_Contract ?? 0,
-        los_25_30: apiData.lengthOfService?.los_25_30_Contract ?? 0,
-        los_over_30: apiData.lengthOfService?.los_over_30_Contract ?? 0,
+        los_under_5: apiData.lengthOfService?.los_under_5_Contract ?? 0,
+        los_5_to_10: apiData.lengthOfService?.los_5_to_10_Contract ?? 0,
+        los_11_to_15: apiData.lengthOfService?.los_11_to_15_Contract ?? 0,
+        los_16_to_20: apiData.lengthOfService?.los_16_to_20_Contract ?? 0,
+        los_over_25: apiData.lengthOfService?.los_over_25_Contract ?? 0,
       },
     },
   };
@@ -263,7 +252,11 @@ const formatLabel = (key: string): string => {
     // Education
     smaSmk: "SMA",
     // Length of Service
-    los_over_30: "Over 30",
+    los_under_5: "<5",
+    los_5_to_10: "5-10",
+    los_11_to_15: "11-15",
+    los_16_to_20: "16-20",
+    los_over_25: ">25",
     // Headcount
     male: "Male",
     female: "Female",

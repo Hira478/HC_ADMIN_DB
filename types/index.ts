@@ -232,13 +232,11 @@ export interface DemographyManualInputPayload {
     over50: number;
   };
   lengthOfService?: {
-    los_0_5: number;
-    los_6_10: number;
-    los_11_15: number;
-    los_16_20: number;
-    los_21_25: number;
-    los_25_30: number;
-    los_over_30: number;
+    los_under_5: number;
+    los_5_to_10: number;
+    los_11_to_15: number;
+    los_16_to_20: number;
+    los_over_25: number;
   };
 }
 

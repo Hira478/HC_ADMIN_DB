@@ -151,28 +151,24 @@ model AgeStat {
 }
 
 model LengthOfServiceStat {
-  id                    Int     @id @default(autoincrement())
-  month                 Int
-  year                  Int
-  
-  // Kolom baru
-  los_0_5_Permanent     Int @default(0) @map("los_0_5_permanent")
-  los_0_5_Contract      Int @default(0) @map("los_0_5_contract")
-  los_6_10_Permanent    Int @default(0) @map("los_6_10_permanent")
-  los_6_10_Contract     Int @default(0) @map("los_6_10_contract")
-  los_11_15_Permanent   Int @default(0) @map("los_11_15_permanent")
-  los_11_15_Contract    Int @default(0) @map("los_11_15_contract")
-  los_16_20_Permanent   Int @default(0) @map("los_16_20_permanent")
-  los_16_20_Contract    Int @default(0) @map("los_16_20_contract")
-  los_21_25_Permanent   Int @default(0) @map("los_21_25_permanent")
-  los_21_25_Contract    Int @default(0) @map("los_21_25_contract")
-  los_25_30_Permanent   Int @default(0) @map("los_25_30_permanent")
-  los_25_30_Contract    Int @default(0) @map("los_25_30_contract")
-  los_over_30_Permanent Int @default(0) @map("los_over_30_permanent")
-  los_over_30_Contract  Int @default(0) @map("los_over_30_contract")
+  id                  Int     @id @default(autoincrement())
+  month               Int
+  year                Int
 
-  companyId Int
-  company   Company @relation(fields: [companyId], references: [id])
+  // Kolom baru dengan 5 kategori
+  los_under_5_Permanent   Int     @default(0) @map("los_under_5_permanent")
+  los_under_5_Contract    Int     @default(0) @map("los_under_5_contract")
+  los_5_to_10_Permanent   Int     @default(0) @map("los_5_to_10_permanent")
+  los_5_to_10_Contract    Int     @default(0) @map("los_5_to_10_contract")
+  los_11_to_15_Permanent  Int     @default(0) @map("los_11_to_15_permanent")
+  los_11_to_15_Contract   Int     @default(0) @map("los_11_to_15_contract")
+  los_16_to_20_Permanent  Int     @default(0) @map("los_16_to_20_permanent")
+  los_16_to_20_Contract   Int     @default(0) @map("los_16_to_20_contract")
+  los_over_25_Permanent   Int     @default(0) @map("los_over_25_permanent")
+  los_over_25_Contract    Int     @default(0) @map("los_over_25_contract")
+
+  companyId           Int
+  company             Company @relation(fields: [companyId], references: [id])
 
   @@unique([year, month, companyId])
 }

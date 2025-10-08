@@ -31,13 +31,11 @@ interface DemographyPayload {
     over50: number;
   };
   lengthOfService?: {
-    los_0_5: number;
-    los_6_10: number;
-    los_11_15: number;
-    los_16_20: number;
-    los_21_25: number;
-    los_25_30: number;
-    los_over_30: number;
+    los_under_5: number;
+    los_5_to_10: number;
+    los_11_to_15: number;
+    los_16_to_20: number;
+    los_over_25: number;
   };
 }
 
@@ -263,37 +261,43 @@ export async function POST(request: NextRequest) {
       });
 
       // --- 5. Length of Service ---
+      // --- 5. Length of Service ---
       const existingLos = await tx.lengthOfServiceStat.findUnique({
         where: whereClause,
       });
       const losPayload = body.lengthOfService || {
-        los_0_5: 0,
-        los_6_10: 0,
-        los_11_15: 0,
-        los_16_20: 0,
-        los_21_25: 0,
-        los_25_30: 0,
-        los_over_30: 0,
+        los_under_5: 0,
+        los_5_to_10: 0,
+        los_11_to_15: 0,
+        los_16_to_20: 0,
+        los_over_25: 0,
       };
-      const losData = { ...existingLos };
+
+      const losData = {
+        los_under_5_Permanent: existingLos?.los_under_5_Permanent ?? 0,
+        los_5_to_10_Permanent: existingLos?.los_5_to_10_Permanent ?? 0,
+        los_11_to_15_Permanent: existingLos?.los_11_to_15_Permanent ?? 0,
+        los_16_to_20_Permanent: existingLos?.los_16_to_20_Permanent ?? 0,
+        los_over_25_Permanent: existingLos?.los_over_25_Permanent ?? 0,
+        los_under_5_Contract: existingLos?.los_under_5_Contract ?? 0,
+        los_5_to_10_Contract: existingLos?.los_5_to_10_Contract ?? 0,
+        los_11_to_15_Contract: existingLos?.los_11_to_15_Contract ?? 0,
+        los_16_to_20_Contract: existingLos?.los_16_to_20_Contract ?? 0,
+        los_over_25_Contract: existingLos?.los_over_25_Contract ?? 0,
+      };
+
       if (statusType === "permanent") {
-        losData.los_0_5_Permanent = losPayload.los_0_5;
-        losData.los_6_10_Permanent = losPayload.los_6_10;
-        // ... Lanjutkan untuk semua rentang LoS
-        losData.los_11_15_Permanent = losPayload.los_11_15;
-        losData.los_16_20_Permanent = losPayload.los_16_20;
-        losData.los_21_25_Permanent = losPayload.los_21_25;
-        losData.los_25_30_Permanent = losPayload.los_25_30;
-        losData.los_over_30_Permanent = losPayload.los_over_30;
+        losData.los_under_5_Permanent = losPayload.los_under_5;
+        losData.los_5_to_10_Permanent = losPayload.los_5_to_10;
+        losData.los_11_to_15_Permanent = losPayload.los_11_to_15;
+        losData.los_16_to_20_Permanent = losPayload.los_16_to_20;
+        losData.los_over_25_Permanent = losPayload.los_over_25;
       } else {
-        losData.los_0_5_Contract = losPayload.los_0_5;
-        losData.los_6_10_Contract = losPayload.los_6_10;
-        // ... Lanjutkan untuk semua rentang LoS
-        losData.los_11_15_Contract = losPayload.los_11_15;
-        losData.los_16_20_Contract = losPayload.los_16_20;
-        losData.los_21_25_Contract = losPayload.los_21_25;
-        losData.los_25_30_Contract = losPayload.los_25_30;
-        losData.los_over_30_Contract = losPayload.los_over_30;
+        losData.los_under_5_Contract = losPayload.los_under_5;
+        losData.los_5_to_10_Contract = losPayload.los_5_to_10;
+        losData.los_11_to_15_Contract = losPayload.los_11_to_15;
+        losData.los_16_to_20_Contract = losPayload.los_16_to_20;
+        losData.los_over_25_Contract = losPayload.los_over_25;
       }
       await tx.lengthOfServiceStat.upsert({
         where: whereClause,

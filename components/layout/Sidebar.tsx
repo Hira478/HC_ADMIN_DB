@@ -108,6 +108,12 @@ const Sidebar = () => {
               icon={<Users size={20} />}
               title={"User\nManagement"}
             />
+            {/* ## TAMBAHKAN ITEM BARU DI SINI ## */}
+            <SidebarItem
+              href="/admin/companies"
+              icon={<Building size={20} />}
+              title="Company Management"
+            />
           </>
         )}
       </nav>
