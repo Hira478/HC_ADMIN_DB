@@ -398,28 +398,28 @@ const DemographyForm = forwardRef<FormHandle, DemographyFormProps>(
         const permanentPayload = createPayload("permanent");
         const contractPayload = createPayload("contract");
 
-        // Kirim kedua payload secara bersamaan
-        const results = await Promise.all([
-          fetch("/api/data-center/demography", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(permanentPayload),
-          }),
-          fetch("/api/data-center/demography", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(contractPayload),
-          }),
-        ]);
+        // --- KIRIM PERMANENT DULU ---
+        const permanentResponse = await fetch("/api/data-center/demography", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(permanentPayload),
+        });
 
-        // Cek jika salah satu request gagal
-        for (const res of results) {
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(
-              errorData.error || "Gagal menyimpan salah satu data."
-            );
-          }
+        if (!permanentResponse.ok) {
+          const errorData = await permanentResponse.json();
+          throw new Error(errorData.error || "Gagal menyimpan data Permanent.");
+        }
+
+        // --- SETELAH PERMANENT SUKSES, KIRIM CONTRACT ---
+        const contractResponse = await fetch("/api/data-center/demography", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(contractPayload),
+        });
+
+        if (!contractResponse.ok) {
+          const errorData = await contractResponse.json();
+          throw new Error(errorData.error || "Gagal menyimpan data Contract.");
         }
 
         alert("Data demografi (Permanent & Contract) berhasil disimpan!");
