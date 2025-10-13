@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     );
 
     // ## 2. UBAH LABELS: Jadi 5 kategori ##
-    const labels = ["BOD-1", "BOD-2", "BOD-3", "BOD-4", "BOD-4 >"];
+    const labels = ["< BOD-4", "BOD-4", "BOD-3", "BOD-2", "BOD-1"];
 
     if (!dataForPeriod) {
       const emptyValues = [0, 0, 0, 0, 0]; // Sesuaikan jadi 5
@@ -73,18 +73,18 @@ export async function GET(request: NextRequest) {
 
     // ## 4. SUSUN ARRAY VALUES MENJADI 5 ELEMEN ##
     const permanentValues = [
-      bod1Permanent,
-      bod2Permanent,
-      bod3Permanent,
+      bod5Permanent, // < BOD-4
       bod4Permanent,
-      bod5Permanent, // <-- Data BOD-5 akan ditampilkan sebagai "BOD-4 >"
+      bod3Permanent,
+      bod2Permanent,
+      bod1Permanent,
     ];
     const contractValues = [
-      bod1Contract,
-      bod2Contract,
-      bod3Contract,
+      bod5Contract, // < BOD-4
       bod4Contract,
-      bod5Contract, // <-- Data BOD-5 akan ditampilkan sebagai "BOD-4 >"
+      bod3Contract,
+      bod2Contract,
+      bod1Contract,
     ];
 
     let totalValues: number[];
