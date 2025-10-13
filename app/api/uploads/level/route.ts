@@ -14,6 +14,7 @@ interface LevelExcelRow {
   "BOD-2": number;
   "BOD-3": number;
   "BOD-4": number;
+  "BOD-5": number;
 }
 
 // "Kamus" bulan, tidak perlu diubah
@@ -55,6 +56,8 @@ interface AggregatedLevelStat {
   bod3Contract: number;
   bod4Permanent: number;
   bod4Contract: number;
+  bod5Permanent: number; // <-- Ditambahkan
+  bod5Contract: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -121,23 +124,28 @@ export async function POST(request: NextRequest) {
         bod3Contract: 0,
         bod4Permanent: 0,
         bod4Contract: 0,
+        bod5Permanent: 0, // <-- Ditambahkan
+        bod5Contract: 0,
       };
 
       const bod1 = Number(row["BOD-1"]) || 0;
       const bod2 = Number(row["BOD-2"]) || 0;
       const bod3 = Number(row["BOD-3"]) || 0;
       const bod4 = Number(row["BOD-4"]) || 0;
+      const bod5 = Number(row["BOD-5"]) || 0;
 
       if (category === "permanent") {
         entry.bod1Permanent += bod1;
         entry.bod2Permanent += bod2;
         entry.bod3Permanent += bod3;
         entry.bod4Permanent += bod4;
+        entry.bod5Permanent += bod5;
       } else if (category === "contract") {
         entry.bod1Contract += bod1;
         entry.bod2Contract += bod2;
         entry.bod3Contract += bod3;
         entry.bod4Contract += bod4;
+        entry.bod5Contract += bod5;
       }
 
       aggregationMap.set(key, entry);

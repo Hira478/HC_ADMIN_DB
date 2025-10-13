@@ -58,21 +58,35 @@ interface EducationState {
   };
 }
 interface LevelState {
-  permanent: { bod1: number; bod2: number; bod3: number; bod4: number };
-  contract: { bod1: number; bod2: number; bod3: number; bod4: number };
+  permanent: {
+    bod1: number;
+    bod2: number;
+    bod3: number;
+    bod4: number;
+    bod5: number;
+  };
+  contract: {
+    bod1: number;
+    bod2: number;
+    bod3: number;
+    bod4: number;
+    bod5: number;
+  };
 }
 interface AgeState {
   permanent: {
     under25: number;
     age26to40: number;
     age41to50: number;
-    over50: number;
+    age51to60: number;
+    over60: number;
   };
   contract: {
     under25: number;
     age26to40: number;
     age41to50: number;
-    over50: number;
+    age51to60: number;
+    over60: number;
   };
 }
 interface LosState {
@@ -130,12 +144,24 @@ const initialFormState: FormStateData = {
     },
   },
   level: {
-    permanent: { bod1: 0, bod2: 0, bod3: 0, bod4: 0 },
-    contract: { bod1: 0, bod2: 0, bod3: 0, bod4: 0 },
+    permanent: { bod1: 0, bod2: 0, bod3: 0, bod4: 0, bod5: 0 },
+    contract: { bod1: 0, bod2: 0, bod3: 0, bod4: 0, bod5: 0 },
   },
   age: {
-    permanent: { under25: 0, age26to40: 0, age41to50: 0, over50: 0 },
-    contract: { under25: 0, age26to40: 0, age41to50: 0, over50: 0 },
+    permanent: {
+      under25: 0,
+      age26to40: 0,
+      age41to50: 0,
+      age51to60: 0,
+      over60: 0,
+    },
+    contract: {
+      under25: 0,
+      age26to40: 0,
+      age41to50: 0,
+      age51to60: 0,
+      over60: 0,
+    },
   },
   lengthOfService: {
     permanent: {
@@ -199,13 +225,15 @@ const transformApiDataToFormState = (
         under25: apiData.age?.under25Permanent ?? 0,
         age26to40: apiData.age?.age26to40Permanent ?? 0,
         age41to50: apiData.age?.age41to50Permanent ?? 0,
-        over50: apiData.age?.over50Permanent ?? 0,
+        age51to60: apiData.age?.age51to60Permanent ?? 0, // <-- Diubah
+        over60: apiData.age?.over60Permanent ?? 0,
       },
       contract: {
         under25: apiData.age?.under25Contract ?? 0,
         age26to40: apiData.age?.age26to40Contract ?? 0,
         age41to50: apiData.age?.age41to50Contract ?? 0,
-        over50: apiData.age?.over50Contract ?? 0,
+        age51to60: apiData.age?.age51to60Contract ?? 0, // <-- Diubah
+        over60: apiData.age?.over60Contract ?? 0,
       },
     },
     level: {
@@ -214,12 +242,14 @@ const transformApiDataToFormState = (
         bod2: apiData.level?.bod2Permanent ?? 0,
         bod3: apiData.level?.bod3Permanent ?? 0,
         bod4: apiData.level?.bod4Permanent ?? 0,
+        bod5: apiData.level?.bod5Permanent ?? 0,
       },
       contract: {
         bod1: apiData.level?.bod1Contract ?? 0,
         bod2: apiData.level?.bod2Contract ?? 0,
         bod3: apiData.level?.bod3Contract ?? 0,
         bod4: apiData.level?.bod4Contract ?? 0,
+        bod5: apiData.level?.bod5Contract ?? 0,
       },
     },
     // Kode Baru
@@ -248,7 +278,10 @@ const formatLabel = (key: string): string => {
     under25: "<=30 Years Old",
     age26to40: "31-40 Years Old",
     age41to50: "41-50 Years Old",
-    over50: "51-60 Years Old",
+    age51to60: "51-60 Years Old",
+    over60: ">60 Years Old",
+    // Level
+    bod5: "BOD-4 >",
     // Education
     smaSmk: "SMA",
     // Length of Service

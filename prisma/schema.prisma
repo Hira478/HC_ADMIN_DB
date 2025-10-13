@@ -123,6 +123,9 @@ model LevelStat {
   bod4Permanent Int @default(0) @map("bod4_permanent")
   bod4Contract  Int @default(0) @map("bod4_contract")
 
+  bod5Permanent Int @default(0) @map("bod5_permanent")
+  bod5Contract  Int @default(0) @map("bod5_contract")
+
   companyId Int
   company   Company @relation(fields: [companyId], references: [id])
 
@@ -141,8 +144,11 @@ model AgeStat {
   age26to40Contract  Int @default(0) @map("age_26_40_contract")
   age41to50Permanent Int @default(0) @map("age_41_50_permanent")
   age41to50Contract  Int @default(0) @map("age_41_50_contract")
-  over50Permanent    Int @default(0) @map("over_50_permanent")
-  over50Contract     Int @default(0) @map("over_50_contract")
+  
+  age51to60Permanent Int     @default(0) @map("age_51_to_60_permanent")
+  age51to60Contract  Int     @default(0) @map("age_51_to_60_contract")
+  over60Permanent    Int     @default(0) @map("over_60_permanent")
+  over60Contract     Int     @default(0) @map("over_60_contract")
   
   companyId Int
   company   Company @relation(fields: [companyId], references: [id])

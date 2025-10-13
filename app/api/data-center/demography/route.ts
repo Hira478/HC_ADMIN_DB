@@ -23,12 +23,19 @@ interface DemographyPayload {
     s2: number;
     s3: number;
   };
-  level?: { bod1: number; bod2: number; bod3: number; bod4: number };
+  level?: {
+    bod1: number;
+    bod2: number;
+    bod3: number;
+    bod4: number;
+    bod5: number;
+  };
   age?: {
     under25: number;
     age26to40: number;
     age41to50: number;
-    over50: number;
+    age51to60: number; // <-- Diubah
+    over60: number;
   };
   lengthOfService?: {
     los_under_5: number;
@@ -217,19 +224,33 @@ export async function POST(request: NextRequest) {
         under25: 0,
         age26to40: 0,
         age41to50: 0,
-        over50: 0,
+        age51to60: 0,
+        over60: 0,
       };
-      const ageData = { ...existingAge };
+      const ageData = {
+        under25Permanent: existingAge?.under25Permanent ?? 0,
+        age26to40Permanent: existingAge?.age26to40Permanent ?? 0,
+        age41to50Permanent: existingAge?.age41to50Permanent ?? 0,
+        age51to60Permanent: existingAge?.age51to60Permanent ?? 0,
+        over60Permanent: existingAge?.over60Permanent ?? 0,
+        under25Contract: existingAge?.under25Contract ?? 0,
+        age26to40Contract: existingAge?.age26to40Contract ?? 0,
+        age41to50Contract: existingAge?.age41to50Contract ?? 0,
+        age51to60Contract: existingAge?.age51to60Contract ?? 0,
+        over60Contract: existingAge?.over60Contract ?? 0,
+      };
       if (statusType === "permanent") {
         ageData.under25Permanent = agePayload.under25;
         ageData.age26to40Permanent = agePayload.age26to40;
         ageData.age41to50Permanent = agePayload.age41to50;
-        ageData.over50Permanent = agePayload.over50;
+        ageData.age51to60Permanent = agePayload.age51to60;
+        ageData.over60Permanent = agePayload.over60;
       } else {
         ageData.under25Contract = agePayload.under25;
         ageData.age26to40Contract = agePayload.age26to40;
         ageData.age41to50Contract = agePayload.age41to50;
-        ageData.over50Contract = agePayload.over50;
+        ageData.age51to60Contract = agePayload.age51to60;
+        ageData.over60Contract = agePayload.over60;
       }
       await tx.ageStat.upsert({
         where: whereClause,
@@ -241,18 +262,37 @@ export async function POST(request: NextRequest) {
       const existingLevel = await tx.levelStat.findUnique({
         where: whereClause,
       });
-      const levelPayload = body.level || { bod1: 0, bod2: 0, bod3: 0, bod4: 0 };
-      const levelData = { ...existingLevel };
+      const levelPayload = body.level || {
+        bod1: 0,
+        bod2: 0,
+        bod3: 0,
+        bod4: 0,
+        bod5: 0,
+      };
+      const levelData = {
+        bod1Permanent: existingLevel?.bod1Permanent ?? 0,
+        bod2Permanent: existingLevel?.bod2Permanent ?? 0,
+        bod3Permanent: existingLevel?.bod3Permanent ?? 0,
+        bod4Permanent: existingLevel?.bod4Permanent ?? 0,
+        bod5Permanent: existingLevel?.bod5Permanent ?? 0,
+        bod1Contract: existingLevel?.bod1Contract ?? 0,
+        bod2Contract: existingLevel?.bod2Contract ?? 0,
+        bod3Contract: existingLevel?.bod3Contract ?? 0,
+        bod4Contract: existingLevel?.bod4Contract ?? 0,
+        bod5Contract: existingLevel?.bod5Contract ?? 0,
+      };
       if (statusType === "permanent") {
         levelData.bod1Permanent = levelPayload.bod1;
         levelData.bod2Permanent = levelPayload.bod2;
         levelData.bod3Permanent = levelPayload.bod3;
         levelData.bod4Permanent = levelPayload.bod4;
+        levelData.bod5Permanent = levelPayload.bod5;
       } else {
         levelData.bod1Contract = levelPayload.bod1;
         levelData.bod2Contract = levelPayload.bod2;
         levelData.bod3Contract = levelPayload.bod3;
         levelData.bod4Contract = levelPayload.bod4;
+        levelData.bod5Contract = levelPayload.bod5;
       }
       await tx.levelStat.upsert({
         where: whereClause,
