@@ -33,8 +33,10 @@ export async function GET(request: NextRequest) {
         age26to40Contract: true,
         age41to50Permanent: true,
         age41to50Contract: true,
-        over50Permanent: true,
-        over50Contract: true,
+        age51to60Permanent: true, // <-- Kolom baru
+        age51to60Contract: true, // <-- Kolom baru
+        over60Permanent: true, // <-- Kolom baru
+        over60Contract: true,
       },
       orderBy: { month: "asc" },
     });
@@ -44,10 +46,10 @@ export async function GET(request: NextRequest) {
       (stat) => stat.month === latestMonthInPeriod
     );
 
-    const labels = ["51-60", "41-50", "31-40", "<=30"];
+    const labels = [">60", "51-60", "41-50", "26-40", "<25"];
 
     if (!dataForPeriod) {
-      const emptyValues = [0, 0, 0, 0];
+      const emptyValues = [0, 0, 0, 0, 0];
       return NextResponse.json({
         labels,
         permanent: { label: "Permanent", values: emptyValues },
@@ -56,8 +58,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const over50Permanent = dataForPeriod.over50Permanent ?? 0;
-    const over50Contract = dataForPeriod.over50Contract ?? 0;
+    const over60Permanent = dataForPeriod.over60Permanent ?? 0;
+    const over60Contract = dataForPeriod.over60Contract ?? 0;
+    const age51to60Permanent = dataForPeriod.age51to60Permanent ?? 0;
+    const age51to60Contract = dataForPeriod.age51to60Contract ?? 0;
     const age41to50Permanent = dataForPeriod.age41to50Permanent ?? 0;
     const age41to50Contract = dataForPeriod.age41to50Contract ?? 0;
     const age26to40Permanent = dataForPeriod.age26to40Permanent ?? 0;
@@ -68,13 +72,15 @@ export async function GET(request: NextRequest) {
     // ## PERUBAHAN 2: Susun array values sesuai urutan label baru ##
     // Urutan: 51-60, 41-50, 31-40, <=30
     const permanentValues = [
-      over50Permanent,
+      over60Permanent,
+      age51to60Permanent,
       age41to50Permanent,
       age26to40Permanent,
       under25Permanent,
     ];
     const contractValues = [
-      over50Contract,
+      over60Contract,
+      age51to60Contract,
       age41to50Contract,
       age26to40Contract,
       under25Contract,

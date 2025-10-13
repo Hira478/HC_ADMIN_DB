@@ -224,12 +224,19 @@ export interface DemographyManualInputPayload {
     s2: number;
     s3: number;
   };
-  level?: { bod1: number; bod2: number; bod3: number; bod4: number };
+  level?: {
+    bod1: number;
+    bod2: number;
+    bod3: number;
+    bod4: number;
+    bod5: number;
+  };
   age?: {
     under25: number;
     age26to40: number;
     age41to50: number;
-    over50: number;
+    age51to60: number; // <-- Diubah dari over50
+    over60: number;
   };
   lengthOfService?: {
     los_under_5: number;

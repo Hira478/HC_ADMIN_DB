@@ -14,6 +14,7 @@ interface AgeExcelRow {
   "31-40 Years Old": number;
   "41-50 Years Old": number;
   "51-60 Years Old": number;
+  ">60 Years Old": number;
 }
 
 const monthNameToNumber: { [key: string]: number } = {
@@ -52,8 +53,10 @@ interface AggregatedAgeStat {
   age26to40Contract: number;
   age41to50Permanent: number;
   age41to50Contract: number;
-  over50Permanent: number;
-  over50Contract: number;
+  age51to60Permanent: number;
+  age51to60Contract: number;
+  over60Permanent: number;
+  over60Contract: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -116,26 +119,31 @@ export async function POST(request: NextRequest) {
         age26to40Contract: 0,
         age41to50Permanent: 0,
         age41to50Contract: 0,
-        over50Permanent: 0,
-        over50Contract: 0,
+        age51to60Permanent: 0,
+        age51to60Contract: 0,
+        over60Permanent: 0,
+        over60Contract: 0,
       };
 
       // Map Excel columns to corresponding fields in the entry object
-      const under30 = Number(row["<=30 Years Old"]) || 0;
-      const age31to40 = Number(row["31-40 Years Old"]) || 0;
+      const under25 = Number(row["<=30 Years Old"]) || 0; // Tetap menggunakan pemetaan ini
+      const age26to40 = Number(row["31-40 Years Old"]) || 0;
       const age41to50 = Number(row["41-50 Years Old"]) || 0;
       const age51to60 = Number(row["51-60 Years Old"]) || 0;
+      const over60 = Number(row[">60 Years Old"]) || 0;
 
       if (category === "permanent") {
-        entry.under25Permanent += under30;
-        entry.age26to40Permanent += age31to40;
+        entry.under25Permanent += under25;
+        entry.age26to40Permanent += age26to40;
         entry.age41to50Permanent += age41to50;
-        entry.over50Permanent += age51to60;
+        entry.age51to60Permanent += age51to60;
+        entry.over60Permanent += over60;
       } else if (category === "contract") {
-        entry.under25Contract += under30;
-        entry.age26to40Contract += age31to40;
+        entry.under25Contract += under25;
+        entry.age26to40Contract += age26to40;
         entry.age41to50Contract += age41to50;
-        entry.over50Contract += age51to60;
+        entry.age51to60Contract += age51to60;
+        entry.over60Contract += over60;
       }
 
       aggregationMap.set(key, entry);
